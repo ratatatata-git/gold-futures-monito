@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Gold Futures Monitor</title>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Gold Futures</div>
+        <div class="contract" id="contract">GCZ6</div>
+      </div>
+      <div class="status"><span class="dot"></span> DEMO</div>
+    </header>
+
+    <section class="hero card">
+      <div class="contract-name">Gold Futures · Dec 2026</div>
+      <div class="settlement" id="settlement">$4,387.50</div>
+      <div class="label">Settlement · <span id="settlementDate">Sep 16, 2026</span></div>
+      <div class="stats">
+        <div><span>Volume</span><strong id="volume">247,343</strong></div>
+        <div><span>Open Interest</span><strong id="oi">313,365</strong></div>
+        <div><span>OI Change</span><strong class="positive" id="oiChange">+2,295</strong></div>
+      </div>
+    </section>
+
+    <section class="periods" aria-label="Chart period">
+      <button data-period="1M" class="active">1M</button>
+      <button data-period="3M">3M</button>
+      <button data-period="6M">6M</button>
+      <button data-period="1Y">1Y</button>
+    </section>
+
+    <section class="chart-card card">
+      <div class="chart-head"><h2>Settlement Price</h2><span>USD / oz</span></div>
+      <canvas id="priceChart"></canvas>
+    </section>
+
+    <section class="chart-card card">
+      <div class="chart-head"><h2>Volume</h2><span>Contracts</span></div>
+      <canvas id="volumeChart"></canvas>
+    </section>
+
+    <section class="chart-card card">
+      <div class="chart-head"><h2>Open Interest</h2><span>Contracts</span></div>
+      <canvas id="oiChart"></canvas>
+    </section>
+
+    <section class="detail card" id="detail">
+      <div class="detail-title">Tap a chart point</div>
+      <div class="detail-grid">
+        <span>Date</span><b>—</b>
+        <span>Contract</span><b>—</b>
+        <span>Settlement</span><b>—</b>
+        <span>Volume</span><b>—</b>
+        <span>Open Interest</span><b>—</b>
+        <span>OI Change</span><b>—</b>
+      </div>
+    </section>
+
+    <footer>
+      Demo/Test Data only · Not CME data · Active Contract is fixed to GCZ6 in Stage 1
+    </footer>
+  </main>
+<script src="app.js"></script>
+</body>
+</html>
