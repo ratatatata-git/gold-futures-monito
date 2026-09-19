@@ -1,1 +1,2333 @@
-
+[
+  {
+    "date": "2025-09-19",
+    "contract": "GCZ6",
+    "settlement": 3601.6,
+    "volume": 186887,
+    "open_interest": 294928,
+    "oi_change": -72,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-22",
+    "contract": "GCZ6",
+    "settlement": 3612.9,
+    "volume": 191916,
+    "open_interest": 294008,
+    "oi_change": -920,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-23",
+    "contract": "GCZ6",
+    "settlement": 3620.4,
+    "volume": 193563,
+    "open_interest": 293973,
+    "oi_change": -35,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-24",
+    "contract": "GCZ6",
+    "settlement": 3625.9,
+    "volume": 206614,
+    "open_interest": 294887,
+    "oi_change": 914,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-25",
+    "contract": "GCZ6",
+    "settlement": 3637.6,
+    "volume": 208327,
+    "open_interest": 294617,
+    "oi_change": -270,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-26",
+    "contract": "GCZ6",
+    "settlement": 3631.3,
+    "volume": 214475,
+    "open_interest": 295730,
+    "oi_change": 1113,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-29",
+    "contract": "GCZ6",
+    "settlement": 3636.9,
+    "volume": 211584,
+    "open_interest": 296386,
+    "oi_change": 656,
+    "is_active": true
+  },
+  {
+    "date": "2025-09-30",
+    "contract": "GCZ6",
+    "settlement": 3626.3,
+    "volume": 211043,
+    "open_interest": 297064,
+    "oi_change": 678,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-01",
+    "contract": "GCZ6",
+    "settlement": 3641.6,
+    "volume": 215170,
+    "open_interest": 297716,
+    "oi_change": 652,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-02",
+    "contract": "GCZ6",
+    "settlement": 3650.3,
+    "volume": 236057,
+    "open_interest": 297447,
+    "oi_change": -269,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-03",
+    "contract": "GCZ6",
+    "settlement": 3662.7,
+    "volume": 196793,
+    "open_interest": 296244,
+    "oi_change": -1203,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-06",
+    "contract": "GCZ6",
+    "settlement": 3662.4,
+    "volume": 209230,
+    "open_interest": 297355,
+    "oi_change": 1111,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-07",
+    "contract": "GCZ6",
+    "settlement": 3676.3,
+    "volume": 204990,
+    "open_interest": 298489,
+    "oi_change": 1134,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-08",
+    "contract": "GCZ6",
+    "settlement": 3672.0,
+    "volume": 226144,
+    "open_interest": 298921,
+    "oi_change": 432,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-09",
+    "contract": "GCZ6",
+    "settlement": 3680.1,
+    "volume": 242731,
+    "open_interest": 299996,
+    "oi_change": 1075,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-10",
+    "contract": "GCZ6",
+    "settlement": 3690.9,
+    "volume": 239524,
+    "open_interest": 301002,
+    "oi_change": 1006,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-13",
+    "contract": "GCZ6",
+    "settlement": 3691.1,
+    "volume": 214276,
+    "open_interest": 301423,
+    "oi_change": 421,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-14",
+    "contract": "GCZ6",
+    "settlement": 3703.7,
+    "volume": 221591,
+    "open_interest": 303698,
+    "oi_change": 2275,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-15",
+    "contract": "GCZ6",
+    "settlement": 3701.9,
+    "volume": 204773,
+    "open_interest": 304982,
+    "oi_change": 1284,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-16",
+    "contract": "GCZ6",
+    "settlement": 3724.7,
+    "volume": 231689,
+    "open_interest": 306334,
+    "oi_change": 1352,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-17",
+    "contract": "GCZ6",
+    "settlement": 3747.6,
+    "volume": 218525,
+    "open_interest": 306241,
+    "oi_change": -93,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-20",
+    "contract": "GCZ6",
+    "settlement": 3748.9,
+    "volume": 234629,
+    "open_interest": 306153,
+    "oi_change": -88,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-21",
+    "contract": "GCZ6",
+    "settlement": 3756.3,
+    "volume": 218955,
+    "open_interest": 306813,
+    "oi_change": 660,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-22",
+    "contract": "GCZ6",
+    "settlement": 3771.2,
+    "volume": 221470,
+    "open_interest": 309200,
+    "oi_change": 2387,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-23",
+    "contract": "GCZ6",
+    "settlement": 3784.9,
+    "volume": 196407,
+    "open_interest": 309723,
+    "oi_change": 523,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-24",
+    "contract": "GCZ6",
+    "settlement": 3782.4,
+    "volume": 220662,
+    "open_interest": 310250,
+    "oi_change": 527,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-27",
+    "contract": "GCZ6",
+    "settlement": 3788.1,
+    "volume": 212988,
+    "open_interest": 310678,
+    "oi_change": 428,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-28",
+    "contract": "GCZ6",
+    "settlement": 3791.2,
+    "volume": 162219,
+    "open_interest": 310874,
+    "oi_change": 196,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-29",
+    "contract": "GCZ6",
+    "settlement": 3791.0,
+    "volume": 198641,
+    "open_interest": 312547,
+    "oi_change": 1673,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-30",
+    "contract": "GCZ6",
+    "settlement": 3796.6,
+    "volume": 191643,
+    "open_interest": 313547,
+    "oi_change": 1000,
+    "is_active": true
+  },
+  {
+    "date": "2025-10-31",
+    "contract": "GCZ6",
+    "settlement": 3814.1,
+    "volume": 198838,
+    "open_interest": 314608,
+    "oi_change": 1061,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-03",
+    "contract": "GCZ6",
+    "settlement": 3808.3,
+    "volume": 194927,
+    "open_interest": 315727,
+    "oi_change": 1119,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-04",
+    "contract": "GCZ6",
+    "settlement": 3826.8,
+    "volume": 174176,
+    "open_interest": 317853,
+    "oi_change": 2126,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-05",
+    "contract": "GCZ6",
+    "settlement": 3827.6,
+    "volume": 199626,
+    "open_interest": 318766,
+    "oi_change": 913,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-06",
+    "contract": "GCZ6",
+    "settlement": 3826.3,
+    "volume": 147110,
+    "open_interest": 319486,
+    "oi_change": 720,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-07",
+    "contract": "GCZ6",
+    "settlement": 3846.0,
+    "volume": 178867,
+    "open_interest": 320728,
+    "oi_change": 1242,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-10",
+    "contract": "GCZ6",
+    "settlement": 3823.6,
+    "volume": 174038,
+    "open_interest": 321858,
+    "oi_change": 1130,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-11",
+    "contract": "GCZ6",
+    "settlement": 3821.0,
+    "volume": 147371,
+    "open_interest": 322596,
+    "oi_change": 738,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-12",
+    "contract": "GCZ6",
+    "settlement": 3843.1,
+    "volume": 137482,
+    "open_interest": 323026,
+    "oi_change": 430,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-13",
+    "contract": "GCZ6",
+    "settlement": 3860.8,
+    "volume": 146666,
+    "open_interest": 323463,
+    "oi_change": 437,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-14",
+    "contract": "GCZ6",
+    "settlement": 3864.3,
+    "volume": 131012,
+    "open_interest": 324244,
+    "oi_change": 781,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-17",
+    "contract": "GCZ6",
+    "settlement": 3853.1,
+    "volume": 168399,
+    "open_interest": 324846,
+    "oi_change": 602,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-18",
+    "contract": "GCZ6",
+    "settlement": 3880.0,
+    "volume": 157094,
+    "open_interest": 326293,
+    "oi_change": 1447,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-19",
+    "contract": "GCZ6",
+    "settlement": 3867.2,
+    "volume": 149882,
+    "open_interest": 327020,
+    "oi_change": 727,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-20",
+    "contract": "GCZ6",
+    "settlement": 3887.6,
+    "volume": 122333,
+    "open_interest": 328136,
+    "oi_change": 1116,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-21",
+    "contract": "GCZ6",
+    "settlement": 3895.0,
+    "volume": 181164,
+    "open_interest": 329026,
+    "oi_change": 890,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-24",
+    "contract": "GCZ6",
+    "settlement": 3896.2,
+    "volume": 145591,
+    "open_interest": 328595,
+    "oi_change": -431,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-25",
+    "contract": "GCZ6",
+    "settlement": 3898.8,
+    "volume": 153382,
+    "open_interest": 330239,
+    "oi_change": 1644,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-26",
+    "contract": "GCZ6",
+    "settlement": 3892.3,
+    "volume": 164860,
+    "open_interest": 329501,
+    "oi_change": -738,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-27",
+    "contract": "GCZ6",
+    "settlement": 3887.9,
+    "volume": 166436,
+    "open_interest": 330267,
+    "oi_change": 766,
+    "is_active": true
+  },
+  {
+    "date": "2025-11-28",
+    "contract": "GCZ6",
+    "settlement": 3903.6,
+    "volume": 163931,
+    "open_interest": 329720,
+    "oi_change": -547,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-01",
+    "contract": "GCZ6",
+    "settlement": 3908.3,
+    "volume": 177334,
+    "open_interest": 330166,
+    "oi_change": 446,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-02",
+    "contract": "GCZ6",
+    "settlement": 3900.1,
+    "volume": 192002,
+    "open_interest": 330297,
+    "oi_change": 131,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-03",
+    "contract": "GCZ6",
+    "settlement": 3907.2,
+    "volume": 198335,
+    "open_interest": 330714,
+    "oi_change": 417,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-04",
+    "contract": "GCZ6",
+    "settlement": 3909.6,
+    "volume": 218132,
+    "open_interest": 330841,
+    "oi_change": 127,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-05",
+    "contract": "GCZ6",
+    "settlement": 3905.6,
+    "volume": 185508,
+    "open_interest": 331720,
+    "oi_change": 879,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-08",
+    "contract": "GCZ6",
+    "settlement": 3906.1,
+    "volume": 197033,
+    "open_interest": 332360,
+    "oi_change": 640,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-09",
+    "contract": "GCZ6",
+    "settlement": 3899.7,
+    "volume": 160826,
+    "open_interest": 332365,
+    "oi_change": 5,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-10",
+    "contract": "GCZ6",
+    "settlement": 3901.5,
+    "volume": 185157,
+    "open_interest": 332690,
+    "oi_change": 325,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-11",
+    "contract": "GCZ6",
+    "settlement": 3907.5,
+    "volume": 182312,
+    "open_interest": 332736,
+    "oi_change": 46,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-12",
+    "contract": "GCZ6",
+    "settlement": 3904.7,
+    "volume": 177523,
+    "open_interest": 332691,
+    "oi_change": -45,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-15",
+    "contract": "GCZ6",
+    "settlement": 3903.7,
+    "volume": 194622,
+    "open_interest": 332643,
+    "oi_change": -48,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-16",
+    "contract": "GCZ6",
+    "settlement": 3908.7,
+    "volume": 201239,
+    "open_interest": 332468,
+    "oi_change": -175,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-17",
+    "contract": "GCZ6",
+    "settlement": 3919.6,
+    "volume": 202137,
+    "open_interest": 332235,
+    "oi_change": -233,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-18",
+    "contract": "GCZ6",
+    "settlement": 3919.6,
+    "volume": 258776,
+    "open_interest": 330500,
+    "oi_change": -1735,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-19",
+    "contract": "GCZ6",
+    "settlement": 3927.4,
+    "volume": 215153,
+    "open_interest": 329868,
+    "oi_change": -632,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-22",
+    "contract": "GCZ6",
+    "settlement": 3948.7,
+    "volume": 222810,
+    "open_interest": 330717,
+    "oi_change": 849,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-23",
+    "contract": "GCZ6",
+    "settlement": 3944.5,
+    "volume": 231166,
+    "open_interest": 329753,
+    "oi_change": -964,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-24",
+    "contract": "GCZ6",
+    "settlement": 3937.8,
+    "volume": 227445,
+    "open_interest": 328889,
+    "oi_change": -864,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-25",
+    "contract": "GCZ6",
+    "settlement": 3941.2,
+    "volume": 189444,
+    "open_interest": 329476,
+    "oi_change": 587,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-26",
+    "contract": "GCZ6",
+    "settlement": 3940.8,
+    "volume": 259262,
+    "open_interest": 328076,
+    "oi_change": -1400,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-29",
+    "contract": "GCZ6",
+    "settlement": 3945.8,
+    "volume": 284945,
+    "open_interest": 326737,
+    "oi_change": -1339,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-30",
+    "contract": "GCZ6",
+    "settlement": 3931.4,
+    "volume": 217758,
+    "open_interest": 326245,
+    "oi_change": -492,
+    "is_active": true
+  },
+  {
+    "date": "2025-12-31",
+    "contract": "GCZ6",
+    "settlement": 3941.4,
+    "volume": 249977,
+    "open_interest": 325256,
+    "oi_change": -989,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-01",
+    "contract": "GCZ6",
+    "settlement": 3926.5,
+    "volume": 217622,
+    "open_interest": 325220,
+    "oi_change": -36,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-02",
+    "contract": "GCZ6",
+    "settlement": 3934.7,
+    "volume": 188492,
+    "open_interest": 324338,
+    "oi_change": -882,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-05",
+    "contract": "GCZ6",
+    "settlement": 3953.5,
+    "volume": 259843,
+    "open_interest": 323830,
+    "oi_change": -508,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-06",
+    "contract": "GCZ6",
+    "settlement": 3960.6,
+    "volume": 196701,
+    "open_interest": 322397,
+    "oi_change": -1433,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-07",
+    "contract": "GCZ6",
+    "settlement": 3965.2,
+    "volume": 225184,
+    "open_interest": 321882,
+    "oi_change": -515,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-08",
+    "contract": "GCZ6",
+    "settlement": 3964.3,
+    "volume": 192171,
+    "open_interest": 320479,
+    "oi_change": -1403,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-09",
+    "contract": "GCZ6",
+    "settlement": 3956.3,
+    "volume": 220984,
+    "open_interest": 318077,
+    "oi_change": -2402,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-12",
+    "contract": "GCZ6",
+    "settlement": 3957.6,
+    "volume": 213758,
+    "open_interest": 318167,
+    "oi_change": 90,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-13",
+    "contract": "GCZ6",
+    "settlement": 3963.7,
+    "volume": 219747,
+    "open_interest": 317014,
+    "oi_change": -1153,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-14",
+    "contract": "GCZ6",
+    "settlement": 3961.1,
+    "volume": 185505,
+    "open_interest": 317119,
+    "oi_change": 105,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-15",
+    "contract": "GCZ6",
+    "settlement": 3977.9,
+    "volume": 202243,
+    "open_interest": 318407,
+    "oi_change": 1288,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-16",
+    "contract": "GCZ6",
+    "settlement": 3983.6,
+    "volume": 200419,
+    "open_interest": 317744,
+    "oi_change": -663,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-19",
+    "contract": "GCZ6",
+    "settlement": 3987.5,
+    "volume": 226735,
+    "open_interest": 317876,
+    "oi_change": 132,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-20",
+    "contract": "GCZ6",
+    "settlement": 3978.6,
+    "volume": 173700,
+    "open_interest": 317328,
+    "oi_change": -548,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-21",
+    "contract": "GCZ6",
+    "settlement": 3993.9,
+    "volume": 152590,
+    "open_interest": 315058,
+    "oi_change": -2270,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-22",
+    "contract": "GCZ6",
+    "settlement": 3979.8,
+    "volume": 171710,
+    "open_interest": 314212,
+    "oi_change": -846,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-23",
+    "contract": "GCZ6",
+    "settlement": 3990.5,
+    "volume": 155473,
+    "open_interest": 312665,
+    "oi_change": -1547,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-26",
+    "contract": "GCZ6",
+    "settlement": 3975.3,
+    "volume": 171844,
+    "open_interest": 312184,
+    "oi_change": -481,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-27",
+    "contract": "GCZ6",
+    "settlement": 3993.4,
+    "volume": 177042,
+    "open_interest": 311372,
+    "oi_change": -812,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-28",
+    "contract": "GCZ6",
+    "settlement": 4015.4,
+    "volume": 157577,
+    "open_interest": 310289,
+    "oi_change": -1083,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-29",
+    "contract": "GCZ6",
+    "settlement": 4016.9,
+    "volume": 147099,
+    "open_interest": 308266,
+    "oi_change": -2023,
+    "is_active": true
+  },
+  {
+    "date": "2026-01-30",
+    "contract": "GCZ6",
+    "settlement": 4025.8,
+    "volume": 160117,
+    "open_interest": 307455,
+    "oi_change": -811,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-02",
+    "contract": "GCZ6",
+    "settlement": 4025.1,
+    "volume": 160729,
+    "open_interest": 308036,
+    "oi_change": 581,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-03",
+    "contract": "GCZ6",
+    "settlement": 4032.6,
+    "volume": 143760,
+    "open_interest": 307161,
+    "oi_change": -875,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-04",
+    "contract": "GCZ6",
+    "settlement": 4038.8,
+    "volume": 129450,
+    "open_interest": 306634,
+    "oi_change": -527,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-05",
+    "contract": "GCZ6",
+    "settlement": 4046.4,
+    "volume": 185204,
+    "open_interest": 306847,
+    "oi_change": 213,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-06",
+    "contract": "GCZ6",
+    "settlement": 4064.5,
+    "volume": 139420,
+    "open_interest": 306931,
+    "oi_change": 84,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-09",
+    "contract": "GCZ6",
+    "settlement": 4058.6,
+    "volume": 158587,
+    "open_interest": 306902,
+    "oi_change": -29,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-10",
+    "contract": "GCZ6",
+    "settlement": 4056.6,
+    "volume": 190135,
+    "open_interest": 307019,
+    "oi_change": 117,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-11",
+    "contract": "GCZ6",
+    "settlement": 4041.9,
+    "volume": 165715,
+    "open_interest": 306554,
+    "oi_change": -465,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-12",
+    "contract": "GCZ6",
+    "settlement": 4047.9,
+    "volume": 166187,
+    "open_interest": 306659,
+    "oi_change": 105,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-13",
+    "contract": "GCZ6",
+    "settlement": 4031.2,
+    "volume": 139390,
+    "open_interest": 307065,
+    "oi_change": 406,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-16",
+    "contract": "GCZ6",
+    "settlement": 4050.9,
+    "volume": 197300,
+    "open_interest": 308193,
+    "oi_change": 1128,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-17",
+    "contract": "GCZ6",
+    "settlement": 4033.4,
+    "volume": 180031,
+    "open_interest": 306958,
+    "oi_change": -1235,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-18",
+    "contract": "GCZ6",
+    "settlement": 4056.0,
+    "volume": 174170,
+    "open_interest": 306279,
+    "oi_change": -679,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-19",
+    "contract": "GCZ6",
+    "settlement": 4082.6,
+    "volume": 184883,
+    "open_interest": 305166,
+    "oi_change": -1113,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-20",
+    "contract": "GCZ6",
+    "settlement": 4090.0,
+    "volume": 164018,
+    "open_interest": 305406,
+    "oi_change": 240,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-23",
+    "contract": "GCZ6",
+    "settlement": 4088.8,
+    "volume": 205947,
+    "open_interest": 304701,
+    "oi_change": -705,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-24",
+    "contract": "GCZ6",
+    "settlement": 4095.9,
+    "volume": 218033,
+    "open_interest": 304434,
+    "oi_change": -267,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-25",
+    "contract": "GCZ6",
+    "settlement": 4101.4,
+    "volume": 193225,
+    "open_interest": 304307,
+    "oi_change": -127,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-26",
+    "contract": "GCZ6",
+    "settlement": 4111.4,
+    "volume": 195551,
+    "open_interest": 304063,
+    "oi_change": -244,
+    "is_active": true
+  },
+  {
+    "date": "2026-02-27",
+    "contract": "GCZ6",
+    "settlement": 4133.4,
+    "volume": 212222,
+    "open_interest": 304371,
+    "oi_change": 308,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-02",
+    "contract": "GCZ6",
+    "settlement": 4128.6,
+    "volume": 187925,
+    "open_interest": 305634,
+    "oi_change": 1263,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-03",
+    "contract": "GCZ6",
+    "settlement": 4128.9,
+    "volume": 214236,
+    "open_interest": 306021,
+    "oi_change": 387,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-04",
+    "contract": "GCZ6",
+    "settlement": 4137.3,
+    "volume": 207603,
+    "open_interest": 307067,
+    "oi_change": 1046,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-05",
+    "contract": "GCZ6",
+    "settlement": 4136.6,
+    "volume": 228106,
+    "open_interest": 308095,
+    "oi_change": 1028,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-06",
+    "contract": "GCZ6",
+    "settlement": 4136.3,
+    "volume": 200894,
+    "open_interest": 308114,
+    "oi_change": 19,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-09",
+    "contract": "GCZ6",
+    "settlement": 4128.9,
+    "volume": 201520,
+    "open_interest": 309343,
+    "oi_change": 1229,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-10",
+    "contract": "GCZ6",
+    "settlement": 4128.9,
+    "volume": 250013,
+    "open_interest": 311525,
+    "oi_change": 2182,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-11",
+    "contract": "GCZ6",
+    "settlement": 4129.4,
+    "volume": 196006,
+    "open_interest": 312010,
+    "oi_change": 485,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-12",
+    "contract": "GCZ6",
+    "settlement": 4128.6,
+    "volume": 198780,
+    "open_interest": 312609,
+    "oi_change": 599,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-13",
+    "contract": "GCZ6",
+    "settlement": 4131.6,
+    "volume": 218565,
+    "open_interest": 312898,
+    "oi_change": 289,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-16",
+    "contract": "GCZ6",
+    "settlement": 4122.9,
+    "volume": 259803,
+    "open_interest": 313607,
+    "oi_change": 709,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-17",
+    "contract": "GCZ6",
+    "settlement": 4113.3,
+    "volume": 221274,
+    "open_interest": 315061,
+    "oi_change": 1454,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-18",
+    "contract": "GCZ6",
+    "settlement": 4105.2,
+    "volume": 236535,
+    "open_interest": 316387,
+    "oi_change": 1326,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-19",
+    "contract": "GCZ6",
+    "settlement": 4112.8,
+    "volume": 252465,
+    "open_interest": 316897,
+    "oi_change": 510,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-20",
+    "contract": "GCZ6",
+    "settlement": 4124.5,
+    "volume": 211948,
+    "open_interest": 317520,
+    "oi_change": 623,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-23",
+    "contract": "GCZ6",
+    "settlement": 4136.9,
+    "volume": 239525,
+    "open_interest": 318411,
+    "oi_change": 891,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-24",
+    "contract": "GCZ6",
+    "settlement": 4123.0,
+    "volume": 232906,
+    "open_interest": 318897,
+    "oi_change": 486,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-25",
+    "contract": "GCZ6",
+    "settlement": 4112.1,
+    "volume": 208799,
+    "open_interest": 319956,
+    "oi_change": 1059,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-26",
+    "contract": "GCZ6",
+    "settlement": 4088.0,
+    "volume": 224253,
+    "open_interest": 320968,
+    "oi_change": 1012,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-27",
+    "contract": "GCZ6",
+    "settlement": 4080.9,
+    "volume": 233375,
+    "open_interest": 322262,
+    "oi_change": 1294,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-30",
+    "contract": "GCZ6",
+    "settlement": 4073.7,
+    "volume": 199297,
+    "open_interest": 323604,
+    "oi_change": 1342,
+    "is_active": true
+  },
+  {
+    "date": "2026-03-31",
+    "contract": "GCZ6",
+    "settlement": 4056.6,
+    "volume": 201753,
+    "open_interest": 324075,
+    "oi_change": 471,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-01",
+    "contract": "GCZ6",
+    "settlement": 4057.1,
+    "volume": 207705,
+    "open_interest": 324967,
+    "oi_change": 892,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-02",
+    "contract": "GCZ6",
+    "settlement": 4069.5,
+    "volume": 204003,
+    "open_interest": 325615,
+    "oi_change": 648,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-03",
+    "contract": "GCZ6",
+    "settlement": 4056.2,
+    "volume": 208762,
+    "open_interest": 326793,
+    "oi_change": 1178,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-06",
+    "contract": "GCZ6",
+    "settlement": 4072.4,
+    "volume": 178114,
+    "open_interest": 327624,
+    "oi_change": 831,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-07",
+    "contract": "GCZ6",
+    "settlement": 4072.3,
+    "volume": 185772,
+    "open_interest": 328421,
+    "oi_change": 797,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-08",
+    "contract": "GCZ6",
+    "settlement": 4054.2,
+    "volume": 198012,
+    "open_interest": 329609,
+    "oi_change": 1188,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-09",
+    "contract": "GCZ6",
+    "settlement": 4067.7,
+    "volume": 219552,
+    "open_interest": 330135,
+    "oi_change": 526,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-10",
+    "contract": "GCZ6",
+    "settlement": 4068.6,
+    "volume": 175268,
+    "open_interest": 332099,
+    "oi_change": 1964,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-13",
+    "contract": "GCZ6",
+    "settlement": 4051.2,
+    "volume": 180052,
+    "open_interest": 331812,
+    "oi_change": -287,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-14",
+    "contract": "GCZ6",
+    "settlement": 4024.8,
+    "volume": 131379,
+    "open_interest": 331546,
+    "oi_change": -266,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-15",
+    "contract": "GCZ6",
+    "settlement": 4038.8,
+    "volume": 148845,
+    "open_interest": 331990,
+    "oi_change": 444,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-16",
+    "contract": "GCZ6",
+    "settlement": 4028.6,
+    "volume": 172508,
+    "open_interest": 331826,
+    "oi_change": -164,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-17",
+    "contract": "GCZ6",
+    "settlement": 4046.0,
+    "volume": 141023,
+    "open_interest": 331837,
+    "oi_change": 11,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-20",
+    "contract": "GCZ6",
+    "settlement": 4050.6,
+    "volume": 157114,
+    "open_interest": 333227,
+    "oi_change": 1390,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-21",
+    "contract": "GCZ6",
+    "settlement": 4055.5,
+    "volume": 133110,
+    "open_interest": 333281,
+    "oi_change": 54,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-22",
+    "contract": "GCZ6",
+    "settlement": 4053.1,
+    "volume": 166517,
+    "open_interest": 333901,
+    "oi_change": 620,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-23",
+    "contract": "GCZ6",
+    "settlement": 4056.0,
+    "volume": 168185,
+    "open_interest": 333880,
+    "oi_change": -21,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-24",
+    "contract": "GCZ6",
+    "settlement": 4059.1,
+    "volume": 155314,
+    "open_interest": 335145,
+    "oi_change": 1265,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-27",
+    "contract": "GCZ6",
+    "settlement": 4062.9,
+    "volume": 145742,
+    "open_interest": 334687,
+    "oi_change": -458,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-28",
+    "contract": "GCZ6",
+    "settlement": 4075.6,
+    "volume": 141942,
+    "open_interest": 335079,
+    "oi_change": 392,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-29",
+    "contract": "GCZ6",
+    "settlement": 4060.1,
+    "volume": 172223,
+    "open_interest": 334331,
+    "oi_change": -748,
+    "is_active": true
+  },
+  {
+    "date": "2026-04-30",
+    "contract": "GCZ6",
+    "settlement": 4057.3,
+    "volume": 173877,
+    "open_interest": 333529,
+    "oi_change": -802,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-01",
+    "contract": "GCZ6",
+    "settlement": 4062.4,
+    "volume": 157970,
+    "open_interest": 332892,
+    "oi_change": -637,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-04",
+    "contract": "GCZ6",
+    "settlement": 4083.4,
+    "volume": 185834,
+    "open_interest": 331570,
+    "oi_change": -1322,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-05",
+    "contract": "GCZ6",
+    "settlement": 4073.9,
+    "volume": 176010,
+    "open_interest": 330630,
+    "oi_change": -940,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-06",
+    "contract": "GCZ6",
+    "settlement": 4076.2,
+    "volume": 166752,
+    "open_interest": 330933,
+    "oi_change": 303,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-07",
+    "contract": "GCZ6",
+    "settlement": 4080.5,
+    "volume": 169408,
+    "open_interest": 330230,
+    "oi_change": -703,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-08",
+    "contract": "GCZ6",
+    "settlement": 4101.6,
+    "volume": 162327,
+    "open_interest": 330202,
+    "oi_change": -28,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-11",
+    "contract": "GCZ6",
+    "settlement": 4103.0,
+    "volume": 176937,
+    "open_interest": 329793,
+    "oi_change": -409,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-12",
+    "contract": "GCZ6",
+    "settlement": 4108.3,
+    "volume": 160740,
+    "open_interest": 329961,
+    "oi_change": 168,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-13",
+    "contract": "GCZ6",
+    "settlement": 4131.0,
+    "volume": 187465,
+    "open_interest": 330039,
+    "oi_change": 78,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-14",
+    "contract": "GCZ6",
+    "settlement": 4147.4,
+    "volume": 203978,
+    "open_interest": 329792,
+    "oi_change": -247,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-15",
+    "contract": "GCZ6",
+    "settlement": 4156.9,
+    "volume": 207046,
+    "open_interest": 329348,
+    "oi_change": -444,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-18",
+    "contract": "GCZ6",
+    "settlement": 4153.4,
+    "volume": 196124,
+    "open_interest": 327588,
+    "oi_change": -1760,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-19",
+    "contract": "GCZ6",
+    "settlement": 4160.5,
+    "volume": 207266,
+    "open_interest": 327816,
+    "oi_change": 228,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-20",
+    "contract": "GCZ6",
+    "settlement": 4169.2,
+    "volume": 220542,
+    "open_interest": 327202,
+    "oi_change": -614,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-21",
+    "contract": "GCZ6",
+    "settlement": 4164.9,
+    "volume": 182269,
+    "open_interest": 325920,
+    "oi_change": -1282,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-22",
+    "contract": "GCZ6",
+    "settlement": 4156.7,
+    "volume": 222702,
+    "open_interest": 325098,
+    "oi_change": -822,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-25",
+    "contract": "GCZ6",
+    "settlement": 4169.6,
+    "volume": 215975,
+    "open_interest": 325057,
+    "oi_change": -41,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-26",
+    "contract": "GCZ6",
+    "settlement": 4187.7,
+    "volume": 206092,
+    "open_interest": 324128,
+    "oi_change": -929,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-27",
+    "contract": "GCZ6",
+    "settlement": 4188.1,
+    "volume": 191237,
+    "open_interest": 323789,
+    "oi_change": -339,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-28",
+    "contract": "GCZ6",
+    "settlement": 4207.2,
+    "volume": 222642,
+    "open_interest": 322665,
+    "oi_change": -1124,
+    "is_active": true
+  },
+  {
+    "date": "2026-05-29",
+    "contract": "GCZ6",
+    "settlement": 4225.0,
+    "volume": 182482,
+    "open_interest": 321954,
+    "oi_change": -711,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-01",
+    "contract": "GCZ6",
+    "settlement": 4232.1,
+    "volume": 215922,
+    "open_interest": 322012,
+    "oi_change": 58,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-02",
+    "contract": "GCZ6",
+    "settlement": 4248.0,
+    "volume": 222555,
+    "open_interest": 321094,
+    "oi_change": -918,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-03",
+    "contract": "GCZ6",
+    "settlement": 4248.7,
+    "volume": 218638,
+    "open_interest": 319368,
+    "oi_change": -1726,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-04",
+    "contract": "GCZ6",
+    "settlement": 4268.5,
+    "volume": 246492,
+    "open_interest": 319001,
+    "oi_change": -367,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-05",
+    "contract": "GCZ6",
+    "settlement": 4260.8,
+    "volume": 265108,
+    "open_interest": 319393,
+    "oi_change": 392,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-08",
+    "contract": "GCZ6",
+    "settlement": 4266.9,
+    "volume": 210577,
+    "open_interest": 317932,
+    "oi_change": -1461,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-09",
+    "contract": "GCZ6",
+    "settlement": 4275.2,
+    "volume": 209164,
+    "open_interest": 317010,
+    "oi_change": -922,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-10",
+    "contract": "GCZ6",
+    "settlement": 4290.5,
+    "volume": 196781,
+    "open_interest": 317415,
+    "oi_change": 405,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-11",
+    "contract": "GCZ6",
+    "settlement": 4310.8,
+    "volume": 199525,
+    "open_interest": 315603,
+    "oi_change": -1812,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-12",
+    "contract": "GCZ6",
+    "settlement": 4310.4,
+    "volume": 200728,
+    "open_interest": 314547,
+    "oi_change": -1056,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-15",
+    "contract": "GCZ6",
+    "settlement": 4284.4,
+    "volume": 212307,
+    "open_interest": 314844,
+    "oi_change": 297,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-16",
+    "contract": "GCZ6",
+    "settlement": 4274.2,
+    "volume": 208317,
+    "open_interest": 313016,
+    "oi_change": -1828,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-17",
+    "contract": "GCZ6",
+    "settlement": 4283.0,
+    "volume": 205699,
+    "open_interest": 313434,
+    "oi_change": 418,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-18",
+    "contract": "GCZ6",
+    "settlement": 4286.7,
+    "volume": 199334,
+    "open_interest": 312969,
+    "oi_change": -465,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-19",
+    "contract": "GCZ6",
+    "settlement": 4282.3,
+    "volume": 178007,
+    "open_interest": 312365,
+    "oi_change": -604,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-22",
+    "contract": "GCZ6",
+    "settlement": 4281.2,
+    "volume": 201040,
+    "open_interest": 311835,
+    "oi_change": -530,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-23",
+    "contract": "GCZ6",
+    "settlement": 4276.2,
+    "volume": 201467,
+    "open_interest": 312217,
+    "oi_change": 382,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-24",
+    "contract": "GCZ6",
+    "settlement": 4264.4,
+    "volume": 220937,
+    "open_interest": 311344,
+    "oi_change": -873,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-25",
+    "contract": "GCZ6",
+    "settlement": 4256.1,
+    "volume": 229142,
+    "open_interest": 310763,
+    "oi_change": -581,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-26",
+    "contract": "GCZ6",
+    "settlement": 4271.1,
+    "volume": 196013,
+    "open_interest": 309024,
+    "oi_change": -1739,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-29",
+    "contract": "GCZ6",
+    "settlement": 4272.2,
+    "volume": 167793,
+    "open_interest": 307544,
+    "oi_change": -1480,
+    "is_active": true
+  },
+  {
+    "date": "2026-06-30",
+    "contract": "GCZ6",
+    "settlement": 4252.3,
+    "volume": 175199,
+    "open_interest": 307359,
+    "oi_change": -185,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-01",
+    "contract": "GCZ6",
+    "settlement": 4256.1,
+    "volume": 164168,
+    "open_interest": 306314,
+    "oi_change": -1045,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-02",
+    "contract": "GCZ6",
+    "settlement": 4244.6,
+    "volume": 156245,
+    "open_interest": 305160,
+    "oi_change": -1154,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-03",
+    "contract": "GCZ6",
+    "settlement": 4241.6,
+    "volume": 162684,
+    "open_interest": 304141,
+    "oi_change": -1019,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-06",
+    "contract": "GCZ6",
+    "settlement": 4238.3,
+    "volume": 146601,
+    "open_interest": 303748,
+    "oi_change": -393,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-07",
+    "contract": "GCZ6",
+    "settlement": 4243.1,
+    "volume": 161049,
+    "open_interest": 303713,
+    "oi_change": -35,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-08",
+    "contract": "GCZ6",
+    "settlement": 4224.1,
+    "volume": 148980,
+    "open_interest": 303601,
+    "oi_change": -112,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-09",
+    "contract": "GCZ6",
+    "settlement": 4230.4,
+    "volume": 125407,
+    "open_interest": 303463,
+    "oi_change": -138,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-10",
+    "contract": "GCZ6",
+    "settlement": 4243.0,
+    "volume": 149773,
+    "open_interest": 303211,
+    "oi_change": -252,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-13",
+    "contract": "GCZ6",
+    "settlement": 4247.3,
+    "volume": 156710,
+    "open_interest": 303510,
+    "oi_change": 299,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-14",
+    "contract": "GCZ6",
+    "settlement": 4247.6,
+    "volume": 154745,
+    "open_interest": 302916,
+    "oi_change": -594,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-15",
+    "contract": "GCZ6",
+    "settlement": 4245.4,
+    "volume": 174764,
+    "open_interest": 302751,
+    "oi_change": -165,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-16",
+    "contract": "GCZ6",
+    "settlement": 4243.3,
+    "volume": 144034,
+    "open_interest": 303282,
+    "oi_change": 531,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-17",
+    "contract": "GCZ6",
+    "settlement": 4233.9,
+    "volume": 170401,
+    "open_interest": 302746,
+    "oi_change": -536,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-20",
+    "contract": "GCZ6",
+    "settlement": 4222.5,
+    "volume": 159294,
+    "open_interest": 302955,
+    "oi_change": 209,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-21",
+    "contract": "GCZ6",
+    "settlement": 4226.2,
+    "volume": 176713,
+    "open_interest": 302865,
+    "oi_change": -90,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-22",
+    "contract": "GCZ6",
+    "settlement": 4231.7,
+    "volume": 143610,
+    "open_interest": 303912,
+    "oi_change": 1047,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-23",
+    "contract": "GCZ6",
+    "settlement": 4239.6,
+    "volume": 172413,
+    "open_interest": 304313,
+    "oi_change": 401,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-24",
+    "contract": "GCZ6",
+    "settlement": 4232.2,
+    "volume": 159968,
+    "open_interest": 304968,
+    "oi_change": 655,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-27",
+    "contract": "GCZ6",
+    "settlement": 4233.5,
+    "volume": 171492,
+    "open_interest": 304463,
+    "oi_change": -505,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-28",
+    "contract": "GCZ6",
+    "settlement": 4237.3,
+    "volume": 160468,
+    "open_interest": 304185,
+    "oi_change": -278,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-29",
+    "contract": "GCZ6",
+    "settlement": 4237.7,
+    "volume": 143375,
+    "open_interest": 305110,
+    "oi_change": 925,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-30",
+    "contract": "GCZ6",
+    "settlement": 4249.5,
+    "volume": 179863,
+    "open_interest": 304980,
+    "oi_change": -130,
+    "is_active": true
+  },
+  {
+    "date": "2026-07-31",
+    "contract": "GCZ6",
+    "settlement": 4241.9,
+    "volume": 182250,
+    "open_interest": 303963,
+    "oi_change": -1017,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-03",
+    "contract": "GCZ6",
+    "settlement": 4247.0,
+    "volume": 201137,
+    "open_interest": 304358,
+    "oi_change": 395,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-04",
+    "contract": "GCZ6",
+    "settlement": 4245.0,
+    "volume": 196671,
+    "open_interest": 305223,
+    "oi_change": 865,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-05",
+    "contract": "GCZ6",
+    "settlement": 4260.8,
+    "volume": 197902,
+    "open_interest": 305448,
+    "oi_change": 225,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-06",
+    "contract": "GCZ6",
+    "settlement": 4259.9,
+    "volume": 204928,
+    "open_interest": 307166,
+    "oi_change": 1718,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-07",
+    "contract": "GCZ6",
+    "settlement": 4260.8,
+    "volume": 186647,
+    "open_interest": 307339,
+    "oi_change": 173,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-10",
+    "contract": "GCZ6",
+    "settlement": 4242.5,
+    "volume": 215275,
+    "open_interest": 307222,
+    "oi_change": -117,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-11",
+    "contract": "GCZ6",
+    "settlement": 4234.0,
+    "volume": 177278,
+    "open_interest": 307289,
+    "oi_change": 67,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-12",
+    "contract": "GCZ6",
+    "settlement": 4245.6,
+    "volume": 192468,
+    "open_interest": 306970,
+    "oi_change": -319,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-13",
+    "contract": "GCZ6",
+    "settlement": 4253.2,
+    "volume": 212836,
+    "open_interest": 308089,
+    "oi_change": 1119,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-14",
+    "contract": "GCZ6",
+    "settlement": 4267.2,
+    "volume": 221371,
+    "open_interest": 308101,
+    "oi_change": 12,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-17",
+    "contract": "GCZ6",
+    "settlement": 4272.0,
+    "volume": 232687,
+    "open_interest": 308592,
+    "oi_change": 491,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-18",
+    "contract": "GCZ6",
+    "settlement": 4262.5,
+    "volume": 245272,
+    "open_interest": 309204,
+    "oi_change": 612,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-19",
+    "contract": "GCZ6",
+    "settlement": 4264.5,
+    "volume": 227018,
+    "open_interest": 310765,
+    "oi_change": 1561,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-20",
+    "contract": "GCZ6",
+    "settlement": 4274.1,
+    "volume": 221586,
+    "open_interest": 312105,
+    "oi_change": 1340,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-21",
+    "contract": "GCZ6",
+    "settlement": 4304.6,
+    "volume": 252954,
+    "open_interest": 313442,
+    "oi_change": 1337,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-24",
+    "contract": "GCZ6",
+    "settlement": 4299.2,
+    "volume": 295432,
+    "open_interest": 313562,
+    "oi_change": 120,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-25",
+    "contract": "GCZ6",
+    "settlement": 4302.2,
+    "volume": 214751,
+    "open_interest": 315515,
+    "oi_change": 1953,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-26",
+    "contract": "GCZ6",
+    "settlement": 4314.0,
+    "volume": 200654,
+    "open_interest": 316577,
+    "oi_change": 1062,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-27",
+    "contract": "GCZ6",
+    "settlement": 4327.2,
+    "volume": 219154,
+    "open_interest": 316663,
+    "oi_change": 86,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-28",
+    "contract": "GCZ6",
+    "settlement": 4326.4,
+    "volume": 215138,
+    "open_interest": 317544,
+    "oi_change": 881,
+    "is_active": true
+  },
+  {
+    "date": "2026-08-31",
+    "contract": "GCZ6",
+    "settlement": 4327.9,
+    "volume": 233943,
+    "open_interest": 317776,
+    "oi_change": 232,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-01",
+    "contract": "GCZ6",
+    "settlement": 4316.0,
+    "volume": 204729,
+    "open_interest": 319484,
+    "oi_change": 1708,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-02",
+    "contract": "GCZ6",
+    "settlement": 4316.8,
+    "volume": 257156,
+    "open_interest": 320613,
+    "oi_change": 1129,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-03",
+    "contract": "GCZ6",
+    "settlement": 4311.0,
+    "volume": 196679,
+    "open_interest": 321556,
+    "oi_change": 943,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-04",
+    "contract": "GCZ6",
+    "settlement": 4304.9,
+    "volume": 250845,
+    "open_interest": 321670,
+    "oi_change": 114,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-07",
+    "contract": "GCZ6",
+    "settlement": 4319.1,
+    "volume": 230569,
+    "open_interest": 322327,
+    "oi_change": 657,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-08",
+    "contract": "GCZ6",
+    "settlement": 4314.7,
+    "volume": 195379,
+    "open_interest": 323258,
+    "oi_change": 931,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-09",
+    "contract": "GCZ6",
+    "settlement": 4330.7,
+    "volume": 197195,
+    "open_interest": 323010,
+    "oi_change": -248,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-10",
+    "contract": "GCZ6",
+    "settlement": 4337.3,
+    "volume": 179858,
+    "open_interest": 322216,
+    "oi_change": -794,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-11",
+    "contract": "GCZ6",
+    "settlement": 4335.5,
+    "volume": 161975,
+    "open_interest": 323182,
+    "oi_change": 966,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-14",
+    "contract": "GCZ6",
+    "settlement": 4362.5,
+    "volume": 217024,
+    "open_interest": 323353,
+    "oi_change": 171,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-15",
+    "contract": "GCZ6",
+    "settlement": 4362.7,
+    "volume": 191851,
+    "open_interest": 324543,
+    "oi_change": 1190,
+    "is_active": true
+  },
+  {
+    "date": "2026-09-16",
+    "contract": "GCZ6",
+    "settlement": 4387.5,
+    "volume": 247343,
+    "open_interest": 313365,
+    "oi_change": 2295,
+    "is_active": true
+  }
+]
