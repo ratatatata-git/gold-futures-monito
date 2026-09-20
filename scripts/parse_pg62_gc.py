@@ -1,189 +1,536 @@
-#!/usr/bin/env python3
-from __future__ import annotations
-import argparse, json, re
-from datetime import datetime, timezone
+import json
+import re
 from pathlib import Path
-from typing import Any
+from datetime import datetime
+
 import pdfplumber
 
-MONTHS = r"(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)"
-CONTRACT_RE = re.compile(rf"^{MONTHS}\d{{2}}$")
-DATE_RE = re.compile(r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})\b")
 
-def norm_lines(pdf_path: Path) -> list[str]:
-    out=[]
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text=page.extract_text(x_tolerance=2, y_tolerance=3) or ""
-            for raw in text.splitlines():
-                line=re.sub(r"\s+", " ", raw.strip())
-                if line: out.append(line)
-    return out
+ROOT = Path(__file__).resolve().parents[1]
+PDF_DIR = ROOT / "data" / "cme-pg62"
+OUT_FILE = ROOT / "data" / "cme-gc-history.json"
 
-def parse_bulletin_date(lines):
-    for line in lines[:100]:
-        m=DATE_RE.search(line)
-        if m:
-            mon, day, year=m.groups()
-            return datetime.strptime(f"{day} {mon} {year}", "%d %b %Y").date().isoformat()
-    raise ValueError("Bulletin date not found.")
 
-def num(s):
-    s=s.replace(",","").strip()
-    if s in {"----","UNCH","NEW"}: return None
-    s=re.sub(r"[^0-9.\-+]","",s)
-    return float(s) if s and s not in {"+","-"} else None
+MONTHS = {
+    "JAN": 1,
+    "FEB": 2,
+    "MAR": 3,
+    "APR": 4,
+    "MAY": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AUG": 8,
+    "SEP": 9,
+    "OCT": 10,
+    "NOV": 11,
+    "DEC": 12,
+}
 
-def integer(s):
-    s=s.replace(",","").strip()
-    if s in {"----","UNCH","NEW"}: return None
-    s=re.sub(r"[^0-9\-+]","",s)
-    return int(s) if s and s not in {"+","-"} else None
 
-def signed(sign, value):
-    n=integer(str(value))
-    if n is None: return None
-    return -abs(n) if sign=="-" else abs(n)
+def clean_token(s):
+    if s is None:
+        return ""
+    return s.strip().replace(",", "")
+
+
+def number(s):
+    """
+    Convert a normal numeric token to float.
+    B/A suffixes used by CME are removed.
+    """
+    s = clean_token(s)
+
+    if not s:
+        return None
+
+    s = s.replace("B", "").replace("A", "")
+
+    if s in {"-", "--", "---", "----"}:
+        return None
+
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+def find_bulletin_date(text):
+    """
+    Find a date such as:
+      09/18/2026
+      9/18/2026
+    """
+    m = re.search(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b", text)
+
+    if not m:
+        return None
+
+    month, day, year = map(int, m.groups())
+
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def split_price_token(token):
+    """
+    Handle CME PDF extraction where two prices may become one token.
+
+    Examples:
+      4510.80B/4447.20A
+      4510.804447.20
+      4378.00B
+      4447.20A
+
+    Returns a list of numeric-looking price values.
+    """
+    token = clean_token(token)
+
+    if not token:
+        return []
+
+    # Remove bid/ask markers but keep slash.
+    token = token.replace("B", "").replace("A", "")
+
+    # Normal slash-separated high/low.
+    if "/" in token:
+        parts = token.split("/")
+        result = []
+
+        for p in parts:
+            if re.fullmatch(r"\d+(?:\.\d+)?", p):
+                result.append(float(p))
+
+        return result
+
+    # Normal number.
+    if re.fullmatch(r"\d+(?:\.\d+)?", token):
+        return [float(token)]
+
+    # PDF extraction sometimes glues two prices together:
+    # 4510.804447.20
+    #
+    # Gold futures prices have two decimal places, so this pattern
+    # safely separates them.
+    m = re.fullmatch(
+        r"(\d{3,4}\.\d{2})(\d{3,4}\.\d{2})",
+        token
+    )
+
+    if m:
+        return [float(m.group(1)), float(m.group(2))]
+
+    return []
+
 
 def parse_gc_line(line, trade_date):
-    t=line.split()
-    if not t or not CONTRACT_RE.match(t[0]) or len(t)<6: return None
-    contract=t[0]
+    """
+    Parse a GC futures contract row.
 
-    # Find the price-change sign after the price columns.
-    si=None
-    for i in range(2, min(len(t),10)):
-        if t[i] in {"+","-","UNCH"} or re.match(r"^[+-]\d",t[i]):
-            si=i; break
-    if si is None: return None
+    Expected examples:
 
-    prices=[num(x) for x in t[1:si]]
-    if len(prices)>=4:
-        op,hi,lo,sett=prices[-4:]
-    elif len(prices)==3:
-        op,hi,lo,sett=None,prices[0],prices[1],prices[2]
-    elif len(prices)==2:
-        op,hi,lo,sett=None,None,prices[0],prices[1]
-    else:
-        op,hi,lo,sett=None,None,None,prices[0]
+    DEC26 4381.60 4439.80 /4372.20 4424.90 +25.20
+           141307 1612 315327 +1194
 
-    if t[si] in {"+","-"}:
-        ps=t[si]; pc=num(t[si+1]) if si+1<len(t) else None; cur=si+2
-    elif t[si].startswith(("+","-")):
-        ps=t[si][0]; pc=num(t[si][1:]); cur=si+1
-    else:
-        ps="UNCH"; pc=0; cur=si+1
+    APR27 4466.00 4510.80B/4447.20A 4498.50 +25.80
+           2129 11 10307 +775
 
-    rem=t[cur:]
-    if len(rem)<3: return None
+    SEP26 ---- 4378.00B 4385.90 +25.70 539 ---- 503 +117
+    """
 
-    oi_si=None
-    for i in range(len(rem)-1,-1,-1):
-        if rem[i] in {"+","-","UNCH"} or re.match(r"^[+-]\d",rem[i]):
-            oi_si=i; break
-    if oi_si is None or oi_si<1: return None
+    line = " ".join(line.split())
 
-    ost=rem[oi_si]
-    if ost in {"+","-"}:
-        osign=ost; ochange=rem[oi_si+1] if oi_si+1<len(rem) else None
-    else:
-        osign=ost[0]; ochange=ost[1:]
-    if ochange is None: return None
+    if not line:
+        return None
 
-    before=rem[:oi_si]
-    if len(before)<2: return None
+    # Contract must start the row.
+    m = re.match(
+        r"^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d{2})\b(.*)$",
+        line,
+        re.I,
+    )
 
-    # Standard PG62: Globex volume, PNT/PIT volume, OI.
-    if len(before)>=3:
-        globex=integer(before[-3]) or 0
-        pnt=integer(before[-2]) or 0
-        oi=integer(before[-1])
-    else:
-        globex=integer(before[0]) or 0
-        pnt=0
-        oi=integer(before[1])
+    if not m:
+        return None
 
-    if sett is None or oi is None: return None
+    month = m.group(1).upper()
+    year2 = int(m.group(2))
+    rest = m.group(3).strip()
+
+    contract = f"{month}{year2:02d}"
+
+    tokens = rest.split()
+
+    # Need enough fields to contain settlement, change, volume,
+    # volume/PIT, OI and OI change.
+    if len(tokens) < 5:
+        return None
+
+    # ------------------------------------------------------------
+    # IMPORTANT:
+    # Work backwards from the right side.
+    #
+    # The last four fields in a normal GC row are:
+    #
+    # volume
+    # PNT/PIT volume
+    # open interest
+    # OI change
+    #
+    # Some rows contain "----" for PNT/PIT.
+    # ------------------------------------------------------------
+
+    oi_change = number(tokens[-1])
+    open_interest = number(tokens[-2])
+    volume_pnt_pit = number(tokens[-3])
+    volume = number(tokens[-4])
+
+    if volume is None:
+        return None
+
+    # The field before volume is price change.
+    price_change = number(tokens[-5])
+
+    if price_change is None:
+        return None
+
+    price_tokens = tokens[:-5]
+
+    # ------------------------------------------------------------
+    # Extract all price values from the remaining tokens.
+    # ------------------------------------------------------------
+
+    prices = []
+
+    for token in price_tokens:
+        vals = split_price_token(token)
+        prices.extend(vals)
+
+    if not prices:
+        return None
+
+    # ------------------------------------------------------------
+    # CME rows normally contain:
+    #
+    # open
+    # high
+    # low
+    # settlement
+    #
+    # But some rows have missing open/high/low fields.
+    #
+    # Settlement is the final price before price change.
+    # ------------------------------------------------------------
+
+    settlement = prices[-1]
+
+    open_price = None
+    high_price = None
+    low_price = None
+
+    if len(prices) >= 4:
+        open_price = prices[0]
+        high_price = prices[1]
+        low_price = prices[2]
+        settlement = prices[3]
+
+    elif len(prices) == 3:
+        # Example of a shortened row.
+        open_price = prices[0]
+        high_price = prices[1]
+        settlement = prices[2]
+
+    elif len(prices) == 2:
+        open_price = prices[0]
+        settlement = prices[1]
+
+    elif len(prices) == 1:
+        settlement = prices[0]
 
     return {
-        "date": trade_date, "contract": contract,
-        "open": op, "high": hi, "low": lo, "settlement": sett,
-        "price_change": signed(ps, pc) if pc is not None else None,
-        "volume": globex+pnt, "volume_globex": globex,
-        "volume_pnt_pit": pnt, "open_interest": oi,
-        "oi_change": signed(osign, ochange), "is_active": False
+        "date": trade_date,
+        "contract": contract,
+        "open": open_price,
+        "high": high_price,
+        "low": low_price,
+        "settlement": settlement,
+        "price_change": price_change,
+        "volume": int(volume) if volume is not None else None,
+        "volume_globex": None,
+        "volume_pnt_pit": (
+            int(volume_pnt_pit)
+            if volume_pnt_pit is not None
+            else None
+        ),
+        "open_interest": (
+            int(open_interest)
+            if open_interest is not None
+            else None
+        ),
+        "oi_change": (
+            int(oi_change)
+            if oi_change is not None
+            else None
+        ),
     }
 
-def extract_gc(pdf):
-    lines=norm_lines(pdf)
-    trade_date=parse_bulletin_date(lines)
-    start=None
-    for i,line in enumerate(lines):
-        if "GC FUT COMEX GOLD FUTURES" in line:
-            start=i+1; break
-    if start is None:
-        raise ValueError("GC FUT COMEX GOLD FUTURES section not found.")
 
-    rows=[]
-    for line in lines[start:]:
-        if line.startswith("TOTAL GC FUT"): break
-        r=parse_gc_line(line, trade_date)
-        if r: rows.append(r)
-    if not rows: raise ValueError("GC section found, but no rows parsed.")
-    max(rows, key=lambda r:r["volume"])["is_active"]=True
+def extract_gc(pdf_path):
+    """
+    Extract GC futures rows from a CME PG62 PDF.
+    """
+
+    all_text = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            all_text.append(text)
+
+    full_text = "\n".join(all_text)
+
+    trade_date = find_bulletin_date(full_text)
+
+    if not trade_date:
+        raise RuntimeError(
+            f"Could not find bulletin date in {pdf_path.name}"
+        )
+
+    lines = full_text.splitlines()
+
+    in_gc = False
+    rows = []
+
+    for raw_line in lines:
+        line = " ".join(raw_line.split())
+
+        # Start of GC section.
+        if "GC FUT COMEX GOLD FUTURES" in line:
+            in_gc = True
+            continue
+
+        if not in_gc:
+            continue
+
+        # Stop at the next futures product section.
+        if re.search(
+            r"\b[A-Z]{2,4}\s+FUT\s+",
+            line
+        ) and "GC FUT COMEX GOLD FUTURES" not in line:
+            break
+
+        # Ignore headers.
+        if line.startswith("CONTRACT"):
+            continue
+
+        if line.startswith("OPEN"):
+            continue
+
+        # Ignore total rows.
+        if line.startswith("TOTAL"):
+            continue
+
+        result = parse_gc_line(line, trade_date)
+
+        if result:
+            rows.append(result)
+
+    if not rows:
+        raise RuntimeError(
+            f"No GC futures rows found in {pdf_path.name}"
+        )
+
+    # ------------------------------------------------------------
+    # Determine active contract.
+    #
+    # For now we use the highest-volume GC contract in the
+    # bulletin. This can later be replaced with a more explicit
+    # CME active-contract rule if desired.
+    # ------------------------------------------------------------
+
+    valid_volume_rows = [
+        r for r in rows
+        if r.get("volume") is not None
+    ]
+
+    if valid_volume_rows:
+        active = max(
+            valid_volume_rows,
+            key=lambda r: r["volume"]
+        )
+
+        active_contract = active["contract"]
+
+        for row in rows:
+            row["is_active"] = (
+                row["contract"] == active_contract
+            )
+    else:
+        active_contract = None
+
+        for row in rows:
+            row["is_active"] = False
+
     return trade_date, rows
 
-def load_history(path):
-    if not path.exists(): return []
-    obj=json.loads(path.read_text(encoding="utf-8"))
-    return obj.get("contracts",[]) if isinstance(obj,dict) else obj
+
+def load_history():
+    if not OUT_FILE.exists():
+        return {
+            "updated_at": None,
+            "dates": [],
+            "contracts": {},
+            "candles": [],
+        }
+
+    try:
+        with OUT_FILE.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {
+            "updated_at": None,
+            "dates": [],
+            "contracts": {},
+            "candles": [],
+        }
+
+
+def save_history(history):
+    OUT_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with OUT_FILE.open(
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump(
+            history,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
+
 
 def main():
-    ap=argparse.ArgumentParser()
-    ap.add_argument("--pdf", type=Path)
-    ap.add_argument("--input-dir", type=Path, default=Path("data/cme-pg62"))
-    ap.add_argument("--output", type=Path, default=Path("data/cme-gc-history.json"))
-    a=ap.parse_args()
+    PDFs = sorted(PDF_DIR.glob("*.pdf"))
 
-    pdfs=[a.pdf] if a.pdf else sorted(a.input_dir.glob("*.pdf"))
-    if not pdfs: raise SystemExit(f"No PG62 PDF found in {a.input_dir}")
+    if not PDFs:
+        raise RuntimeError(
+            f"No PDF files found in {PDF_DIR}"
+        )
 
-    existing={(r["date"],r["contract"]):r for r in load_history(a.output)}
-    for pdf in pdfs:
-        d, rows=extract_gc(pdf)
-        for r in rows: existing[(r["date"],r["contract"])]=r
-        print(f"Parsed {pdf.name}: {d}, {len(rows)} contracts")
+    history = load_history()
 
-    grouped={}
-    for r in existing.values(): grouped.setdefault(r["date"],[]).append(r)
-    for rows in grouped.values():
-        for r in rows: r["is_active"]=False
-        max(rows,key=lambda r:r["volume"])["is_active"]=True
+    all_rows = []
 
-    contracts=sorted(existing.values(), key=lambda r:(r["date"],r["contract"]))
-    latest=max(r["date"] for r in contracts)
-    active=next((r for r in contracts if r["date"]==latest and r["is_active"]),None)
-    candles=[
-        {"date":r["date"],"contract":r["contract"],"open":r["open"],
-         "high":r["high"],"low":r["low"],"close":r["settlement"],
-         "settlement":r["settlement"],"volume":r["volume"],
-         "open_interest":r["open_interest"],"oi_change":r["oi_change"],
-         "is_active":r["is_active"]}
-        for r in contracts if r["open"] is not None and r["high"] is not None and r["low"] is not None
-    ]
-    out={
-        "product":"GC","exchange":"COMEX",
-        "source":"CME Daily Bulletin PG62 (manual PDF import)",
-        "source_pdf":"data/cme-pg62/*.pdf",
-        "retrieved_at_utc":datetime.now(timezone.utc).isoformat(),
-        "latest_trade_date":latest,
-        "active_contract_method":"highest_volume_on_latest_bulletin",
-        "active_contract":active["contract"] if active else None,
-        "contracts":contracts,"candles":candles
+    for pdf in PDFs:
+        print(f"Parsing {pdf.name}")
+
+        trade_date, rows = extract_gc(pdf)
+
+        print(
+            f"  Date: {trade_date}"
+        )
+
+        print(
+            f"  GC rows: {len(rows)}"
+        )
+
+        all_rows.extend(rows)
+
+    # ------------------------------------------------------------
+    # Merge rows by date + contract.
+    # ------------------------------------------------------------
+
+    existing = {}
+
+    for row in history.get("candles", []):
+        key = (
+            row.get("date"),
+            row.get("contract")
+        )
+        existing[key] = row
+
+    for row in all_rows:
+        key = (
+            row.get("date"),
+            row.get("contract")
+        )
+
+        candle = {
+            "date": row["date"],
+            "contract": row["contract"],
+            "open": row["open"],
+            "high": row["high"],
+            "low": row["low"],
+            "close": row["settlement"],
+            "settlement": row["settlement"],
+            "volume": row["volume"],
+            "open_interest": row["open_interest"],
+            "oi_change": row["oi_change"],
+            "is_active": row["is_active"],
+        }
+
+        existing[key] = candle
+
+    candles = list(existing.values())
+
+    candles.sort(
+        key=lambda x: (
+            x.get("date") or "",
+            x.get("contract") or ""
+        )
+    )
+
+    # ------------------------------------------------------------
+    # Build contract history.
+    # ------------------------------------------------------------
+
+    contracts = {}
+
+    for row in candles:
+        contract = row["contract"]
+
+        contracts.setdefault(
+            contract,
+            []
+        )
+
+        contracts[contract].append(row)
+
+    # ------------------------------------------------------------
+    # Dates.
+    # ------------------------------------------------------------
+
+    dates = sorted(
+        {
+            row["date"]
+            for row in candles
+            if row.get("date")
+        }
+    )
+
+    history = {
+        "updated_at": datetime.utcnow().isoformat() + "Z",
+        "dates": dates,
+        "contracts": contracts,
+        "candles": candles,
     }
-    a.output.parent.mkdir(parents=True,exist_ok=True)
-    a.output.write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print(f"Wrote {a.output}: {len(contracts)} contract-day records; active={out['active_contract']}")
 
-if __name__=="__main__":
+    save_history(history)
+
+    print(
+        f"Saved {len(candles)} candles"
+    )
+
+    print(
+        f"Saved {len(contracts)} contracts"
+    )
+
+    print(
+        f"Output: {OUT_FILE}"
+    )
+
+
+if __name__ == "__main__":
     main()
