@@ -1,18 +1,14 @@
-# Gold Futures Monitor — Stage 1
+# Stage 2: CME GC manual PDF import
 
-iPhone-first static PWA prototype using Demo/Test Data.
+1. Download the official CME Daily Bulletin Metals / PG62 PDF manually.
+2. Put it in `data/cme-pg62/`, e.g. `PG62_2026-09-18.pdf`.
+3. Commit/push the PDF.
+4. GitHub Actions runs the parser automatically.
+5. `data/cme-gc-history.json` is updated.
+6. The PWA can use `candles` for daily OHLC candles and `contracts` for Volume/OI.
 
-## Included
-- GCZ6 as fixed Stage-1 active/center contract
-- Settlement / Volume / Open Interest charts
-- 1M / 3M / 6M / 1Y
-- Tap chart to inspect Date / Contract / Settlement / Volume / OI / OI Change
-- PWA manifest + service worker
-- No backend and no CME credentials in frontend
+Captured per contract/day: Open, High, Low, Settlement/Close, Volume (Globex + PNT/PIT), Open Interest, OI Change, contract, active flag.
 
-## Deploy
-Upload this folder to a static host such as GitHub Pages, Cloudflare Pages, or Vercel.
-Open the HTTPS URL in iPhone Safari and use Share → Add to Home Screen.
+Active contract is provisional: highest GC volume on each bulletin date. This can later be replaced with a formal roll rule.
 
-## Next stage
-Replace `data/demo-data.json` with an API endpoint backed by a server-side CME Daily Bulletin PG62 ingestion job. Keep credentials/server access off the client.
+No CME credentials are stored in the repository, and the workflow does not attempt to bypass CME access controls.
