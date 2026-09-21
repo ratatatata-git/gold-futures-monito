@@ -54,49 +54,190 @@ def number(s):
         return None
 
 
-def find_bulletin_date(text, filename=""):
+def find_bulletin_date(pdf):
     """
-    Find bulletin date.
+    Extract the bulletin date from the actual PDF.
 
-    First try the PDF text.
-    If the PDF text does not contain a date, use the filename.
+    The filename is deliberately NOT used.
 
-    Example filename:
-      PG62_2026-09-18.pdf
-      PG62_2026-09-18.pdf.pdf
+    We search:
+      1. normal extracted page text
+      2. words extracted with coordinates
+
+    Supported examples:
+      09/18/2026
+      9/18/2026
+      September 18, 2026
+      Sep 18, 2026
     """
 
-    # ------------------------------------------------------------
-    # 1. Try dates inside the PDF text.
-    # ------------------------------------------------------------
-
-    m = re.search(
-        r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b",
-        text
+    months = (
+        "January|February|March|April|May|June|July|August|"
+        "September|October|November|December"
     )
 
-    if m:
-        month, day, year = map(int, m.groups())
+    short_months = (
+        "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+    )
 
-        return f"{year:04d}-{month:02d}-{day:02d}"
+    patterns = [
+        rf"\b(\d{{1,2}})/(\d{{1,2}})/(\d{{4}})\b",
+
+        rf"\b({months})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
+
+        rf"\b({short_months})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
+    ]
 
     # ------------------------------------------------------------
-    # 2. Try ISO date in the filename.
+    # 1. Search normal PDF text.
+    # ------------------------------------------------------------
+
+    for page in pdf.pages:
+        text = page.extract_text() or ""
+
+        for pattern in patterns:
+
+            m = re.search(
+                pattern,
+                text,
+                re.IGNORECASE
+            )
+
+            if not m:
+                continue
+
+            groups = m.groups()
+
+            # MM/DD/YYYY
+            if len(groups) == 3 and groups[0].isdigit():
+
+                month = int(groups[0])
+                day = int(groups[1])
+                year = int(groups[2])
+
+                return f"{year:04d}-{month:02d}-{day:02d}"
+
+            # Month DD, YYYY
+            if len(groups) == 3:
+
+                month_name = groups[0][:3].upper()
+                day = int(groups[1])
+                year = int(groups[2])
+
+                month_map = {
+                    "JAN": 1,
+                    "FEB": 2,
+                    "MAR": 3,
+                    "APR": 4,
+                    "MAY": 5,
+                    "JUN": 6,
+                    "JUL": 7,
+                    "AUG": 8,
+                    "SEP": 9,
+                    "OCT": 10,
+                    "NOV": 11,
+                    "DEC": 12,
+                }
+
+                month = month_map.get(month_name)
+
+                if month:
+                    return (
+                        f"{year:04d}-"
+                        f"{month:02d}-"
+                        f"{day:02d}"
+                    )
+
+    # ------------------------------------------------------------
+    # 2. Search individual PDF words.
     #
-    # This handles:
-    #   PG62_2026-09-18.pdf
-    #   PG62_2026-09-18.pdf.pdf
+    # This is useful when pdfplumber's normal text extraction
+    # does not preserve the date as one text block.
     # ------------------------------------------------------------
 
-    m = re.search(
-        r"\b(20\d{2})-(\d{2})-(\d{2})\b",
-        filename
-    )
+    for page in pdf.pages:
 
-    if m:
-        year, month, day = map(int, m.groups())
+        words = page.extract_words(
+            x_tolerance=2,
+            y_tolerance=3,
+            keep_blank_chars=False,
+        )
 
-        return f"{year:04d}-{month:02d}-{day:02d}"
+        for i, word in enumerate(words):
+
+            text = word.get("text", "").strip()
+
+            # Direct numeric date.
+            m = re.fullmatch(
+                r"(\d{1,2})/(\d{1,2})/(\d{4})",
+                text
+            )
+
+            if m:
+
+                month, day, year = map(
+                    int,
+                    m.groups()
+                )
+
+                return (
+                    f"{year:04d}-"
+                    f"{month:02d}-"
+                    f"{day:02d}"
+                )
+
+            # Search nearby words for:
+            # September 18, 2026
+            if re.fullmatch(
+                rf"(?:{months}|{short_months})",
+                text,
+                re.IGNORECASE,
+            ):
+
+                nearby = " ".join(
+                    w.get("text", "")
+                    for w in words[i:i + 4]
+                )
+
+                m = re.search(
+                    rf"\b({months}|{short_months})\s+"
+                    rf"(\d{{1,2}}),?\s+"
+                    rf"(\d{{4}})\b",
+                    nearby,
+                    re.IGNORECASE,
+                )
+
+                if m:
+
+                    month_name = m.group(1)[:3].upper()
+                    day = int(m.group(2))
+                    year = int(m.group(3))
+
+                    month_map = {
+                        "JAN": 1,
+                        "FEB": 2,
+                        "MAR": 3,
+                        "APR": 4,
+                        "MAY": 5,
+                        "JUN": 6,
+                        "JUL": 7,
+                        "AUG": 8,
+                        "SEP": 9,
+                        "OCT": 10,
+                        "NOV": 11,
+                        "DEC": 12,
+                    }
+
+                    month = month_map.get(
+                        month_name
+                    )
+
+                    if month:
+                        return (
+                            f"{year:04d}-"
+                            f"{month:02d}-"
+                            f"{day:02d}"
+                        )
 
     return None
 
@@ -318,10 +459,7 @@ def extract_gc(pdf_path):
 
     full_text = "\n".join(all_text)
 
-    trade_date = find_bulletin_date(
-    full_text,
-    pdf_path.name
-)
+    trade_date = find_bulletin_date(pdf)
 
     if not trade_date:
         raise RuntimeError(
