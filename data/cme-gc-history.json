@@ -1,0 +1,150 @@
+{
+  "updated_at": "2026-09-21T00:33:46.429667Z",
+  "dates": [
+    "2026-09-18"
+  ],
+  "contracts": {
+    "APR27": [
+      {
+        "date": "2026-09-18",
+        "contract": "APR27",
+        "open": 4466.0,
+        "high": 4510.8,
+        "low": 4447.2,
+        "close": 4498.5,
+        "settlement": 4498.5,
+        "volume": 11,
+        "open_interest": null,
+        "oi_change": 775,
+        "is_active": false
+      }
+    ],
+    "DEC26": [
+      {
+        "date": "2026-09-18",
+        "contract": "DEC26",
+        "open": 4381.6,
+        "high": 4439.8,
+        "low": 4372.2,
+        "close": 4424.9,
+        "settlement": 4424.9,
+        "volume": 1612,
+        "open_interest": null,
+        "oi_change": 1194,
+        "is_active": true
+      }
+    ],
+    "FEB27": [
+      {
+        "date": "2026-09-18",
+        "contract": "FEB27",
+        "open": 4418.6,
+        "high": 4475.9,
+        "low": 4410.0,
+        "close": 4462.1,
+        "settlement": 4462.1,
+        "volume": 18,
+        "open_interest": null,
+        "oi_change": 570,
+        "is_active": false
+      }
+    ],
+    "JUN27": [
+      {
+        "date": "2026-09-18",
+        "contract": "JUN27",
+        "open": 4495.0,
+        "high": 4549.5,
+        "low": 4490.0,
+        "close": 4537.6,
+        "settlement": 4537.6,
+        "volume": 110,
+        "open_interest": null,
+        "oi_change": 76,
+        "is_active": false
+      }
+    ],
+    "OCT26": [
+      {
+        "date": "2026-09-18",
+        "contract": "OCT26",
+        "open": 4347.2,
+        "high": 4405.3,
+        "low": 4338.7,
+        "close": 4390.7,
+        "settlement": 4390.7,
+        "volume": 267,
+        "open_interest": null,
+        "oi_change": 581,
+        "is_active": false
+      }
+    ]
+  },
+  "candles": [
+    {
+      "date": "2026-09-18",
+      "contract": "APR27",
+      "open": 4466.0,
+      "high": 4510.8,
+      "low": 4447.2,
+      "close": 4498.5,
+      "settlement": 4498.5,
+      "volume": 11,
+      "open_interest": null,
+      "oi_change": 775,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "DEC26",
+      "open": 4381.6,
+      "high": 4439.8,
+      "low": 4372.2,
+      "close": 4424.9,
+      "settlement": 4424.9,
+      "volume": 1612,
+      "open_interest": null,
+      "oi_change": 1194,
+      "is_active": true
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "FEB27",
+      "open": 4418.6,
+      "high": 4475.9,
+      "low": 4410.0,
+      "close": 4462.1,
+      "settlement": 4462.1,
+      "volume": 18,
+      "open_interest": null,
+      "oi_change": 570,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "JUN27",
+      "open": 4495.0,
+      "high": 4549.5,
+      "low": 4490.0,
+      "close": 4537.6,
+      "settlement": 4537.6,
+      "volume": 110,
+      "open_interest": null,
+      "oi_change": 76,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "OCT26",
+      "open": 4347.2,
+      "high": 4405.3,
+      "low": 4338.7,
+      "close": 4390.7,
+      "settlement": 4390.7,
+      "volume": 267,
+      "open_interest": null,
+      "oi_change": 581,
+      "is_active": false
+    }
+  ]
+}
