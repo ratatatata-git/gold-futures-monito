@@ -54,20 +54,51 @@ def number(s):
         return None
 
 
-def find_bulletin_date(text):
+def find_bulletin_date(text, filename=""):
     """
-    Find a date such as:
-      09/18/2026
-      9/18/2026
+    Find bulletin date.
+
+    First try the PDF text.
+    If the PDF text does not contain a date, use the filename.
+
+    Example filename:
+      PG62_2026-09-18.pdf
+      PG62_2026-09-18.pdf.pdf
     """
-    m = re.search(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b", text)
 
-    if not m:
-        return None
+    # ------------------------------------------------------------
+    # 1. Try dates inside the PDF text.
+    # ------------------------------------------------------------
 
-    month, day, year = map(int, m.groups())
+    m = re.search(
+        r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b",
+        text
+    )
 
-    return f"{year:04d}-{month:02d}-{day:02d}"
+    if m:
+        month, day, year = map(int, m.groups())
+
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    # ------------------------------------------------------------
+    # 2. Try ISO date in the filename.
+    #
+    # This handles:
+    #   PG62_2026-09-18.pdf
+    #   PG62_2026-09-18.pdf.pdf
+    # ------------------------------------------------------------
+
+    m = re.search(
+        r"\b(20\d{2})-(\d{2})-(\d{2})\b",
+        filename
+    )
+
+    if m:
+        year, month, day = map(int, m.groups())
+
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    return None
 
 
 def split_price_token(token):
@@ -287,7 +318,10 @@ def extract_gc(pdf_path):
 
     full_text = "\n".join(all_text)
 
-    trade_date = find_bulletin_date(full_text)
+    trade_date = find_bulletin_date(
+    full_text,
+    pdf_path.name
+)
 
     if not trade_date:
         raise RuntimeError(
