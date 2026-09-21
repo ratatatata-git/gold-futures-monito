@@ -1,7 +1,7 @@
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime
 
 import pdfplumber
 
@@ -27,21 +27,25 @@ MONTHS = {
 }
 
 
-def clean_token(s):
-    if s is None:
-        return ""
-    return s.strip().replace(",", "")
+def clean(s):
+    return str(s or "").strip().replace(",", "")
 
 
-def number(s):
+def to_number(s):
     """
-    Convert a normal numeric token to float.
-    B/A suffixes used by CME are removed.
+    Convert CME numeric fields to float.
+
+    ---- / --- / -- / - => None
+    UNCH => 0
     """
-    s = clean_token(s)
+
+    s = clean(s)
 
     if not s:
         return None
+
+    if s.upper() == "UNCH":
+        return 0.0
 
     s = s.replace("B", "").replace("A", "")
 
@@ -54,24 +58,31 @@ def number(s):
         return None
 
 
+def to_int(s):
+    value = to_number(s)
+
+    if value is None:
+        return None
+
+    return int(round(value))
+
+
 def find_bulletin_date(pdf):
     """
-    Extract the bulletin date from the actual PDF.
+    Find the bulletin date INSIDE the PDF.
 
-    The filename is deliberately NOT used.
+    The filename is deliberately never used.
 
-    We search:
-      1. normal extracted page text
-      2. words extracted with coordinates
+    CME PG62 examples include:
 
-    Supported examples:
-      09/18/2026
-      9/18/2026
-      September 18, 2026
-      Sep 18, 2026
+        Fri, Sep 18, 2026
+
+    We also support numeric dates and month-name dates.
     """
 
-    months = (
+    month_map = MONTHS
+
+    full_months = (
         "January|February|March|April|May|June|July|August|"
         "September|October|November|December"
     )
@@ -80,79 +91,82 @@ def find_bulletin_date(pdf):
         "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
     )
 
-    patterns = [
-        rf"\b(\d{{1,2}})/(\d{{1,2}})/(\d{{4}})\b",
-
-        rf"\b({months})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
-
-        rf"\b({short_months})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
-    ]
+    weekday = (
+        "Mon|Tue|Wed|Thu|Fri|Sat|Sun"
+    )
 
     # ------------------------------------------------------------
-    # 1. Search normal PDF text.
+    # Search normal extracted text.
     # ------------------------------------------------------------
 
     for page in pdf.pages:
+
         text = page.extract_text() or ""
+
+        # Example:
+        # Fri, Sep 18, 2026
+        patterns = [
+            rf"\b(?:{weekday})\.?,?\s+"
+            rf"({short_months}|{full_months})\s+"
+            rf"(\d{{1,2}}),\s*(\d{{2,4}})\b",
+
+            rf"\b({short_months}|{full_months})\s+"
+            rf"(\d{{1,2}}),\s*(\d{{2,4}})\b",
+
+            # 09/18/2026 or 09/18/26
+            r"\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b",
+        ]
 
         for pattern in patterns:
 
-            m = re.search(
+            match = re.search(
                 pattern,
                 text,
-                re.IGNORECASE
+                re.IGNORECASE,
             )
 
-            if not m:
+            if not match:
                 continue
 
-            groups = m.groups()
+            groups = match.groups()
 
-            # MM/DD/YYYY
-            if len(groups) == 3 and groups[0].isdigit():
+            # Month-name date.
+            if groups[0][:3].upper() in month_map:
 
-                month = int(groups[0])
+                month = month_map[
+                    groups[0][:3].upper()
+                ]
+
                 day = int(groups[1])
                 year = int(groups[2])
 
-                return f"{year:04d}-{month:02d}-{day:02d}"
+                if year < 100:
+                    year += 2000
 
-            # Month DD, YYYY
-            if len(groups) == 3:
+                return (
+                    f"{year:04d}-"
+                    f"{month:02d}-"
+                    f"{day:02d}"
+                )
 
-                month_name = groups[0][:3].upper()
-                day = int(groups[1])
-                year = int(groups[2])
+            # Numeric date.
+            month = int(groups[0])
+            day = int(groups[1])
+            year = int(groups[2])
 
-                month_map = {
-                    "JAN": 1,
-                    "FEB": 2,
-                    "MAR": 3,
-                    "APR": 4,
-                    "MAY": 5,
-                    "JUN": 6,
-                    "JUL": 7,
-                    "AUG": 8,
-                    "SEP": 9,
-                    "OCT": 10,
-                    "NOV": 11,
-                    "DEC": 12,
-                }
+            if year < 100:
+                year += 2000
 
-                month = month_map.get(month_name)
-
-                if month:
-                    return (
-                        f"{year:04d}-"
-                        f"{month:02d}-"
-                        f"{day:02d}"
-                    )
+            return (
+                f"{year:04d}-"
+                f"{month:02d}-"
+                f"{day:02d}"
+            )
 
     # ------------------------------------------------------------
-    # 2. Search individual PDF words.
-    #
-    # This is useful when pdfplumber's normal text extraction
-    # does not preserve the date as one text block.
+    # Search individual words.
+    # This handles PDFs where the date is split into separate
+    # positioned text objects.
     # ------------------------------------------------------------
 
     for page in pdf.pages:
@@ -165,20 +179,36 @@ def find_bulletin_date(pdf):
 
         for i, word in enumerate(words):
 
-            text = word.get("text", "").strip()
-
-            # Direct numeric date.
-            m = re.fullmatch(
-                r"(\d{1,2})/(\d{1,2})/(\d{4})",
-                text
+            current = clean(
+                word.get("text", "")
             )
 
-            if m:
+            nearby = " ".join(
+                clean(w.get("text", ""))
+                for w in words[i:i + 5]
+            )
 
-                month, day, year = map(
-                    int,
-                    m.groups()
-                )
+            # Example:
+            # Fri, Sep 18, 2026
+            match = re.search(
+                rf"\b(?:{weekday})\.?,?\s+"
+                rf"({short_months}|{full_months})\s+"
+                rf"(\d{{1,2}}),?\s*(\d{{2,4}})\b",
+                nearby,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                month = month_map[
+                    match.group(1)[:3].upper()
+                ]
+
+                day = int(match.group(2))
+                year = int(match.group(3))
+
+                if year < 100:
+                    year += 2000
 
                 return (
                     f"{year:04d}-"
@@ -186,211 +216,246 @@ def find_bulletin_date(pdf):
                     f"{day:02d}"
                 )
 
-            # Search nearby words for:
-            # September 18, 2026
-            if re.fullmatch(
-                rf"(?:{months}|{short_months})",
-                text,
-                re.IGNORECASE,
-            ):
+            # Numeric date as one PDF word.
+            match = re.fullmatch(
+                r"(\d{1,2})/(\d{1,2})/(\d{2,4})",
+                current,
+            )
 
-                nearby = " ".join(
-                    w.get("text", "")
-                    for w in words[i:i + 4]
+            if match:
+
+                month = int(match.group(1))
+                day = int(match.group(2))
+                year = int(match.group(3))
+
+                if year < 100:
+                    year += 2000
+
+                return (
+                    f"{year:04d}-"
+                    f"{month:02d}-"
+                    f"{day:02d}"
                 )
-
-                m = re.search(
-                    rf"\b({months}|{short_months})\s+"
-                    rf"(\d{{1,2}}),?\s+"
-                    rf"(\d{{4}})\b",
-                    nearby,
-                    re.IGNORECASE,
-                )
-
-                if m:
-
-                    month_name = m.group(1)[:3].upper()
-                    day = int(m.group(2))
-                    year = int(m.group(3))
-
-                    month_map = {
-                        "JAN": 1,
-                        "FEB": 2,
-                        "MAR": 3,
-                        "APR": 4,
-                        "MAY": 5,
-                        "JUN": 6,
-                        "JUL": 7,
-                        "AUG": 8,
-                        "SEP": 9,
-                        "OCT": 10,
-                        "NOV": 11,
-                        "DEC": 12,
-                    }
-
-                    month = month_map.get(
-                        month_name
-                    )
-
-                    if month:
-                        return (
-                            f"{year:04d}-"
-                            f"{month:02d}-"
-                            f"{day:02d}"
-                        )
 
     return None
 
 
 def split_price_token(token):
     """
-    Handle CME PDF extraction where two prices may become one token.
+    Extract one or more Gold prices from a PDF token.
 
-    Examples:
-      4510.80B/4447.20A
-      4510.804447.20
-      4378.00B
-      4447.20A
+    Handles:
 
-    Returns a list of numeric-looking price values.
+        4510.80B
+        4447.20A
+        4510.80B/4447.20A
+        4510.804447.20
     """
-    token = clean_token(token)
+
+    token = clean(token)
 
     if not token:
         return []
 
-    # Remove bid/ask markers but keep slash.
-    token = token.replace("B", "").replace("A", "")
+    token = token.replace("B", "")
+    token = token.replace("A", "")
 
-    # Normal slash-separated high/low.
+    # Slash-separated bid/ask or high/low.
     if "/" in token:
-        parts = token.split("/")
+
         result = []
 
-        for p in parts:
-            if re.fullmatch(r"\d+(?:\.\d+)?", p):
-                result.append(float(p))
+        for part in token.split("/"):
+
+            if re.fullmatch(
+                r"\d+(?:\.\d+)?",
+                part,
+            ):
+                result.append(float(part))
 
         return result
 
-    # Normal number.
-    if re.fullmatch(r"\d+(?:\.\d+)?", token):
+    # Normal price.
+    if re.fullmatch(
+        r"\d+(?:\.\d+)?",
+        token,
+    ):
         return [float(token)]
 
-    # PDF extraction sometimes glues two prices together:
+    # PDF may concatenate two prices:
+    #
     # 4510.804447.20
     #
-    # Gold futures prices have two decimal places, so this pattern
-    # safely separates them.
-    m = re.fullmatch(
+    match = re.fullmatch(
         r"(\d{3,4}\.\d{2})(\d{3,4}\.\d{2})",
-        token
+        token,
     )
 
-    if m:
-        return [float(m.group(1)), float(m.group(2))]
+    if match:
+
+        return [
+            float(match.group(1)),
+            float(match.group(2)),
+        ]
 
     return []
 
 
-def parse_gc_line(line, trade_date):
+def normalize_gc_line(line):
     """
-    Parse a GC futures contract row.
-
-    Expected examples:
-
-    DEC26 4381.60 4439.80 /4372.20 4424.90 +25.20
-           141307 1612 315327 +1194
-
-    APR27 4466.00 4510.80B/4447.20A 4498.50 +25.80
-           2129 11 10307 +775
-
-    SEP26 ---- 4378.00B 4385.90 +25.70 539 ---- 503 +117
+    Normalize PDF extraction artifacts.
     """
 
     line = " ".join(line.split())
 
-    if not line:
-        return None
-
-    # Contract must start the row.
-    m = re.match(
-        r"^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d{2})\b(.*)$",
+    # Combine separated signs:
+    #
+    # + 25.20 -> +25.20
+    # - 581   -> -581
+    #
+    line = re.sub(
+        r"([+-])\s+(\d+(?:\.\d+)?)",
+        r"\1\2",
         line,
-        re.I,
     )
 
-    if not m:
+    # Separate B/A markers:
+    #
+    # 4510.80B -> 4510.80 B
+    # 4447.20A -> 4447.20 A
+    line = re.sub(
+        r"(?<=\d)(?=[BA])",
+        " ",
+        line,
+    )
+
+    # Put slash on its own.
+    line = line.replace("/", " / ")
+
+    # Split concatenated prices:
+    #
+    # 4510.804447.20
+    # -> 4510.80 4447.20
+    line = re.sub(
+        r"(\d{3,4}\.\d{2})(?=\d{3,4}\.\d{2})",
+        r"\1 ",
+        line,
+    )
+
+    return " ".join(line.split())
+
+
+def parse_gc_line(line, trade_date):
+    """
+    Parse one CME GC futures row.
+
+    Actual CME structure:
+
+      CONTRACT
+      OPEN
+      HIGH/LOW
+      SETTLEMENT
+      CHANGE
+      GLOBEX VOLUME
+      PNT/PIT VOLUME
+      OPEN INTEREST
+      OI CHANGE
+
+    Example:
+
+      DEC26 4381.60 4439.80 /4372.20 4424.90
+      +25.20 141307 1612 315327 +1194
+    """
+
+    line = normalize_gc_line(line)
+
+    match = re.match(
+        r"^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)"
+        r"(\d{2})\b(.*)$",
+        line,
+        re.IGNORECASE,
+    )
+
+    if not match:
         return None
 
-    month = m.group(1).upper()
-    year2 = int(m.group(2))
-    rest = m.group(3).strip()
+    month = match.group(1).upper()
+    year = int(match.group(2))
 
-    contract = f"{month}{year2:02d}"
+    contract = f"{month}{year:02d}"
 
+    rest = match.group(3).strip()
     tokens = rest.split()
 
-    # Need enough fields to contain settlement, change, volume,
-    # volume/PIT, OI and OI change.
+    # Need:
+    #
+    # price(s)
+    # price change
+    # globex volume
+    # PNT/PIT volume
+    # OI
+    # OI change
     if len(tokens) < 5:
         return None
 
     # ------------------------------------------------------------
-    # IMPORTANT:
-    # Work backwards from the right side.
+    # Work backwards from the right.
     #
-    # The last four fields in a normal GC row are:
+    # Example:
     #
-    # volume
-    # PNT/PIT volume
-    # open interest
-    # OI change
+    # +25.20 141307 1612 315327 +1194
     #
-    # Some rows contain "----" for PNT/PIT.
+    #                 [-4] [-3] [-2] [-1]
     # ------------------------------------------------------------
 
-    oi_change = number(tokens[-1])
-    open_interest = number(tokens[-2])
-    volume_pnt_pit = number(tokens[-3])
-    volume = number(tokens[-4])
+    oi_change_raw = tokens[-1]
+    oi_raw = tokens[-2]
+    pnt_raw = tokens[-3]
+    globex_raw = tokens[-4]
+    price_change_raw = tokens[-5]
 
-    if volume is None:
-        return None
+    globex_volume = to_int(globex_raw)
+    pnt_volume = to_int(pnt_raw)
+    open_interest = to_int(oi_raw)
 
-    # The field before volume is price change.
-    price_change = number(tokens[-5])
+    oi_change = to_int(oi_change_raw)
 
-    if price_change is None:
-        return None
+    price_change = to_number(
+        price_change_raw
+    )
+
+    # If CME says UNCH, represent change as 0.
+    if str(oi_change_raw).upper() == "UNCH":
+        oi_change = 0
+
+    if str(price_change_raw).upper() == "UNCH":
+        price_change = 0
+
+    # Total volume = Globex + PNT/PIT.
+    #
+    # Missing ---- means zero.
+    volume = (
+        (globex_volume or 0)
+        +
+        (pnt_volume or 0)
+    )
+
+    # ------------------------------------------------------------
+    # Prices.
+    # ------------------------------------------------------------
 
     price_tokens = tokens[:-5]
-
-    # ------------------------------------------------------------
-    # Extract all price values from the remaining tokens.
-    # ------------------------------------------------------------
 
     prices = []
 
     for token in price_tokens:
-        vals = split_price_token(token)
-        prices.extend(vals)
+
+        prices.extend(
+            split_price_token(token)
+        )
 
     if not prices:
         return None
-
-    # ------------------------------------------------------------
-    # CME rows normally contain:
-    #
-    # open
-    # high
-    # low
-    # settlement
-    #
-    # But some rows have missing open/high/low fields.
-    #
-    # Settlement is the final price before price change.
-    # ------------------------------------------------------------
 
     settlement = prices[-1]
 
@@ -398,23 +463,38 @@ def parse_gc_line(line, trade_date):
     high_price = None
     low_price = None
 
+    # Standard:
+    #
+    # OPEN HIGH LOW SETTLEMENT
     if len(prices) >= 4:
+
         open_price = prices[0]
         high_price = prices[1]
         low_price = prices[2]
         settlement = prices[3]
 
+    # Some CME rows have:
+    #
+    # OPEN HIGH SETTLEMENT
     elif len(prices) == 3:
-        # Example of a shortened row.
+
         open_price = prices[0]
         high_price = prices[1]
         settlement = prices[2]
 
+    # Example:
+    #
+    # ---- 4378.00B 4385.90
     elif len(prices) == 2:
+
         open_price = prices[0]
         settlement = prices[1]
 
+    # Example:
+    #
+    # ---- ---- 4518.00
     elif len(prices) == 1:
+
         settlement = prices[0]
 
     return {
@@ -423,129 +503,150 @@ def parse_gc_line(line, trade_date):
         "open": open_price,
         "high": high_price,
         "low": low_price,
+        "close": settlement,
         "settlement": settlement,
         "price_change": price_change,
-        "volume": int(volume) if volume is not None else None,
-        "volume_globex": None,
-        "volume_pnt_pit": (
-            int(volume_pnt_pit)
-            if volume_pnt_pit is not None
-            else None
-        ),
-        "open_interest": (
-            int(open_interest)
-            if open_interest is not None
-            else None
-        ),
-        "oi_change": (
-            int(oi_change)
-            if oi_change is not None
-            else None
-        ),
+        "volume": volume,
+        "volume_globex": globex_volume or 0,
+        "volume_pnt_pit": pnt_volume or 0,
+        "open_interest": open_interest,
+        "oi_change": oi_change,
+        "is_active": False,
     }
 
 
 def extract_gc(pdf_path):
     """
-    Extract GC futures rows from a CME PG62 PDF.
+    Extract the GC section from the actual PDF.
+
+    Important:
+    The GC section continues across PDF pages.
+    We therefore DO NOT stop just because another page starts.
+
+    We stop only at:
+        TOTAL GC FUT
     """
 
-    all_text = []
-
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            all_text.append(text)
-
-    full_text = "\n".join(all_text)
-
-    trade_date = find_bulletin_date(pdf)
-
-    if not trade_date:
-        raise RuntimeError(
-            f"Could not find bulletin date in {pdf_path.name}"
-        )
-
-    lines = full_text.splitlines()
-
-    in_gc = False
     rows = []
 
-    for raw_line in lines:
-        line = " ".join(raw_line.split())
+    with pdfplumber.open(pdf_path) as pdf:
 
-        # Start of GC section.
-        if "GC FUT COMEX GOLD FUTURES" in line:
-            in_gc = True
-            continue
+        trade_date = find_bulletin_date(pdf)
 
-        if not in_gc:
-            continue
+        if not trade_date:
+            raise RuntimeError(
+                "Could not find bulletin date inside PDF: "
+                f"{pdf_path.name}"
+            )
 
-        # Stop at the next futures product section.
-        if re.search(
-            r"\b[A-Z]{2,4}\s+FUT\s+",
-            line
-        ) and "GC FUT COMEX GOLD FUTURES" not in line:
-            break
+        print(
+            f"  Bulletin date from PDF: {trade_date}"
+        )
 
-        # Ignore headers.
-        if line.startswith("CONTRACT"):
-            continue
+        in_gc = False
 
-        if line.startswith("OPEN"):
-            continue
+        for page_number, page in enumerate(
+            pdf.pages,
+            start=1,
+        ):
 
-        # Ignore total rows.
-        if line.startswith("TOTAL"):
-            continue
+            text = page.extract_text() or ""
 
-        result = parse_gc_line(line, trade_date)
+            for raw_line in text.splitlines():
 
-        if result:
-            rows.append(result)
+                line = " ".join(
+                    raw_line.split()
+                )
+
+                if not line:
+                    continue
+
+                # GC section starts here.
+                if "GC FUT COMEX GOLD FUTURES" in line:
+
+                    in_gc = True
+                    continue
+
+                if not in_gc:
+                    continue
+
+                # GC section ends here.
+                if line.startswith(
+                    "TOTAL GC FUT"
+                ):
+
+                    return trade_date, finalize_rows(
+                        rows
+                    )
+
+                # Ignore page headers.
+                if "PG62 BULLETIN" in line:
+                    continue
+
+                if "PRELIMINARY" in line:
+                    continue
+
+                if "METAL FUTURES PRODUCTS" in line:
+                    continue
+
+                result = parse_gc_line(
+                    line,
+                    trade_date,
+                )
+
+                if result:
+                    rows.append(result)
+
+    return trade_date, finalize_rows(rows)
+
+
+def finalize_rows(rows):
+    """
+    Determine active contract by total GC volume.
+    """
 
     if not rows:
         raise RuntimeError(
-            f"No GC futures rows found in {pdf_path.name}"
+            "No GC futures rows found in PDF."
         )
 
-    # ------------------------------------------------------------
-    # Determine active contract.
-    #
-    # For now we use the highest-volume GC contract in the
-    # bulletin. This can later be replaced with a more explicit
-    # CME active-contract rule if desired.
-    # ------------------------------------------------------------
+    # Highest total volume = active contract for Stage 2.
+    active = max(
+        rows,
+        key=lambda r: (
+            r.get("volume") or 0,
+            r.get("open_interest") or 0,
+        ),
+    )
 
-    valid_volume_rows = [
-        r for r in rows
-        if r.get("volume") is not None
-    ]
+    active_contract = active["contract"]
 
-    if valid_volume_rows:
-        active = max(
-            valid_volume_rows,
-            key=lambda r: r["volume"]
+    for row in rows:
+
+        row["is_active"] = (
+            row["contract"]
+            == active_contract
         )
 
-        active_contract = active["contract"]
+    print(
+        f"  GC contracts parsed: {len(rows)}"
+    )
 
-        for row in rows:
-            row["is_active"] = (
-                row["contract"] == active_contract
-            )
-    else:
-        active_contract = None
+    print(
+        f"  Active contract: {active_contract}"
+    )
 
-        for row in rows:
-            row["is_active"] = False
+    print(
+        f"  Active volume: "
+        f"{active.get('volume', 0):,}"
+    )
 
-    return trade_date, rows
+    return rows
 
 
 def load_history():
     if not OUT_FILE.exists():
+
         return {
             "updated_at": None,
             "dates": [],
@@ -554,9 +655,16 @@ def load_history():
         }
 
     try:
-        with OUT_FILE.open("r", encoding="utf-8") as f:
+
+        with OUT_FILE.open(
+            "r",
+            encoding="utf-8",
+        ) as f:
+
             return json.load(f)
+
     except Exception:
+
         return {
             "updated_at": None,
             "dates": [],
@@ -566,109 +674,118 @@ def load_history():
 
 
 def save_history(history):
+
     OUT_FILE.parent.mkdir(
         parents=True,
-        exist_ok=True
+        exist_ok=True,
     )
 
     with OUT_FILE.open(
         "w",
-        encoding="utf-8"
+        encoding="utf-8",
     ) as f:
+
         json.dump(
             history,
             f,
             ensure_ascii=False,
-            indent=2
+            indent=2,
         )
 
 
 def main():
-    PDFs = sorted(PDF_DIR.glob("*.pdf"))
 
-    if not PDFs:
+    pdfs = sorted(
+        PDF_DIR.glob("*.pdf")
+    )
+
+    if not pdfs:
+
         raise RuntimeError(
             f"No PDF files found in {PDF_DIR}"
         )
 
     history = load_history()
 
-    all_rows = []
+    # ------------------------------------------------------------
+    # Existing data.
+    # ------------------------------------------------------------
 
-    for pdf in PDFs:
-        print(f"Parsing {pdf.name}")
+    existing = {}
 
-        trade_date, rows = extract_gc(pdf)
+    for row in history.get(
+        "candles",
+        [],
+    ):
+
+        key = (
+            row.get("date"),
+            row.get("contract"),
+        )
+
+        existing[key] = row
+
+    # ------------------------------------------------------------
+    # Parse every PDF currently in the folder.
+    # ------------------------------------------------------------
+
+    for pdf_path in pdfs:
+
+        print("")
+        print(
+            f"Parsing {pdf_path.name}"
+        )
+
+        trade_date, rows = extract_gc(
+            pdf_path
+        )
 
         print(
             f"  Date: {trade_date}"
         )
 
-        print(
-            f"  GC rows: {len(rows)}"
-        )
+        for row in rows:
 
-        all_rows.extend(rows)
+            key = (
+                row["date"],
+                row["contract"],
+            )
+
+            existing[key] = row
 
     # ------------------------------------------------------------
-    # Merge rows by date + contract.
+    # Rebuild candles.
     # ------------------------------------------------------------
 
-    existing = {}
-
-    for row in history.get("candles", []):
-        key = (
-            row.get("date"),
-            row.get("contract")
-        )
-        existing[key] = row
-
-    for row in all_rows:
-        key = (
-            row.get("date"),
-            row.get("contract")
-        )
-
-        candle = {
-            "date": row["date"],
-            "contract": row["contract"],
-            "open": row["open"],
-            "high": row["high"],
-            "low": row["low"],
-            "close": row["settlement"],
-            "settlement": row["settlement"],
-            "volume": row["volume"],
-            "open_interest": row["open_interest"],
-            "oi_change": row["oi_change"],
-            "is_active": row["is_active"],
-        }
-
-        existing[key] = candle
-
-    candles = list(existing.values())
+    candles = list(
+        existing.values()
+    )
 
     candles.sort(
-        key=lambda x: (
-            x.get("date") or "",
-            x.get("contract") or ""
+        key=lambda row: (
+            row.get("date") or "",
+            row.get("contract") or "",
         )
     )
 
     # ------------------------------------------------------------
-    # Build contract history.
+    # Rebuild contract index.
     # ------------------------------------------------------------
 
     contracts = {}
 
     for row in candles:
+
         contract = row["contract"]
 
         contracts.setdefault(
             contract,
-            []
+            [],
         )
 
-        contracts[contract].append(row)
+        contracts[contract].append(
+            row
+        )
 
     # ------------------------------------------------------------
     # Dates.
@@ -682,22 +799,65 @@ def main():
         }
     )
 
+    # ------------------------------------------------------------
+    # Latest active contract.
+    # ------------------------------------------------------------
+
+    latest_active = None
+
+    if dates:
+
+        latest_date = dates[-1]
+
+        latest_rows = [
+            row
+            for row in candles
+            if row["date"] == latest_date
+            and row.get("is_active")
+        ]
+
+        if latest_rows:
+
+            latest_active = latest_rows[0]
+
     history = {
-        "updated_at": datetime.utcnow().isoformat() + "Z",
+        "updated_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
+
+        "latest_date": (
+            dates[-1]
+            if dates
+            else None
+        ),
+
+        "latest_active": latest_active,
+
         "dates": dates,
+
         "contracts": contracts,
+
         "candles": candles,
     }
 
     save_history(history)
 
+    print("")
     print(
-        f"Saved {len(candles)} candles"
+        f"Saved {len(candles)} contract-day rows"
     )
 
     print(
-        f"Saved {len(contracts)} contracts"
+        f"Saved {len(dates)} dates"
     )
+
+    if latest_active:
+
+        print(
+            "Latest active: "
+            f"{latest_active['contract']} "
+            f"{latest_active['settlement']}"
+        )
 
     print(
         f"Output: {OUT_FILE}"
