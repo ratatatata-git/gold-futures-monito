@@ -1,5 +1,22 @@
 {
-  "updated_at": "2026-09-21T00:36:57.818296Z",
+  "updated_at": "2026-09-21T00:46:58.585512+00:00",
+  "latest_date": "2026-09-18",
+  "latest_active": {
+    "date": "2026-09-18",
+    "contract": "DEC26",
+    "open": 4381.6,
+    "high": 4439.8,
+    "low": 4372.2,
+    "close": 4424.9,
+    "settlement": 4424.9,
+    "price_change": 25.2,
+    "volume": 142919,
+    "volume_globex": 141307,
+    "volume_pnt_pit": 1612,
+    "open_interest": 315327,
+    "oi_change": 1194,
+    "is_active": true
+  },
   "dates": [
     "2026-09-18"
   ],
@@ -13,9 +30,30 @@
         "low": 4447.2,
         "close": 4498.5,
         "settlement": 4498.5,
-        "volume": 11,
-        "open_interest": null,
+        "price_change": 25.8,
+        "volume": 2140,
+        "volume_globex": 2129,
+        "volume_pnt_pit": 11,
+        "open_interest": 10307,
         "oi_change": 775,
+        "is_active": false
+      }
+    ],
+    "AUG27": [
+      {
+        "date": "2026-09-18",
+        "contract": "AUG27",
+        "open": 4562.9,
+        "high": 4577.2,
+        "low": null,
+        "close": 4562.9,
+        "settlement": 4562.9,
+        "price_change": 4577.6,
+        "volume": 235,
+        "volume_globex": 27,
+        "volume_pnt_pit": 208,
+        "open_interest": null,
+        "oi_change": 9,
         "is_active": false
       }
     ],
@@ -28,10 +66,31 @@
         "low": 4372.2,
         "close": 4424.9,
         "settlement": 4424.9,
-        "volume": 1612,
-        "open_interest": null,
+        "price_change": 25.2,
+        "volume": 142919,
+        "volume_globex": 141307,
+        "volume_pnt_pit": 1612,
+        "open_interest": 315327,
         "oi_change": 1194,
         "is_active": true
+      }
+    ],
+    "DEC27": [
+      {
+        "date": "2026-09-18",
+        "contract": "DEC27",
+        "open": 4665.9,
+        "high": 4665.9,
+        "low": null,
+        "close": 4665.9,
+        "settlement": 4665.9,
+        "price_change": 4655.7,
+        "volume": 164,
+        "volume_globex": 29,
+        "volume_pnt_pit": 135,
+        "open_interest": null,
+        "oi_change": -32,
+        "is_active": false
       }
     ],
     "FEB27": [
@@ -43,9 +102,30 @@
         "low": 4410.0,
         "close": 4462.1,
         "settlement": 4462.1,
-        "volume": 18,
-        "open_interest": null,
+        "price_change": 25.4,
+        "volume": 4798,
+        "volume_globex": 4780,
+        "volume_pnt_pit": 18,
+        "open_interest": 33508,
         "oi_change": 570,
+        "is_active": false
+      }
+    ],
+    "JAN27": [
+      {
+        "date": "2026-09-18",
+        "contract": "JAN27",
+        "open": 4457.5,
+        "high": 4457.5,
+        "low": null,
+        "close": 4413.0,
+        "settlement": 4413.0,
+        "price_change": 4445.0,
+        "volume": 42,
+        "volume_globex": 25,
+        "volume_pnt_pit": 17,
+        "open_interest": null,
+        "oi_change": 1,
         "is_active": false
       }
     ],
@@ -58,9 +138,48 @@
         "low": 4490.0,
         "close": 4537.6,
         "settlement": 4537.6,
-        "volume": 110,
-        "open_interest": null,
+        "price_change": 26.6,
+        "volume": 973,
+        "volume_globex": 863,
+        "volume_pnt_pit": 110,
+        "open_interest": 5564,
         "oi_change": 76,
+        "is_active": false
+      }
+    ],
+    "MAR27": [
+      {
+        "date": "2026-09-18",
+        "contract": "MAR27",
+        "open": 4476.7,
+        "high": 4476.7,
+        "low": null,
+        "close": 4474.8,
+        "settlement": 4474.8,
+        "price_change": 4479.7,
+        "volume": 33,
+        "volume_globex": 26,
+        "volume_pnt_pit": 7,
+        "open_interest": null,
+        "oi_change": -5,
+        "is_active": false
+      }
+    ],
+    "NOV26": [
+      {
+        "date": "2026-09-18",
+        "contract": "NOV26",
+        "open": 4374.6,
+        "high": 4421.5,
+        "low": null,
+        "close": 4374.6,
+        "settlement": 4374.6,
+        "price_change": 4408.3,
+        "volume": 216,
+        "volume_globex": 25,
+        "volume_pnt_pit": 191,
+        "open_interest": null,
+        "oi_change": -4,
         "is_active": false
       }
     ],
@@ -73,9 +192,12 @@
         "low": 4338.7,
         "close": 4390.7,
         "settlement": 4390.7,
-        "volume": 267,
-        "open_interest": null,
-        "oi_change": 581,
+        "price_change": 25.2,
+        "volume": 12782,
+        "volume_globex": 12515,
+        "volume_pnt_pit": 267,
+        "open_interest": 42492,
+        "oi_change": -581,
         "is_active": false
       }
     ]
@@ -89,9 +211,28 @@
       "low": 4447.2,
       "close": 4498.5,
       "settlement": 4498.5,
-      "volume": 11,
-      "open_interest": null,
+      "price_change": 25.8,
+      "volume": 2140,
+      "volume_globex": 2129,
+      "volume_pnt_pit": 11,
+      "open_interest": 10307,
       "oi_change": 775,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "AUG27",
+      "open": 4562.9,
+      "high": 4577.2,
+      "low": null,
+      "close": 4562.9,
+      "settlement": 4562.9,
+      "price_change": 4577.6,
+      "volume": 235,
+      "volume_globex": 27,
+      "volume_pnt_pit": 208,
+      "open_interest": null,
+      "oi_change": 9,
       "is_active": false
     },
     {
@@ -102,10 +243,29 @@
       "low": 4372.2,
       "close": 4424.9,
       "settlement": 4424.9,
-      "volume": 1612,
-      "open_interest": null,
+      "price_change": 25.2,
+      "volume": 142919,
+      "volume_globex": 141307,
+      "volume_pnt_pit": 1612,
+      "open_interest": 315327,
       "oi_change": 1194,
       "is_active": true
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "DEC27",
+      "open": 4665.9,
+      "high": 4665.9,
+      "low": null,
+      "close": 4665.9,
+      "settlement": 4665.9,
+      "price_change": 4655.7,
+      "volume": 164,
+      "volume_globex": 29,
+      "volume_pnt_pit": 135,
+      "open_interest": null,
+      "oi_change": -32,
+      "is_active": false
     },
     {
       "date": "2026-09-18",
@@ -115,9 +275,28 @@
       "low": 4410.0,
       "close": 4462.1,
       "settlement": 4462.1,
-      "volume": 18,
-      "open_interest": null,
+      "price_change": 25.4,
+      "volume": 4798,
+      "volume_globex": 4780,
+      "volume_pnt_pit": 18,
+      "open_interest": 33508,
       "oi_change": 570,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "JAN27",
+      "open": 4457.5,
+      "high": 4457.5,
+      "low": null,
+      "close": 4413.0,
+      "settlement": 4413.0,
+      "price_change": 4445.0,
+      "volume": 42,
+      "volume_globex": 25,
+      "volume_pnt_pit": 17,
+      "open_interest": null,
+      "oi_change": 1,
       "is_active": false
     },
     {
@@ -128,9 +307,44 @@
       "low": 4490.0,
       "close": 4537.6,
       "settlement": 4537.6,
-      "volume": 110,
-      "open_interest": null,
+      "price_change": 26.6,
+      "volume": 973,
+      "volume_globex": 863,
+      "volume_pnt_pit": 110,
+      "open_interest": 5564,
       "oi_change": 76,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "MAR27",
+      "open": 4476.7,
+      "high": 4476.7,
+      "low": null,
+      "close": 4474.8,
+      "settlement": 4474.8,
+      "price_change": 4479.7,
+      "volume": 33,
+      "volume_globex": 26,
+      "volume_pnt_pit": 7,
+      "open_interest": null,
+      "oi_change": -5,
+      "is_active": false
+    },
+    {
+      "date": "2026-09-18",
+      "contract": "NOV26",
+      "open": 4374.6,
+      "high": 4421.5,
+      "low": null,
+      "close": 4374.6,
+      "settlement": 4374.6,
+      "price_change": 4408.3,
+      "volume": 216,
+      "volume_globex": 25,
+      "volume_pnt_pit": 191,
+      "open_interest": null,
+      "oi_change": -4,
       "is_active": false
     },
     {
@@ -141,9 +355,12 @@
       "low": 4338.7,
       "close": 4390.7,
       "settlement": 4390.7,
-      "volume": 267,
-      "open_interest": null,
-      "oi_change": 581,
+      "price_change": 25.2,
+      "volume": 12782,
+      "volume_globex": 12515,
+      "volume_pnt_pit": 267,
+      "open_interest": 42492,
+      "oi_change": -581,
       "is_active": false
     }
   ]
