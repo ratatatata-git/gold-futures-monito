@@ -252,15 +252,180 @@ def parse(pdf_path: Path) -> dict[str, Any]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("pdf")
-    ap.add_argument("-o", "--output", default="cme-gold-options.json")
+    ap.add_argument(
+        "pdf",
+        nargs="?",
+        default=None,
+        help="Optional single PDF. If omitted, parse all PDFs under data/cme-pg64/"
+    )
+    ap.add_argument(
+        "-o",
+        "--output",
+        default="data/cme-gold-options-history.json",
+    )
+    ap.add_argument(
+        "--input-dir",
+        default="data/cme-pg64",
+    )
     args = ap.parse_args()
-    data = parse(Path(args.pdf))
-    Path(args.output).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Parsed {len(data['options'])} Gold option rows from {data['pdf']}")
-    print(f"Date: {data['date']}")
-    from collections import Counter
-    print("Products:", dict(Counter(x['product_code'] for x in data['options'])))
 
-if __name__ == '__main__':
+    input_dir = Path(args.input_dir)
+    output_path = Path(args.output)
+
+    # ------------------------------------------------------------
+    # Input PDFs
+    # ------------------------------------------------------------
+    if args.pdf:
+        pdf_paths = [Path(args.pdf)]
+    else:
+        pdf_paths = sorted(input_dir.glob("*.pdf"))
+
+    if not pdf_paths:
+        raise SystemExit(
+            f"No PG64 PDF files found in {input_dir}"
+        )
+
+    print(f"Found {len(pdf_paths)} PG64 PDF(s)")
+
+    # ------------------------------------------------------------
+    # Parse all PDFs first
+    # ------------------------------------------------------------
+    parsed_by_date = {}
+
+    for pdf_path in pdf_paths:
+        print(f"\nParsing: {pdf_path}")
+
+        data = parse(pdf_path)
+        bulletin_date = data["date"]
+
+        print(
+            f"  Date: {bulletin_date}"
+        )
+        print(
+            f"  Rows: {len(data['options'])}"
+        )
+
+        # If multiple PDFs somehow contain the same bulletin date,
+        # the later parsed file replaces the earlier one.
+        parsed_by_date[bulletin_date] = data
+
+    # ------------------------------------------------------------
+    # Load existing history
+    # ------------------------------------------------------------
+    history_options = []
+
+    if output_path.exists():
+        try:
+            existing = json.loads(
+                output_path.read_text(encoding="utf-8")
+            )
+
+            # Current history format
+            if isinstance(existing, dict) and isinstance(
+                existing.get("options"), list
+            ):
+                history_options = existing["options"]
+
+            print(
+                f"\nExisting history rows: {len(history_options)}"
+            )
+
+        except Exception as exc:
+            print(
+                f"Warning: could not read existing history: {exc}"
+            )
+            print("Starting with empty history.")
+
+    # ------------------------------------------------------------
+    # Remove old records for dates being re-parsed
+    # ------------------------------------------------------------
+    dates_to_replace = set(parsed_by_date.keys())
+
+    history_options = [
+        row
+        for row in history_options
+        if row.get("date") not in dates_to_replace
+    ]
+
+    # ------------------------------------------------------------
+    # Add newly parsed records
+    # ------------------------------------------------------------
+    for bulletin_date in sorted(parsed_by_date):
+        history_options.extend(
+            parsed_by_date[bulletin_date]["options"]
+        )
+
+    # ------------------------------------------------------------
+    # Sort history
+    # ------------------------------------------------------------
+    def sort_key(row):
+        return (
+            row.get("date") or "",
+            row.get("product_code") or "",
+            row.get("option_type") or "",
+            row.get("expiry") or "",
+            float(row.get("strike") or 0),
+        )
+
+    history_options.sort(key=sort_key)
+
+    # ------------------------------------------------------------
+    # Build output
+    # ------------------------------------------------------------
+    dates = sorted(
+        {
+            row["date"]
+            for row in history_options
+            if row.get("date")
+        }
+    )
+
+    output = {
+        "source": "CME Daily Bulletin PG64",
+        "dates": dates,
+        "options": history_options,
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    output_path.write_text(
+        json.dumps(
+            output,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    # ------------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------------
+    from collections import Counter
+
+    product_counts = Counter(
+        row["product_code"]
+        for row in history_options
+    )
+
+    print("\n========================================")
+    print("PG64 history updated")
+    print("========================================")
+    print(f"Dates: {len(dates)}")
+    print(f"Rows:  {len(history_options)}")
+    print(f"Output: {output_path}")
+
+    print("\nDates:")
+    for d in dates:
+        count = sum(
+            1
+            for row in history_options
+            if row.get("date") == d
+        )
+        print(f"  {d}: {count} rows")
+
+    print("\nProducts:")
+    print(dict(product_counts))
+
+
+if __name__ == "__main__":
     main()
