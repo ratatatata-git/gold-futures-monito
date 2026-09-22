@@ -315,18 +315,17 @@ function baseChart(canvas, rows, min, max, formatter) {
     );
 
   const x = index => {
-    if (rows.length === 1) {
-      return pad.l +
-        (w - pad.l - pad.r) / 2;
-    }
+  if (rows.length === 1) {
+    return pad.l;
+  }
 
-    return pad.l +
-      index *
-      (
-        (w - pad.l - pad.r) /
-        (rows.length - 1)
-      );
-  };
+  return pad.l +
+    index *
+    (
+      (w - pad.l - pad.r) /
+      (rows.length - 1)
+    );
+};
 
   ctx.font =
     "10px -apple-system,BlinkMacSystemFont,sans-serif";
