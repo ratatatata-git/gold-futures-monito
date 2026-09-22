@@ -5,7 +5,9 @@ on:
   push:
     paths:
       - "data/cme-pg62/*.pdf"
+      - "data/cme-pg64/*.pdf"
       - "scripts/parse_pg62_gc.py"
+      - "scripts/parse_pg64.py"
       - "requirements.txt"
 
 permissions:
@@ -30,10 +32,17 @@ jobs:
       - name: Parse PG62 PDFs
         run: python scripts/parse_pg62_gc.py
 
+      - name: Parse PG64 PDFs
+        run: python scripts/parse_pg64.py
+
       - name: Commit generated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/cme-gc-history.json
-          git diff --cached --quiet || git commit -m "Update CME GC history"
+
+          git add \
+            data/cme-gc-history.json \
+            data/cme-gold-options-history.json
+
+          git diff --cached --quiet || git commit -m "Update CME Gold futures and options history"
           git push
