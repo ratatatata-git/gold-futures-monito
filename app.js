@@ -9,14 +9,23 @@ const state = {
 const $ = id => document.getElementById(id);
 
 const fmtInt = n => {
-  if (n === null || n === undefined || !Number.isFinite(Number(n))) {
+  if (
+    n === null ||
+    n === undefined ||
+    !Number.isFinite(Number(n))
+  ) {
     return "—";
   }
+
   return Number(n).toLocaleString("en-US");
 };
 
 const fmtPrice = n => {
-  if (n === null || n === undefined || !Number.isFinite(Number(n))) {
+  if (
+    n === null ||
+    n === undefined ||
+    !Number.isFinite(Number(n))
+  ) {
     return "—";
   }
 
@@ -29,134 +38,260 @@ const fmtPrice = n => {
 const fmtDate = s => {
   if (!s) return "—";
 
-  return new Date(s + "T00:00:00").toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  });
+  return new Date(s + "T00:00:00").toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }
+  );
 };
 
+
+/* =========================
+   INIT
+   ========================= */
+
 async function init() {
+
+  /*
+   * Futures and Options are loaded independently.
+   * PG64 failure must never break PG62.
+   */
+
+  await initFutures();
+  await initOptions();
+
+  bind();
+  render();
+  renderOptions();
+}
+
+
+/* =========================
+   FUTURES
+   ========================= */
+
+async function initFutures() {
+
   try {
-    const [futuresResponse, optionsResponse] = await Promise.all([
-      fetch(
-        "data/cme-gc-history.json?v=4",
-        { cache: "no-store" }
-      ),
-      fetch(
-        "data/cme-gold-options-history.json?v=1",
-        { cache: "no-store" }
-      )
-    ]);
 
-    if (!futuresResponse.ok) {
-      throw new Error(`Futures HTTP ${futuresResponse.status}`);
+    const response = await fetch(
+      "data/cme-gc-history.json?v=4",
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Futures HTTP ${response.status}`
+      );
     }
 
-    if (!optionsResponse.ok) {
-      throw new Error(`Options HTTP ${optionsResponse.status}`);
-    }
+    const json =
+      await response.json();
 
-    const futuresJson = await futuresResponse.json();
-    const optionsJson = await optionsResponse.json();
-
-    const candles = Array.isArray(futuresJson.candles)
-      ? futuresJson.candles
-      : [];
-
-    state.data = candles
-      .filter(row => row.is_active === true)
-      .filter(row =>
-        row.date &&
-        Number.isFinite(Number(row.settlement))
-      )
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    state.options =
-      Array.isArray(optionsJson.options)
-        ? optionsJson.options
+    const candles =
+      Array.isArray(json.candles)
+        ? json.candles
         : [];
 
-    state.optionsDate =
-      Array.isArray(optionsJson.dates) &&
-      optionsJson.dates.length
-        ? optionsJson.dates[
-            optionsJson.dates.length - 1
-          ]
-        : null;
+    state.data =
+      candles
+        .filter(row =>
+          row.is_active === true
+        )
+        .filter(row =>
+          row.date &&
+          Number.isFinite(
+            Number(row.settlement)
+          )
+        )
+        .sort(
+          (a, b) =>
+            a.date.localeCompare(b.date)
+        );
 
     if (!state.data.length) {
-      throw new Error("No active-contract CME data found.");
+      throw new Error(
+        "No active-contract CME data found."
+      );
     }
 
     state.selected =
       state.data[state.data.length - 1];
 
     updateLiveStatus();
-    bind();
-    render();
-    renderOptions();
 
   } catch (error) {
-    console.error(error);
-    showError(error.message || "CME data could not be loaded.");
+
+    console.error(
+      "Futures load error:",
+      error
+    );
+
+    showFuturesError(
+      error.message ||
+      "CME Futures data could not be loaded."
+    );
   }
 }
+
+
+/* =========================
+   OPTIONS
+   ========================= */
+
+async function initOptions() {
+
+  try {
+
+    const response = await fetch(
+      "data/cme-gold-options-2026-09-21.json?v=1",
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Options HTTP ${response.status}`
+      );
+    }
+
+    const json =
+      await response.json();
+
+    state.options =
+      Array.isArray(json.options)
+        ? json.options
+        : [];
+
+    state.optionsDate =
+      Array.isArray(json.dates) &&
+      json.dates.length
+        ? json.dates[
+            json.dates.length - 1
+          ]
+        : null;
+
+  } catch (error) {
+
+    console.error(
+      "Options load error:",
+      error
+    );
+
+    /*
+     * Important:
+     * Options failure does NOT affect Futures.
+     */
+
+    state.options = [];
+    state.optionsDate = null;
+  }
+}
+
+
+/* =========================
+   STATUS
+   ========================= */
 
 function updateLiveStatus() {
-  const status = document.querySelector(".status");
+
+  const status =
+    document.querySelector(".status");
 
   if (status) {
+
     status.innerHTML =
       '<span class="dot"></span> CME PDF';
+
   }
 
-  const footer = document.querySelector("footer");
+  const footer =
+    document.querySelector("footer");
 
   if (footer) {
+
     footer.textContent =
-      "CME Daily Bulletin PG62 · Manual PDF import · Active Contract = highest GC volume";
+      "CME Daily Bulletin PG62 + PG64 · Manual PDF import · Active Contract = highest GC volume";
+
   }
 }
 
-function showError(message) {
-  const status = document.querySelector(".status");
+
+function showFuturesError(message) {
+
+  const status =
+    document.querySelector(".status");
 
   if (status) {
     status.textContent = "ERROR";
   }
 
-  const settlement = $("settlement");
+  const settlement =
+    $("settlement");
 
   if (settlement) {
     settlement.textContent = "—";
   }
 
-  const settlementDate = $("settlementDate");
+  const settlementDate =
+    $("settlementDate");
 
   if (settlementDate) {
-    settlementDate.textContent = message;
+    settlementDate.textContent =
+      message;
   }
 }
 
+
+/* =========================
+   BIND
+   ========================= */
+
 function bind() {
+
   document
     .querySelectorAll(".periods button")
     .forEach(btn => {
-      btn.addEventListener("click", () => {
 
-        document
-          .querySelectorAll(".periods button")
-          .forEach(b => b.classList.remove("active"));
+      btn.addEventListener(
+        "click",
+        () => {
 
-        btn.classList.add("active");
+          document
+            .querySelectorAll(
+              ".periods button"
+            )
+            .forEach(b =>
+              b.classList.remove(
+                "active"
+              )
+            );
 
-        state.period = btn.dataset.period;
-        state.selected = state.data[state.data.length - 1];
+          btn.classList.add(
+            "active"
+          );
 
-        render();
-      });
+          state.period =
+            btn.dataset.period;
+
+          state.selected =
+            state.data[
+              state.data.length - 1
+            ];
+
+          render();
+
+        }
+      );
+
     });
+
 
   [
     "priceChart",
@@ -168,13 +303,26 @@ function bind() {
 
     if (!canvas) return;
 
-    canvas.addEventListener("click", event => {
-      selectFromChart(id, event);
-    });
+    canvas.addEventListener(
+      "click",
+      event => {
+        selectFromChart(
+          id,
+          event
+        );
+      }
+    );
+
   });
 }
 
+
+/* =========================
+   DATA SLICE
+   ========================= */
+
 function sliceData() {
+
   const counts = {
     "1M": 22,
     "3M": 66,
@@ -182,46 +330,77 @@ function sliceData() {
     "1Y": 252
   };
 
-  return state.data.slice(-counts[state.period]);
+  return state.data.slice(
+    -counts[state.period]
+  );
 }
 
+
+/* =========================
+   RENDER FUTURES
+   ========================= */
+
 function render() {
-  if (!state.data.length) return;
+
+  if (!state.data.length) {
+    return;
+  }
 
   const latest =
-    state.data[state.data.length - 1];
+    state.data[
+      state.data.length - 1
+    ];
 
   $("contract").textContent =
     latest.contract;
 
   const contractName =
-    document.querySelector(".contract-name");
+    document.querySelector(
+      ".contract-name"
+    );
 
   if (contractName) {
+
     contractName.textContent =
-      `Gold Futures · ${contractMonthName(latest.contract)}`;
+      `Gold Futures · ${contractMonthName(
+        latest.contract
+      )}`;
+
   }
 
   $("settlement").textContent =
-    "$" + fmtPrice(latest.settlement);
+    "$" +
+    fmtPrice(
+      latest.settlement
+    );
 
   $("settlementDate").textContent =
-    fmtDate(latest.date);
+    fmtDate(
+      latest.date
+    );
 
   $("volume").textContent =
-    fmtInt(latest.volume);
+    fmtInt(
+      latest.volume
+    );
 
   $("oi").textContent =
-    fmtInt(latest.open_interest);
+    fmtInt(
+      latest.open_interest
+    );
 
   const oiChange =
-    Number(latest.oi_change || 0);
+    Number(
+      latest.oi_change || 0
+    );
 
   $("oiChange").textContent =
     (oiChange >= 0 ? "+" : "") +
     fmtInt(oiChange);
 
-  const rows = sliceData();
+
+  const rows =
+    sliceData();
 
   drawCandles(
     $("priceChart"),
@@ -240,22 +419,44 @@ function render() {
     "open_interest"
   );
 
+
   if (!state.selected) {
-    state.selected = latest;
+    state.selected =
+      latest;
   }
 
-  showDetail(state.selected);
-renderOptions();
+  showDetail(
+    state.selected
+  );
 
-function contractMonthName(contract) {
-  if (!contract || contract.length < 5) {
-    return contract || "Gold Futures";
+  renderOptions();
+}
+
+
+/* =========================
+   CONTRACT NAME
+   ========================= */
+
+function contractMonthName(
+  contract
+) {
+
+  if (
+    !contract ||
+    contract.length < 5
+  ) {
+    return contract ||
+      "Gold Futures";
   }
 
-  const monthCode = contract.slice(0, 3);
+  const monthCode =
+    contract.slice(0, 3);
 
   const year =
-    2000 + Number(contract.slice(3));
+    2000 +
+    Number(
+      contract.slice(3)
+    );
 
   const names = {
     JAN: "Jan",
@@ -272,21 +473,37 @@ function contractMonthName(contract) {
     DEC: "Dec"
   };
 
-  return `${names[monthCode] || monthCode} ${year}`;
+  return `${
+    names[monthCode] ||
+    monthCode
+  } ${year}`;
 }
 
+
+/* =========================
+   CHART GEOMETRY
+   ========================= */
+
 function chartGeometry(canvas) {
+
   const dpr =
-    Math.max(1, window.devicePixelRatio || 1);
+    Math.max(
+      1,
+      window.devicePixelRatio || 1
+    );
 
   const rect =
     canvas.getBoundingClientRect();
 
   canvas.width =
-    Math.round(rect.width * dpr);
+    Math.round(
+      rect.width * dpr
+    );
 
   canvas.height =
-    Math.round(rect.height * dpr);
+    Math.round(
+      rect.height * dpr
+    );
 
   const ctx =
     canvas.getContext("2d");
@@ -313,17 +530,37 @@ function chartGeometry(canvas) {
   };
 }
 
-function makeScale(min, max, y0, y1) {
+
+function makeScale(
+  min,
+  max,
+  y0,
+  y1
+) {
+
   return value => {
+
     return y1 -
-      ((value - min) /
-      (max - min || 1)) *
+      (
+        (value - min) /
+        (max - min || 1)
+      ) *
       (y1 - y0);
+
   };
 }
 
-function baseChart(canvas, rows, min, max, formatter) {
-  const g = chartGeometry(canvas);
+
+function baseChart(
+  canvas,
+  rows,
+  min,
+  max,
+  formatter
+) {
+
+  const g =
+    chartGeometry(canvas);
 
   const {
     ctx,
@@ -332,7 +569,12 @@ function baseChart(canvas, rows, min, max, formatter) {
     pad
   } = g;
 
-  ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(
+    0,
+    0,
+    w,
+    h
+  );
 
   const y =
     makeScale(
@@ -342,82 +584,155 @@ function baseChart(canvas, rows, min, max, formatter) {
       h - pad.b
     );
 
-  const x = index => {
-  if (rows.length === 1) {
-    return pad.l;
-  }
 
-  return pad.l +
-    index *
-    (
-      (w - pad.l - pad.r) /
-      (rows.length - 1)
-    );
-};
+  const x = index => {
+
+    /*
+     * One-day chart:
+     * put the data point at the left edge.
+     */
+
+    if (rows.length === 1) {
+      return pad.l;
+    }
+
+    return pad.l +
+      index *
+      (
+        (w - pad.l - pad.r) /
+        (rows.length - 1)
+      );
+
+  };
+
 
   ctx.font =
     "10px -apple-system,BlinkMacSystemFont,sans-serif";
 
-  ctx.strokeStyle = "#252b33";
-  ctx.fillStyle = "#737e8c";
+  ctx.strokeStyle =
+    "#252b33";
+
+  ctx.fillStyle =
+    "#737e8c";
+
   ctx.lineWidth = 1;
 
-  for (let j = 0; j < 4; j++) {
+
+  for (
+    let j = 0;
+    j < 4;
+    j++
+  ) {
 
     const yy =
       pad.t +
       j *
-      ((h - pad.t - pad.b) / 3);
+      (
+        (h - pad.t - pad.b) /
+        3
+      );
 
     ctx.beginPath();
-    ctx.moveTo(pad.l, yy);
-    ctx.lineTo(w - pad.r, yy);
+
+    ctx.moveTo(
+      pad.l,
+      yy
+    );
+
+    ctx.lineTo(
+      w - pad.r,
+      yy
+    );
+
     ctx.stroke();
+
 
     const value =
       max -
-      ((max - min) * j / 3);
+      (
+        (max - min) *
+        j /
+        3
+      );
 
-    ctx.textAlign = "left";
+    ctx.textAlign =
+      "left";
 
     ctx.fillText(
       formatter(value),
       3,
       yy + 3
     );
+
   }
 
-  const labelCount =
-    Math.min(5, rows.length);
 
-  const indexes = new Set();
+  const labelCount =
+    Math.min(
+      5,
+      rows.length
+    );
+
+  const indexes =
+    new Set();
+
 
   if (labelCount === 1) {
+
     indexes.add(0);
+
   } else {
-    for (let j = 0; j < labelCount; j++) {
+
+    for (
+      let j = 0;
+      j < labelCount;
+      j++
+    ) {
+
       indexes.add(
         Math.round(
           j *
-          ((rows.length - 1) /
-          (labelCount - 1))
+          (
+            (rows.length - 1) /
+            (labelCount - 1)
+          )
         )
       );
+
     }
+
   }
 
-  [...indexes]
-    .sort((a, b) => a - b)
+
+  [
+    ...indexes
+  ]
+    .sort(
+      (a, b) => a - b
+    )
     .forEach(index => {
 
-      const xx = x(index);
+      const xx =
+        x(index);
 
       if (index === 0) {
-        ctx.textAlign = "left";
-      } else if (index === rows.length - 1) {
-        ctx.textAlign = "right";
+
+        ctx.textAlign =
+          "left";
+
+      } else if (
+        index ===
+        rows.length - 1
+      ) {
+
+        ctx.textAlign =
+          "right";
+
       } else {
-        ctx.textAlign = "center";
+
+        ctx.textAlign =
+          "center";
+
       }
 
       ctx.fillText(
@@ -425,7 +740,9 @@ function baseChart(canvas, rows, min, max, formatter) {
         xx,
         h - 5
       );
+
     });
+
 
   return {
     g,
@@ -441,118 +758,212 @@ function baseChart(canvas, rows, min, max, formatter) {
    CANDLESTICK
    ========================= */
 
-function drawCandles(canvas, rows) {
+function drawCandles(
+  canvas,
+  rows
+) {
+
   if (!rows.length) return;
 
-  const valid = rows.filter(row =>
-    Number.isFinite(Number(row.high)) &&
-    Number.isFinite(Number(row.low)) &&
-    Number.isFinite(Number(row.open)) &&
-    Number.isFinite(Number(row.close))
-  );
+  const valid =
+    rows.filter(row =>
+      Number.isFinite(
+        Number(row.high)
+      ) &&
+      Number.isFinite(
+        Number(row.low)
+      ) &&
+      Number.isFinite(
+        Number(row.open)
+      ) &&
+      Number.isFinite(
+        Number(row.close)
+      )
+    );
 
   if (!valid.length) return;
 
+
   let min =
-    Math.min(...valid.map(r => Number(r.low)));
+    Math.min(
+      ...valid.map(
+        r => Number(r.low)
+      )
+    );
 
   let max =
-    Math.max(...valid.map(r => Number(r.high)));
+    Math.max(
+      ...valid.map(
+        r => Number(r.high)
+      )
+    );
+
 
   if (min === max) {
+
     min -= 1;
     max += 1;
+
   }
 
-  const range = max - min;
 
-  min -= range * 0.08;
-  max += range * 0.08;
+  const range =
+    max - min;
+
+  min -=
+    range * 0.08;
+
+  max +=
+    range * 0.08;
+
 
   const {
     g,
     x,
     y
-  } = baseChart(
-    canvas,
-    valid,
-    min,
-    max,
-    fmtPrice
-  );
+  } =
+    baseChart(
+      canvas,
+      valid,
+      min,
+      max,
+      fmtPrice
+    );
 
-  const ctx = g.ctx;
+
+  const ctx =
+    g.ctx;
+
 
   const slot =
-    (g.w - g.pad.l - g.pad.r) /
-    Math.max(1, valid.length);
+    (
+      g.w -
+      g.pad.l -
+      g.pad.r
+    ) /
+    Math.max(
+      1,
+      valid.length
+    );
+
 
   const bodyWidth =
     Math.max(
       5,
-      Math.min(14, slot * 0.45)
+      Math.min(
+        14,
+        slot * 0.45
+      )
     );
 
-  valid.forEach((row, index) => {
 
-    const open =
-      Number(row.open);
+  valid.forEach(
+    (row, index) => {
 
-    const high =
-      Number(row.high);
+      const open =
+        Number(row.open);
 
-    const low =
-      Number(row.low);
+      const high =
+        Number(row.high);
 
-    const close =
-      Number(row.close);
+      const low =
+        Number(row.low);
 
-    const xx = x(index);
+      const close =
+        Number(row.close);
 
-    const yHigh = y(high);
-    const yLow = y(low);
-    const yOpen = y(open);
-    const yClose = y(close);
+      const xx =
+        x(index);
 
-    const up = close >= open;
+      const yHigh =
+        y(high);
 
-    ctx.strokeStyle =
-      up ? "#62d49a" : "#ef767a";
+      const yLow =
+        y(low);
 
-    ctx.fillStyle =
-      up ? "#62d49a" : "#ef767a";
+      const yOpen =
+        y(open);
 
-    ctx.lineWidth = 1.5;
+      const yClose =
+        y(close);
 
-    /* wick */
-    ctx.beginPath();
-    ctx.moveTo(xx, yHigh);
-    ctx.lineTo(xx, yLow);
-    ctx.stroke();
+      const up =
+        close >= open;
 
-    /* body */
-    let top =
-      Math.min(yOpen, yClose);
 
-    let bottom =
-      Math.max(yOpen, yClose);
+      ctx.strokeStyle =
+        up
+          ? "#62d49a"
+          : "#ef767a";
 
-    /* Minimum visible body */
-    if (bottom - top < 3) {
-      const center =
-        (top + bottom) / 2;
+      ctx.fillStyle =
+        up
+          ? "#62d49a"
+          : "#ef767a";
 
-      top = center - 1.5;
-      bottom = center + 1.5;
+      ctx.lineWidth =
+        1.5;
+
+
+      /* wick */
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        xx,
+        yHigh
+      );
+
+      ctx.lineTo(
+        xx,
+        yLow
+      );
+
+      ctx.stroke();
+
+
+      /* body */
+
+      let top =
+        Math.min(
+          yOpen,
+          yClose
+        );
+
+      let bottom =
+        Math.max(
+          yOpen,
+          yClose
+        );
+
+
+      if (
+        bottom - top < 3
+      ) {
+
+        const center =
+          (top + bottom) /
+          2;
+
+        top =
+          center - 1.5;
+
+        bottom =
+          center + 1.5;
+
+      }
+
+
+      ctx.fillRect(
+        xx -
+        bodyWidth / 2,
+        top,
+        bodyWidth,
+        bottom - top
+      );
+
     }
-
-    ctx.fillRect(
-      xx - bodyWidth / 2,
-      top,
-      bodyWidth,
-      bottom - top
-    );
-  });
+  );
 }
 
 
@@ -560,68 +971,112 @@ function drawCandles(canvas, rows) {
    VOLUME
    ========================= */
 
-function drawBars(canvas, rows, key) {
+function drawBars(
+  canvas,
+  rows,
+  key
+) {
+
   const valid =
     rows.filter(row =>
-      Number.isFinite(Number(row[key]))
+      Number.isFinite(
+        Number(row[key])
+      )
     );
 
   if (!valid.length) return;
 
+
   const values =
-    valid.map(row => Number(row[key]));
+    valid.map(
+      row => Number(row[key])
+    );
+
 
   let min = 0;
-  let max = Math.max(...values);
 
-  if (max === 0) max = 1;
+  let max =
+    Math.max(...values);
+
+
+  if (max === 0) {
+    max = 1;
+  }
+
 
   const {
     g,
     x,
     y
-  } = baseChart(
-    canvas,
-    valid,
-    min,
-    max,
-    value => fmtInt(Math.round(value))
-  );
+  } =
+    baseChart(
+      canvas,
+      valid,
+      min,
+      max,
+      value =>
+        fmtInt(
+          Math.round(value)
+        )
+    );
 
-  const ctx = g.ctx;
+
+  const ctx =
+    g.ctx;
+
 
   const slot =
-    (g.w - g.pad.l - g.pad.r) /
-    Math.max(1, valid.length);
+    (
+      g.w -
+      g.pad.l -
+      g.pad.r
+    ) /
+    Math.max(
+      1,
+      valid.length
+    );
 
-  /* Narrow bars */
+
   const barWidth =
     Math.max(
       4,
-      Math.min(12, slot * 0.35)
+      Math.min(
+        12,
+        slot * 0.35
+      )
     );
+
 
   const bottom =
-    g.h - g.pad.b;
+    g.h -
+    g.pad.b;
 
-  valid.forEach((row, index) => {
 
-    const value =
-      Number(row[key]);
+  valid.forEach(
+    (row, index) => {
 
-    const yy =
-      y(value);
+      const value =
+        Number(row[key]);
 
-    ctx.fillStyle =
-      "#7f8b99";
+      const yy =
+        y(value);
 
-    ctx.fillRect(
-      x(index) - barWidth / 2,
-      yy,
-      barWidth,
-      Math.max(2, bottom - yy)
-    );
-  });
+      ctx.fillStyle =
+        "#7f8b99";
+
+      ctx.fillRect(
+        x(index) -
+        barWidth / 2,
+        yy,
+        barWidth,
+        Math.max(
+          2,
+          bottom - yy
+        )
+      );
+
+    }
+  );
 }
 
 
@@ -629,67 +1084,118 @@ function drawBars(canvas, rows, key) {
    OPEN INTEREST
    ========================= */
 
-function drawLine(canvas, rows, key) {
+function drawLine(
+  canvas,
+  rows,
+  key
+) {
+
   const valid =
     rows.filter(row =>
-      Number.isFinite(Number(row[key]))
+      Number.isFinite(
+        Number(row[key])
+      )
     );
 
   if (!valid.length) return;
 
+
   let min =
-    Math.min(...valid.map(r => Number(r[key])));
+    Math.min(
+      ...valid.map(
+        r => Number(r[key])
+      )
+    );
 
   let max =
-    Math.max(...valid.map(r => Number(r[key])));
+    Math.max(
+      ...valid.map(
+        r => Number(r[key])
+      )
+    );
+
 
   if (min === max) {
+
     const padding =
-      Math.max(Math.abs(min) * 0.01, 1);
+      Math.max(
+        Math.abs(min) * 0.01,
+        1
+      );
 
     min -= padding;
     max += padding;
+
   }
+
 
   const {
     g,
     x,
     y
-  } = baseChart(
-    canvas,
-    valid,
-    min,
-    max,
-    value => fmtInt(Math.round(value))
-  );
+  } =
+    baseChart(
+      canvas,
+      valid,
+      min,
+      max,
+      value =>
+        fmtInt(
+          Math.round(value)
+        )
+    );
 
-  const ctx = g.ctx;
+
+  const ctx =
+    g.ctx;
+
 
   ctx.strokeStyle =
     "#d8b46a";
 
-  ctx.lineWidth = 2;
+  ctx.lineWidth =
+    2;
 
   ctx.beginPath();
 
-  valid.forEach((row, index) => {
 
-    const xx = x(index);
+  valid.forEach(
+    (row, index) => {
 
-    const yy =
-      y(Number(row[key]));
+      const xx =
+        x(index);
 
-    if (index === 0) {
-      ctx.moveTo(xx, yy);
-    } else {
-      ctx.lineTo(xx, yy);
+      const yy =
+        y(
+          Number(row[key])
+        );
+
+      if (index === 0) {
+
+        ctx.moveTo(
+          xx,
+          yy
+        );
+
+      } else {
+
+        ctx.lineTo(
+          xx,
+          yy
+        );
+
+      }
+
     }
-  });
+  );
+
 
   ctx.stroke();
 
+
   const last =
     valid.length - 1;
+
 
   ctx.fillStyle =
     "#f4f6f8";
@@ -698,7 +1204,11 @@ function drawLine(canvas, rows, key) {
 
   ctx.arc(
     x(last),
-    y(Number(valid[last][key])),
+    y(
+      Number(
+        valid[last][key]
+      )
+    ),
     3.5,
     0,
     Math.PI * 2
@@ -712,41 +1222,70 @@ function drawLine(canvas, rows, key) {
    TAP
    ========================= */
 
-function selectFromChart(id, event) {
-  const rows = sliceData();
+function selectFromChart(
+  id,
+  event
+) {
+
+  const rows =
+    sliceData();
 
   if (!rows.length) return;
 
-  const canvas = $(id);
+
+  const canvas =
+    $(id);
 
   const rect =
     canvas.getBoundingClientRect();
 
+
   const px =
-    event.clientX - rect.left;
+    event.clientX -
+    rect.left;
+
 
   const left = 48;
   const right = 8;
 
+
   let index;
 
+
   if (rows.length === 1) {
+
     index = 0;
+
   } else {
+
     index =
       Math.round(
-        ((px - left) /
-        (rect.width - left - right)) *
+        (
+          (px - left) /
+          (
+            rect.width -
+            left -
+            right
+          )
+        ) *
         (rows.length - 1)
       );
+
   }
+
 
   if (
     index >= 0 &&
     index < rows.length
   ) {
-    state.selected = rows[index];
-    showDetail(rows[index]);
+
+    state.selected =
+      rows[index];
+
+    showDetail(
+      rows[index]
+    );
+
   }
 }
 
@@ -756,25 +1295,52 @@ function selectFromChart(id, event) {
    ========================= */
 
 function showDetail(d) {
+
   if (!d) return;
 
+
   const oiChange =
-    Number(d.oi_change || 0);
+    Number(
+      d.oi_change || 0
+    );
+
 
   const values = {
-    date: fmtDate(d.date),
-    contract: d.contract || "—",
-    open: fmtPrice(d.open),
-    high: fmtPrice(d.high),
-    low: fmtPrice(d.low),
-    close: fmtPrice(d.close),
-    settlement: "$" + fmtPrice(d.settlement),
-    volume: fmtInt(d.volume),
-    oi: fmtInt(d.open_interest),
+
+    date:
+      fmtDate(d.date),
+
+    contract:
+      d.contract || "—",
+
+    open:
+      fmtPrice(d.open),
+
+    high:
+      fmtPrice(d.high),
+
+    low:
+      fmtPrice(d.low),
+
+    close:
+      fmtPrice(d.close),
+
+    settlement:
+      "$" +
+      fmtPrice(d.settlement),
+
+    volume:
+      fmtInt(d.volume),
+
+    oi:
+      fmtInt(d.open_interest),
+
     oiChange:
       (oiChange >= 0 ? "+" : "") +
       fmtInt(oiChange)
+
   };
+
 
   const grid =
     document.querySelector(
@@ -783,7 +1349,9 @@ function showDetail(d) {
 
   if (!grid) return;
 
+
   grid.innerHTML = `
+
     <span>Date</span>
     <b>${values.date}</b>
 
@@ -813,123 +1381,229 @@ function showDetail(d) {
 
     <span>OI Change</span>
     <b>${values.oiChange}</b>
+
   `;
 }
 
+
+/* =========================
+   OPTIONS
+   ========================= */
+
 function renderOptions() {
-  const container = $("optionsStructure");
+
+  const container =
+    $("optionsStructure");
 
   if (!container) return;
 
+
   if (!state.options.length) {
+
     container.innerHTML = `
       <div class="options-empty">
-        No CME PG64 options data.
+        CME PG64 data unavailable.
       </div>
     `;
+
     return;
   }
 
+
   const dates =
-    [...new Set(
-      state.options
-        .map(row => row.date)
-        .filter(Boolean)
-    )].sort();
+    [
+      ...new Set(
+        state.options
+          .map(
+            row => row.date
+          )
+          .filter(Boolean)
+      )
+    ].sort();
+
 
   const latestDate =
-    dates[dates.length - 1];
+    dates[
+      dates.length - 1
+    ];
+
 
   const rows =
     state.options.filter(
-      row => row.date === latestDate
+      row =>
+        row.date ===
+        latestDate
     );
+
 
   const callRows =
     rows.filter(
-      row => row.option_type === "CALL"
+      row =>
+        row.option_type ===
+        "CALL"
     );
+
 
   const putRows =
     rows.filter(
-      row => row.option_type === "PUT"
+      row =>
+        row.option_type ===
+        "PUT"
     );
+
 
   const totalCallOI =
     callRows.reduce(
       (sum, row) =>
-        sum + (Number(row.open_interest) || 0),
+        sum +
+        (
+          Number(
+            row.open_interest
+          ) || 0
+        ),
       0
     );
+
 
   const totalPutOI =
     putRows.reduce(
       (sum, row) =>
-        sum + (Number(row.open_interest) || 0),
+        sum +
+        (
+          Number(
+            row.open_interest
+          ) || 0
+        ),
       0
     );
 
+
   const largestCall =
-    [...callRows]
-      .sort(
-        (a, b) =>
-          (Number(b.open_interest) || 0) -
-          (Number(a.open_interest) || 0)
-      )[0];
+    [
+      ...callRows
+    ].sort(
+      (a, b) =>
+        (
+          Number(
+            b.open_interest
+          ) || 0
+        ) -
+        (
+          Number(
+            a.open_interest
+          ) || 0
+        )
+    )[0];
+
 
   const largestPut =
-    [...putRows]
-      .sort(
-        (a, b) =>
-          (Number(b.open_interest) || 0) -
-          (Number(a.open_interest) || 0)
-      )[0];
+    [
+      ...putRows
+    ].sort(
+      (a, b) =>
+        (
+          Number(
+            b.open_interest
+          ) || 0
+        ) -
+        (
+          Number(
+            a.open_interest
+          ) || 0
+        )
+    )[0];
+
 
   container.innerHTML = `
+
     <div class="options-date">
-      CME PG64 · ${fmtDate(latestDate)}
+      CME PG64 · ${fmtDate(
+        latestDate
+      )}
     </div>
 
     <div class="options-grid">
 
       <div class="option-stat">
+
         <span>Total Call OI</span>
-        <b>${fmtInt(totalCallOI)}</b>
+
+        <b>
+          ${fmtInt(
+            totalCallOI
+          )}
+        </b>
+
       </div>
 
+
       <div class="option-stat">
+
         <span>Total Put OI</span>
-        <b>${fmtInt(totalPutOI)}</b>
+
+        <b>
+          ${fmtInt(
+            totalPutOI
+          )}
+        </b>
+
       </div>
 
+
       <div class="option-stat">
+
         <span>Largest Call OI</span>
+
         <b>
           ${
             largestCall
-              ? `${fmtPrice(largestCall.strike)} · ${fmtInt(largestCall.open_interest)}`
+              ? `${fmtPrice(
+                  largestCall.strike
+                )} · ${fmtInt(
+                  largestCall.open_interest
+                )}`
               : "—"
           }
         </b>
+
       </div>
 
+
       <div class="option-stat">
+
         <span>Largest Put OI</span>
+
         <b>
           ${
             largestPut
-              ? `${fmtPrice(largestPut.strike)} · ${fmtInt(largestPut.open_interest)}`
+              ? `${fmtPrice(
+                  largestPut.strike
+                )} · ${fmtInt(
+                  largestPut.open_interest
+                )}`
               : "—"
           }
         </b>
+
       </div>
 
     </div>
   `;
 }
+
+
+/* =========================
+   RESIZE
+   ========================= */
+
 window.addEventListener(
   "resize",
   () => render()
 );
+
+
+/* =========================
+   START
+   ========================= */
 
 init();
