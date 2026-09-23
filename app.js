@@ -1,7 +1,9 @@
 const state = {
   data: [],
+  options: [],
   period: "1M",
-  selected: null
+  selected: null,
+  optionsDate: null
 };
 
 const $ = id => document.getElementById(id);
@@ -36,19 +38,30 @@ const fmtDate = s => {
 
 async function init() {
   try {
-    const response = await fetch(
-      "data/cme-gc-history.json?v=3",
-      { cache: "no-store" }
-    );
+    const [futuresResponse, optionsResponse] = await Promise.all([
+      fetch(
+        "data/cme-gc-history.json?v=4",
+        { cache: "no-store" }
+      ),
+      fetch(
+        "data/cme-gold-options-history.json?v=1",
+        { cache: "no-store" }
+      )
+    ]);
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (!futuresResponse.ok) {
+      throw new Error(`Futures HTTP ${futuresResponse.status}`);
     }
 
-    const json = await response.json();
+    if (!optionsResponse.ok) {
+      throw new Error(`Options HTTP ${optionsResponse.status}`);
+    }
 
-    const candles = Array.isArray(json.candles)
-      ? json.candles
+    const futuresJson = await futuresResponse.json();
+    const optionsJson = await optionsResponse.json();
+
+    const candles = Array.isArray(futuresJson.candles)
+      ? futuresJson.candles
       : [];
 
     state.data = candles
@@ -59,19 +72,34 @@ async function init() {
       )
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    state.options =
+      Array.isArray(optionsJson.options)
+        ? optionsJson.options
+        : [];
+
+    state.optionsDate =
+      Array.isArray(optionsJson.dates) &&
+      optionsJson.dates.length
+        ? optionsJson.dates[
+            optionsJson.dates.length - 1
+          ]
+        : null;
+
     if (!state.data.length) {
       throw new Error("No active-contract CME data found.");
     }
 
-    state.selected = state.data[state.data.length - 1];
+    state.selected =
+      state.data[state.data.length - 1];
 
     updateLiveStatus();
     bind();
     render();
+    renderOptions();
 
   } catch (error) {
     console.error(error);
-    showError("CME data could not be loaded.");
+    showError(error.message || "CME data could not be loaded.");
   }
 }
 
@@ -217,7 +245,7 @@ function render() {
   }
 
   showDetail(state.selected);
-}
+renderOptions();
 
 function contractMonthName(contract) {
   if (!contract || contract.length < 5) {
@@ -788,6 +816,117 @@ function showDetail(d) {
   `;
 }
 
+function renderOptions() {
+  const container = $("optionsStructure");
+
+  if (!container) return;
+
+  if (!state.options.length) {
+    container.innerHTML = `
+      <div class="options-empty">
+        No CME PG64 options data.
+      </div>
+    `;
+    return;
+  }
+
+  const dates =
+    [...new Set(
+      state.options
+        .map(row => row.date)
+        .filter(Boolean)
+    )].sort();
+
+  const latestDate =
+    dates[dates.length - 1];
+
+  const rows =
+    state.options.filter(
+      row => row.date === latestDate
+    );
+
+  const callRows =
+    rows.filter(
+      row => row.option_type === "CALL"
+    );
+
+  const putRows =
+    rows.filter(
+      row => row.option_type === "PUT"
+    );
+
+  const totalCallOI =
+    callRows.reduce(
+      (sum, row) =>
+        sum + (Number(row.open_interest) || 0),
+      0
+    );
+
+  const totalPutOI =
+    putRows.reduce(
+      (sum, row) =>
+        sum + (Number(row.open_interest) || 0),
+      0
+    );
+
+  const largestCall =
+    [...callRows]
+      .sort(
+        (a, b) =>
+          (Number(b.open_interest) || 0) -
+          (Number(a.open_interest) || 0)
+      )[0];
+
+  const largestPut =
+    [...putRows]
+      .sort(
+        (a, b) =>
+          (Number(b.open_interest) || 0) -
+          (Number(a.open_interest) || 0)
+      )[0];
+
+  container.innerHTML = `
+    <div class="options-date">
+      CME PG64 · ${fmtDate(latestDate)}
+    </div>
+
+    <div class="options-grid">
+
+      <div class="option-stat">
+        <span>Total Call OI</span>
+        <b>${fmtInt(totalCallOI)}</b>
+      </div>
+
+      <div class="option-stat">
+        <span>Total Put OI</span>
+        <b>${fmtInt(totalPutOI)}</b>
+      </div>
+
+      <div class="option-stat">
+        <span>Largest Call OI</span>
+        <b>
+          ${
+            largestCall
+              ? `${fmtPrice(largestCall.strike)} · ${fmtInt(largestCall.open_interest)}`
+              : "—"
+          }
+        </b>
+      </div>
+
+      <div class="option-stat">
+        <span>Largest Put OI</span>
+        <b>
+          ${
+            largestPut
+              ? `${fmtPrice(largestPut.strike)} · ${fmtInt(largestPut.open_interest)}`
+              : "—"
+          }
+        </b>
+      </div>
+
+    </div>
+  `;
+}
 window.addEventListener(
   "resize",
   () => render()
