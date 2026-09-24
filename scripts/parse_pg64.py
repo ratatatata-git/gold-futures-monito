@@ -76,9 +76,20 @@ def value_near_x(words, lo, hi):
 
 def parse_row(words: list[dict[str, Any]], product_code: str, option_type: str, expiry: str):
     words = sorted(words, key=lambda w: w["x0"])
+
     if not words:
         return None
+
+    # CME PG64 has summary rows such as:
+    # TOTAL 6349 77538 +1358
+    # These numbers are NOT Strike / Open Interest records.
+    # Never treat TOTAL rows as individual option strikes.
+    row_text = " ".join(w["text"] for w in words).upper()
+    if re.search(r"\bTOTAL\b", row_text):
+        return None
+
     first = words[0]["text"]
+
     if not STRIKE_RE.fullmatch(first):
         return None
     strike = parse_number(first)
