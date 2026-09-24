@@ -160,33 +160,153 @@ def parse_row(words: list[dict[str, Any]], product_code: str, option_type: str, 
 def row_groups(page):
     """Return visually aligned rows using the Strike column as the anchor.
 
-    CME places the Strike text about 0.7pt below the other cells. Grouping by
-    rounded y-coordinates can therefore accidentally merge adjacent strikes.
+    CME places the Strike text about 0.7pt below the other cells.
+    Grouping by rounded y-coordinates can therefore accidentally merge
+    adjacent strikes.
+
+    Important:
+    PG64 has summary rows such as:
+        TOTAL 6349 77538 +1358
+
+    The numeric values on TOTAL rows are NOT strikes.
+    We therefore exclude TOTAL rows both when creating strike candidates
+    and again when building the final row.
     """
-    words = page.extract_words(x_tolerance=1, y_tolerance=2, keep_blank_chars=False)
-    strikes = [w for w in words if w["x0"] < 35 and STRIKE_RE.fullmatch(w["text"]) and float(w["text"]) >= 1000]
+    words = page.extract_words(
+        x_tolerance=1,
+        y_tolerance=2,
+        keep_blank_chars=False,
+    )
+
+    # ------------------------------------------------------------
+    # Build visually aligned candidate rows first.
+    # This lets us identify TOTAL rows before treating any number
+    # as a possible strike.
+    # ------------------------------------------------------------
+    candidate_rows = []
+
+    for w in words:
+        if w["x0"] >= 35:
+            continue
+
+        if not STRIKE_RE.fullmatch(w["text"]):
+            continue
+
+        try:
+            numeric_value = float(w["text"])
+        except (TypeError, ValueError):
+            continue
+
+        if numeric_value < 1000:
+            continue
+
+        sw = w
+
+        row = [
+            word
+            for word in words
+            if (
+                abs(word["top"] - sw["top"]) <= 1.25
+                or abs(word["top"] - (sw["top"] - 0.75)) <= 1.25
+            )
+        ]
+
+        row = sorted(row, key=lambda word: word["x0"])
+
+        # --------------------------------------------------------
+        # CRITICAL:
+        # Never treat TOTAL rows as option-strike rows.
+        # Example:
+        # TOTAL 6349 77538 +1358
+        # --------------------------------------------------------
+        row_text = " ".join(
+            word["text"] for word in row
+        ).upper()
+
+        if re.search(r"\bTOTAL\b", row_text):
+            continue
+
+        candidate_rows.append(
+            (sw["top"], row)
+        )
+
+    # ------------------------------------------------------------
+    # Remove duplicate/overlapping candidate rows.
+    # ------------------------------------------------------------
     data_rows = []
     used = set()
-    for sw in strikes:
-        row = [w for w in words if abs(w["top"] - (sw["top"] - 0.75)) <= 1.25 or abs(w["top"] - sw["top"]) <= 1.25]
-        # Keep the strike itself and avoid accidentally taking the next row.
-        row = [w for w in row if abs(w["top"] - sw["top"]) <= 1.25 or abs(w["top"] - (sw["top"] - 0.75)) <= 1.25]
-        data_rows.append((sw["top"], sorted(row, key=lambda w: w["x0"])))
-        used.update(id(w) for w in row)
 
-    # Also return non-data visual lines (product/expiry headers) for state tracking.
-    remaining = [w for w in words if id(w) not in used]
-    remaining = sorted(remaining, key=lambda w: (w["top"], w["x0"]))
+    for top, row in candidate_rows:
+        data_rows.append(
+            (
+                top,
+                row,
+            )
+        )
+
+        used.update(
+            id(word)
+            for word in row
+        )
+
+    # ------------------------------------------------------------
+    # Also return non-data visual lines
+    # (product / expiry headers) for state tracking.
+    # ------------------------------------------------------------
+    remaining = [
+        word
+        for word in words
+        if id(word) not in used
+    ]
+
+    remaining = sorted(
+        remaining,
+        key=lambda word: (
+            word["top"],
+            word["x0"],
+        ),
+    )
+
     header_rows = []
-    for w in remaining:
-        if not header_rows or abs(w["top"] - header_rows[-1]["top"]) > 1.5:
-            header_rows.append({"top": w["top"], "words": [w]})
+
+    for word in remaining:
+        if (
+            not header_rows
+            or abs(
+                word["top"]
+                - header_rows[-1]["top"]
+            ) > 1.5
+        ):
+            header_rows.append(
+                {
+                    "top": word["top"],
+                    "words": [word],
+                }
+            )
         else:
-            header_rows[-1]["words"].append(w)
-    out = [(g["top"], sorted(g["words"], key=lambda w: w["x0"])) for g in header_rows]
+            header_rows[-1]["words"].append(word)
+
+    out = [
+        (
+            group["top"],
+            sorted(
+                group["words"],
+                key=lambda word: word["x0"],
+            ),
+        )
+        for group in header_rows
+    ]
+
     out.extend(data_rows)
-    out.sort(key=lambda x: x[0])
-    return [r for _, r in out]
+
+    out.sort(
+        key=lambda item: item[0]
+    )
+
+    return [
+        row
+        for _, row in out
+    ]
 
 
 def extract_bulletin_date(pdf) -> str:
