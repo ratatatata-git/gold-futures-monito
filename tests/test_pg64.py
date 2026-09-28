@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PARSER = ROOT / 'parse_pg64_v1.py'
 FIX = ROOT / 'pg64_fixtures'
 OUT = ROOT / 'pg64_tests' / 'out'
-OUT.mkdir(exist_ok=True)
+OUT.mkdir(parents=True, exist_ok=True)
 
 EXPECTED = {
     '21': {
