@@ -1,357 +1,211 @@
-import hashlib
-import json
-import re
+import hashlib, json, re
 from datetime import datetime, timezone
 from pathlib import Path
-
 import pdfplumber
 
-ROOT = Path(__file__).resolve().parents[1]
-PDF_DIR = ROOT / "data" / "cme-pg62"
-OUT_FILE = ROOT / "data" / "cme-gc-history.json"
+ROOT=Path(__file__).resolve().parents[1]
+PDF_DIR=ROOT/'data'/'cme-pg62'
+OUT_FILE=ROOT/'data'/'cme-gc-history.json'
+PARSER_VERSION='pg62-gold-v2.1.0'
+MONTHS={m:i for i,m in enumerate(('JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'),1)}
+CONTRACT_RE=re.compile(r'^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d{2})$',re.I)
+MAX_VOLUME=2_000_000; MAX_OI=10_000_000; MAX_PRICE=20_000.0
 
-PARSER_VERSION = "pg62-gold-v2.0.0"
+def clean(x): return str(x or '').strip().replace(',','')
+def missing(x): return clean(x).upper() in {'','-','--','---','----'}
+def num(x):
+    s=clean(x)
+    if missing(s): return None
+    if s.upper()=='UNCH': return 0.0
+    try: return float(s.replace('B','').replace('A',''))
+    except ValueError: return None
+def integer(x):
+    v=num(x); return None if v is None else int(round(v))
+def signed(words):
+    s=''.join(clean(w.get('text')) for w in words).replace(' ','')
+    if not s or s in {'-','--','---','----'}: return None
+    if s.upper()=='UNCH': return 0.0
+    try: return float(s.replace('B','').replace('A',''))
+    except ValueError: return None
 
-MONTHS = {
-    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
-    "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
-    "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
-}
-CONTRACT_RE = re.compile(r"^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d{2})$", re.I)
-
-# PG62 is a fixed-width report, but the parser uses x-ranges only after
-# semantic discovery of the GC section. These are local column bands, not
-# meanings inferred from the extracted text order.
-X = {
-    "contract": (0, 70),
-    "open": (90, 180),
-    "high_low": (180, 280),
-    "settlement": (270, 310),
-    "change": (310, 360),
-    "globex_volume": (390, 465),
-    "pnt_volume": (465, 520),
-    "open_interest": (520, 560),
-    "oi_change": (560, 610),
-}
-
-
-def clean(s):
-    return str(s or "").strip().replace(",", "")
-
-
-def parse_number(s):
-    s = clean(s)
-    if not s or s.upper() in {"-", "--", "---", "----"}:
-        return None
-    if s.upper() == "UNCH":
-        return 0.0
-    s = s.replace("B", "").replace("A", "")
-    try:
-        return float(s)
-    except ValueError:
-        return None
-
-
-def parse_int(s):
-    value = parse_number(s)
-    return None if value is None else int(round(value))
-
-
-def parse_signed(words):
-    text = "".join(clean(w.get("text")) for w in words)
-    text = text.replace(" ", "")
-    if text.upper() == "UNCH":
-        return 0.0
-    if text in {"-", "--", "---", "----", ""}:
-        return None
-    text = text.replace("B", "").replace("A", "")
-    try:
-        return float(text)
-    except ValueError:
-        return None
-
-
-def numeric_prices(text):
-    """Extract price values from a single price/high-low cell."""
-    text = clean(text).replace("B", "").replace("A", "")
-    if not text or set(text) <= {"-", "/", " "}:
-        return []
-    # Handles both 4422.20/4362.70 and concatenated 4510.804447.20.
-    parts = [p for p in text.replace("/", " ").split() if p]
-    out = []
-    for part in parts:
-        if re.fullmatch(r"\d+(?:\.\d+)?", part):
-            out.append(float(part))
-            continue
-        m = re.fullmatch(r"(\d{3,4}\.\d{2})(\d{3,4}\.\d{2})", part)
-        if m:
-            out.extend([float(m.group(1)), float(m.group(2))])
+def prices(s):
+    s=clean(s).replace('B','').replace('A','')
+    out=[]
+    for p in s.replace('/',' ').split():
+        if re.fullmatch(r'\d+(?:\.\d+)?',p): out.append(float(p)); continue
+        m=re.fullmatch(r'(\d{3,5}\.\d{1,4})(\d{3,5}\.\d{1,4})',p)
+        if m: out += [float(m.group(1)),float(m.group(2))]
     return out
 
-
-def find_bulletin_date(pdf):
-    full = "January|February|March|April|May|June|July|August|September|October|November|December"
-    short = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
-    weekday = "Mon|Tue|Wed|Thu|Fri|Sat|Sun"
-    month_map = MONTHS
-
-    for page in pdf.pages:
-        text = page.extract_text() or ""
-        patterns = [
-            rf"\b(?:{weekday})\.?[,]?\s+({short}|{full})\s+(\d{{1,2}}),\s*(\d{{2,4}})\b",
-            rf"\b({short}|{full})\s+(\d{{1,2}}),\s*(\d{{2,4}})\b",
-            r"\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b",
-        ]
-        for pattern in patterns:
-            m = re.search(pattern, text, re.I)
-            if not m:
-                continue
-            g = m.groups()
-            if g[0][:3].upper() in month_map:
-                month, day, year = month_map[g[0][:3].upper()], int(g[1]), int(g[2])
-            else:
-                month, day, year = int(g[0]), int(g[1]), int(g[2])
-            if year < 100:
-                year += 2000
-            return f"{year:04d}-{month:02d}-{day:02d}"
-
-    return None
-
-
-def words_in_band(words, x0, x1):
-    return [w for w in words if w["x0"] >= x0 and w["x0"] < x1]
-
-
-def row_words(words, top, tolerance=1.0):
-    return sorted(
-        [w for w in words if abs(w["top"] - top) <= tolerance],
-        key=lambda w: w["x0"],
-    )
-
-
-def parse_gc_coordinate_row(words, trade_date):
-    contract_words = words_in_band(words, *X["contract"])
-    if not contract_words:
-        return None
-    contract = clean(contract_words[0]["text"]).upper()
-    m = CONTRACT_RE.fullmatch(contract)
-    if not m:
-        return None
-    contract = f"{m.group(1).upper()}{int(m.group(2)):02d}"
-
-    open_words = words_in_band(words, *X["open"])
-    hl_words = words_in_band(words, *X["high_low"])
-    settlement_words = words_in_band(words, *X["settlement"])
-    change_words = words_in_band(words, *X["change"])
-    globex_words = words_in_band(words, *X["globex_volume"])
-    pnt_words = words_in_band(words, *X["pnt_volume"])
-    oi_words = words_in_band(words, *X["open_interest"])
-    oi_change_words = words_in_band(words, *X["oi_change"])
-
-    open_price = parse_number(open_words[0]["text"]) if open_words else None
-    hl_text = " ".join(w["text"] for w in hl_words)
-    hl_prices = numeric_prices(hl_text)
-    high_price = hl_prices[0] if len(hl_prices) >= 1 else None
-    low_price = hl_prices[1] if len(hl_prices) >= 2 else None
-
-    settlement = parse_number(settlement_words[0]["text"]) if settlement_words else None
-    price_change = parse_signed(change_words)
-
-    globex_volume = parse_int(globex_words[0]["text"]) if globex_words else None
-    pnt_volume = parse_int(pnt_words[0]["text"]) if pnt_words else None
-    open_interest = parse_int(oi_words[0]["text"]) if oi_words else None
-    oi_change = parse_signed(oi_change_words)
-    if oi_change is not None:
-        oi_change = int(round(oi_change))
-
-    # IMPORTANT: ---- means unavailable, not zero.
-    volume = None
-    if globex_volume is not None or pnt_volume is not None:
-        volume = (globex_volume or 0) + (pnt_volume or 0)
-
-    row = {
-        "date": trade_date,
-        "contract": contract,
-        "open": open_price,
-        "high": high_price,
-        "low": low_price,
-        "close": settlement,
-        "settlement": settlement,
-        "price_change": price_change,
-        "volume": volume,
-        "volume_globex": globex_volume,
-        "volume_pnt_pit": pnt_volume,
-        "open_interest": open_interest,
-        "oi_change": oi_change,
-        "is_active": False,
-    }
-    validate_row(row)
-    return row
-
-
-def validate_row(row):
-    problems = []
-    for k in ("volume", "volume_globex", "volume_pnt_pit", "open_interest"):
-        v = row.get(k)
-        if v is not None and v < 0:
-            problems.append(f"negative {k}={v}")
-    if row.get("high") is not None and row.get("low") is not None and row["high"] < row["low"]:
-        problems.append(f"high<{row['low']=}")
-    if row.get("volume_globex") is not None and row["volume_globex"] > 2_000_000:
-        problems.append(f"implausible globex volume={row['volume_globex']}")
-    if row.get("open_interest") is not None and row["open_interest"] > 10_000_000:
-        problems.append(f"implausible open interest={row['open_interest']}")
-    if problems:
-        raise ValueError(f"PG62 validation failed for {row['date']} {row['contract']}: " + "; ".join(problems))
-
-
-def is_gc_header(words):
-    text = " ".join(w["text"] for w in words)
-    return "GC FUT COMEX GOLD FUTURES" in text
-
-
-def is_total_gc(words):
-    text = " ".join(w["text"] for w in words).strip()
-    return text.startswith("TOTAL GC FUT")
-
-
-def extract_gc(pdf_path):
-    rows = []
-    with pdfplumber.open(pdf_path) as pdf:
-        trade_date = find_bulletin_date(pdf)
-        if not trade_date:
-            raise RuntimeError(f"Could not find bulletin date inside PDF: {pdf_path.name}")
-
-        in_gc = False
-        ended = False
-        for page_number, page in enumerate(pdf.pages, start=1):
-            words = page.extract_words(x_tolerance=2, y_tolerance=3, keep_blank_chars=False)
-            # Group words by visual line. This preserves the report's columns.
-            groups = {}
-            for w in words:
-                key = round(w["top"], 1)
-                groups.setdefault(key, []).append(w)
-
-            for top in sorted(groups):
-                line_words = sorted(groups[top], key=lambda w: w["x0"])
-                line_text = " ".join(w["text"] for w in line_words)
-
-                if is_gc_header(line_words):
-                    in_gc = True
-                    continue
-                if not in_gc:
-                    continue
-                if is_total_gc(line_words):
-                    ended = True
-                    break
-
-                contract = clean(line_words[0]["text"]).upper() if line_words else ""
-                if not CONTRACT_RE.fullmatch(contract):
-                    continue
-                if line_words[0]["x0"] > 50:
-                    continue
-
-                row = parse_gc_coordinate_row(line_words, trade_date)
-                if row:
-                    rows.append(row)
-
-            if ended:
-                break
-
-        return trade_date, finalize_rows(rows)
-
-
-def finalize_rows(rows):
-    if not rows:
-        raise RuntimeError("No GC futures rows found in PDF.")
-
-    # This is an EOD representative/active-contract rule, not an intraday fact.
-    active = max(rows, key=lambda r: (r.get("volume") or 0, r.get("open_interest") or 0))
-    active_contract = active["contract"]
-    for row in rows:
-        row["is_active"] = row["contract"] == active_contract
-    return rows
-
-
-def file_sha256(path):
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
+def sha(path):
+    h=hashlib.sha256()
+    with path.open('rb') as f:
+        for b in iter(lambda:f.read(1<<20),b''): h.update(b)
     return h.hexdigest()
 
+def bulletin_date(pdf):
+    mon='Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec'
+    full='January|February|March|April|May|June|July|August|September|October|November|December'
+    wd='Mon|Tue|Wed|Thu|Fri|Sat|Sun'
+    pats=[rf'\b(?:{wd})\.?[,]?\s+({mon}|{full})\s+(\d{{1,2}}),\s*(\d{{2,4}})\b',rf'\b({mon}|{full})\s+(\d{{1,2}}),\s*(\d{{2,4}})\b',r'\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b']
+    for p in pdf.pages:
+        t=p.extract_text() or ''
+        for pat in pats:
+            m=re.search(pat,t,re.I)
+            if not m: continue
+            a,b,c=m.groups()
+            if a[:3].upper() in MONTHS: mo,day,yr=MONTHS[a[:3].upper()],int(b),int(c)
+            else: mo,day,yr=int(a),int(b),int(c)
+            if yr<100: yr+=2000
+            return f'{yr:04d}-{mo:02d}-{day:02d}'
+    return None
 
-def load_history():
-    if not OUT_FILE.exists():
-        return {"updated_at": None, "dates": [], "contracts": {}, "candles": []}
+def status(pdf):
+    for p in pdf.pages[:4]:
+        t=(p.extract_text() or '').upper()
+        if re.search(r'\bFINAL\b',t): return 'FINAL'
+        if re.search(r'\bPRELIMINARY\b',t): return 'PRELIMINARY'
+    return 'UNKNOWN'
+
+def bulletin_no(pdf):
+    for p in pdf.pages[:4]:
+        m=re.search(r'PG62\s+BULLETIN\s*#\s*(\d+)',p.extract_text() or '',re.I)
+        if m: return int(m.group(1))
+    return None
+
+def groups(words,tol=1.4):
+    gs=[]
+    for w in sorted(words,key=lambda x:(x['top'],x['x0'])):
+        if not gs or abs(w['top']-gs[-1]['top'])>tol: gs.append({'top':w['top'],'words':[w]})
+        else:
+            gs[-1]['words'].append(w); gs[-1]['top']=sum(x['top'] for x in gs[-1]['words'])/len(gs[-1]['words'])
+    for g in gs:g['words'].sort(key=lambda x:x['x0'])
+    return gs
+
+def text(words): return ' '.join(clean(w.get('text')) for w in words)
+def gc_header(words): return 'GC FUT COMEX GOLD FUTURES' in text(words).upper()
+def total(words): return text(words).upper().startswith('TOTAL GC FUT')
+def gc_page(page): return 'GC FUT COMEX GOLD FUTURES' in (page.extract_text() or '').upper()
+
+def anchors(lines,i):
+    search=lines[max(0,i-3):min(len(lines),i+4)]; out={}
+    pats={'open':r'^OPEN$','high_low':r'HIGH/?LOW','settlement':r'SETT\.?PRICE|^SETT$','change':r'PT\.?CHGE|PRICE.*CHANGE','open_interest':r'OPEN.*INTEREST','delta':r'^DELTA$','globex_open':r'GLOBEX.*OPEN','pnt_volume':r'^PNT$|PNT.*VOLUME','globex_volume':r'GLOBEX.*VOLUME'}
+    for k,p in pats.items():
+        c=[w for ln in search for w in ln['words'] if re.search(p,clean(w.get('text')),re.I)]
+        if c: out[k]=min(c,key=lambda w:w['x0'])['x0']
+    return out
+
+def bands(a,width):
+    order=['open','high_low','settlement','change','open_interest','delta','globex_open','pnt_volume','globex_volume']
+    u=sorted([(k,a[k]) for k in order if k in a],key=lambda z:z[1]); b={}
+    for i,(k,x) in enumerate(u): b[k]=(0 if i==0 else (u[i-1][1]+x)/2,width if i==len(u)-1 else (x+u[i+1][1])/2)
+    first=min([x for _,x in u],default=70); b['contract']=(0,max(70,first-5))
+    return b
+
+def fallback(width):
+    return {'contract':(0,70),'open':(90,180),'high_low':(180,280),'settlement':(270,310),'change':(310,360),'open_interest':(520,560),'delta':(560,610),'globex_open':(610,650),'pnt_volume':(650,710),'globex_volume':(710,min(width,780))}
+
+def inband(words,band): return [w for w in words if band[0]<=w['x0']<band[1]]
+def first(ws): return clean(ws[0]['text']) if ws else ''
+def contract(words,b):
+    for w in inband(words,b['contract']):
+        m=CONTRACT_RE.fullmatch(clean(w['text']).upper())
+        if m:return f'{m.group(1)}{int(m.group(2)):02d}'
+    return None
+
+def validate(r):
+    bad=[]
+    for k in ('volume','volume_globex','volume_pnt_pit','open_interest'):
+        if r[k] is not None and r[k]<0: bad.append(f'negative {k}={r[k]}')
+    for k in ('open','high','low','settlement'):
+        if r[k] is not None and abs(r[k])>MAX_PRICE: bad.append(f'implausible {k}={r[k]}')
+    if r['high'] is not None and r['low'] is not None and r['high']<r['low']: bad.append('high<low')
+    if r['volume_globex'] is not None and r['volume_globex']>MAX_VOLUME: bad.append('implausible globex volume')
+    if r['volume_pnt_pit'] is not None and r['volume_pnt_pit']>MAX_VOLUME: bad.append('implausible pnt volume')
+    if r['open_interest'] is not None and r['open_interest']>MAX_OI: bad.append('implausible open interest')
+    if all(r[k] is not None for k in ('volume','volume_globex','volume_pnt_pit')) and r['volume']!=r['volume_globex']+r['volume_pnt_pit']: bad.append('volume != globex + pnt/pit')
+    if bad: raise ValueError(f"PG62 validation failed for {r['date']} {r['contract']}: {'; '.join(bad)}")
+
+def parse_row(words,date,source,st,bno,b):
+    c=contract(words,b)
+    if not c:return None
+    def t(k):return ' '.join(w['text'] for w in inband(words,b[k]))
+    hp=prices(t('high_low')); ow=num(first(inband(words,b['open']))); hi=hp[0] if hp else None; lo=hp[1] if len(hp)>1 else None
+    sett=num(first(inband(words,b['settlement']))); ch=signed(inband(words,b['change']))
+    oi=integer(first(inband(words,b['open_interest']))); d=signed(inband(words,b['delta'])); d=None if d is None else int(round(d))
+    pnt=integer(first(inband(words,b['pnt_volume']))); glob=integer(first(inband(words,b['globex_volume'])))
+    vol=None if pnt is None and glob is None else (pnt or 0)+(glob or 0)
+    r={'date':date,'contract':c,'open':ow,'high':hi,'low':lo,'close':sett,'settlement':sett,'price_change':ch,'volume':vol,'volume_globex':glob,'volume_pnt_pit':pnt,'open_interest':oi,'oi_change':d,'is_active':False,'source_file':source,'source_status':st,'bulletin_number':bno}
+    validate(r);return r
+
+def extract(path):
+    with pdfplumber.open(path) as pdf:
+        date=bulletin_date(pdf)
+        if not date: raise RuntimeError(f'Could not find bulletin date: {path.name}')
+        st=status(pdf); bno=bulletin_no(pdf); rows=[]; ingc=False; layout=[]
+        for pn,page in enumerate(pdf.pages,1):
+            if not ingc and not gc_page(page): continue
+            lines=groups(page.extract_words(x_tolerance=2,y_tolerance=3,keep_blank_chars=False))
+            b=None
+            for i,line in enumerate(lines):
+                ws=line['words']
+                if gc_header(ws):
+                    ingc=True; a=anchors(lines,i); b=bands(a,float(page.width)); fb=fallback(float(page.width)); [b.setdefault(k,v) for k,v in fb.items()]
+                    layout.append({'page':pn,'header_anchors':a,'bands':b,'anchor_mode':'dynamic_header'}); continue
+                if not ingc: continue
+                if total(ws): break
+                r=parse_row(ws,date,path.name,st,bno,b)
+                if r:r['source_page']=pn; rows.append(r)
+            if ingc and any(x['source_page']==pn for x in rows) and total(lines[-1]['words']): break
+        if not rows: raise RuntimeError(f'No GC futures rows found in {path.name}')
+        # Exact duplicate lines only.
+        d={(r['date'],r['contract'],r['source_file'],r['source_page']):r for r in rows}; rows=list(d.values())
+        active=max(rows,key=lambda r:(r['volume'] if r['volume'] is not None else -1,r['open_interest'] if r['open_interest'] is not None else -1))['contract']
+        for r in rows:r['is_active']=r['contract']==active
+        return date,st,bno,rows,layout
+
+def load():
+    if not OUT_FILE.exists(): return {'observations':[],'provenance':[]}
     try:
-        with OUT_FILE.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {"updated_at": None, "dates": [], "contracts": {}, "candles": []}
+        with OUT_FILE.open(encoding='utf-8') as f:return json.load(f)
+    except Exception:return {'observations':[],'provenance':[]}
 
-
-def save_history(history):
-    OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with OUT_FILE.open("w", encoding="utf-8") as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
-
+def obskey(r):return (r.get('date'),r.get('contract'),r.get('source_file'),r.get('source_status'))
+def rebuild(obs):
+    rank={'FINAL':2,'PRELIMINARY':1,'UNKNOWN':0}; latest={}
+    for r in obs:
+        k=(r.get('date'),r.get('contract')); old=latest.get(k)
+        if old is None or rank.get(r.get('source_status'),0)>rank.get(old.get('source_status'),0):latest[k]=r
+    candles=sorted(latest.values(),key=lambda r:(r.get('date') or '',r.get('contract') or ''))
+    by={}
+    for r in candles:r['is_active']=False;by.setdefault(r['date'],[]).append(r)
+    for rows in by.values():
+        a=max(rows,key=lambda r:(r['volume'] if r['volume'] is not None else -1,r['open_interest'] if r['open_interest'] is not None else -1))['contract']
+        for r in rows:r['is_active']=r['contract']==a
+    contracts={}
+    for r in candles:contracts.setdefault(r['contract'],[]).append(r)
+    dates=sorted(by); active=next((r for r in candles if dates and r['date']==dates[-1] and r['is_active']),None)
+    return candles,contracts,dates,active
 
 def main():
-    pdfs = sorted(PDF_DIR.glob("*.pdf"))
-    if not pdfs:
-        raise RuntimeError(f"No PDF files found in {PDF_DIR}")
+    pdfs=sorted(PDF_DIR.glob('*.pdf'))
+    if not pdfs:raise RuntimeError(f'No PDF files found in {PDF_DIR}')
+    h=load(); om={obskey(r):r for r in h.get('observations',[])}; pm={}
+    for p in h.get('provenance',[]):pm[(p.get('source_file'),p.get('source_sha256'),p.get('trade_date'))]=p
+    for path in pdfs:
+        print(f'Parsing {path.name}'); date,st,bno,rows,layout=extract(path); digest=sha(path)
+        for k in list(om):
+            if om[k].get('source_file')==path.name and om[k].get('source_sha256')==digest:del om[k]
+        for r in rows:r['source_sha256']=digest;r['parser_version']=PARSER_VERSION;om[obskey(r)]=r
+        pm[(path.name,digest,date)]={'source_file':path.name,'source_sha256':digest,'trade_date':date,'bulletin_number':bno,'source_status':st,'parser_version':PARSER_VERSION,'ingested_at':datetime.now(timezone.utc).isoformat(),'active_selection_method':'highest_volume_eod_then_open_interest','layout_discovery':layout}
+        print(f'  {date} {st} bulletin={bno} rows={len(rows)}')
+    obs=sorted(om.values(),key=lambda r:(r.get('date') or '',r.get('contract') or '',r.get('source_status') or '',r.get('source_file') or ''))
+    candles,contracts,dates,active=rebuild(obs)
+    out={'schema_version':'pg62-gc-master-v2.1','parser_version':PARSER_VERSION,'updated_at':datetime.now(timezone.utc).isoformat(),'latest_date':dates[-1] if dates else None,'latest_active':active,'dates':dates,'contracts':contracts,'candles':candles,'observations':obs,'provenance':sorted(pm.values(),key=lambda p:(p.get('trade_date') or '',p.get('source_file') or '')),'notes':{'master_semantics':'Observed source facts only','candles_semantics':'Latest/default observation view; FINAL preferred over PRELIMINARY','active_semantics':'EOD representative only; highest volume then open interest','missing_value':'---- is stored as null, never as zero','analysis_boundary':'IV/Gamma/GEX/regime/dealer positioning are not calculated here'}}
+    OUT_FILE.parent.mkdir(parents=True,exist_ok=True)
+    with OUT_FILE.open('w',encoding='utf-8') as f:json.dump(out,f,ensure_ascii=False,indent=2)
+    print(f'Saved {len(obs)} observations / {len(candles)} default rows / {len(dates)} dates')
+    if active:print(f"Latest active: {active['contract']} {active['settlement']}")
+    print(f'Output: {OUT_FILE}')
 
-    history = load_history()
-    existing = {}
-    for row in history.get("candles", []):
-        key = (row.get("date"), row.get("contract"))
-        existing[key] = row
-
-    provenance = []
-    for pdf_path in pdfs:
-        print(f"\nParsing {pdf_path.name}")
-        trade_date, rows = extract_gc(pdf_path)
-        print(f"  Date: {trade_date}; rows: {len(rows)}")
-        for row in rows:
-            existing[(row["date"], row["contract"])] = row
-        provenance.append({
-            "source_file": pdf_path.name,
-            "source_sha256": file_sha256(pdf_path),
-            "trade_date": trade_date,
-            "parser_version": PARSER_VERSION,
-            "ingested_at": datetime.now(timezone.utc).isoformat(),
-        })
-
-    candles = sorted(existing.values(), key=lambda r: (r.get("date") or "", r.get("contract") or ""))
-    contracts = {}
-    for row in candles:
-        contracts.setdefault(row["contract"], []).append(row)
-    dates = sorted({r["date"] for r in candles if r.get("date")})
-    latest_active = None
-    if dates:
-        latest = [r for r in candles if r["date"] == dates[-1] and r.get("is_active")]
-        if latest:
-            latest_active = latest[0]
-
-    history = {
-        "schema_version": "pg62-gc-master-v2",
-        "parser_version": PARSER_VERSION,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "latest_date": dates[-1] if dates else None,
-        "latest_active": latest_active,
-        "dates": dates,
-        "contracts": contracts,
-        "candles": candles,
-        "provenance": provenance,
-    }
-    save_history(history)
-    print(f"Saved {len(candles)} contract-day rows")
-    print(f"Saved {len(dates)} dates")
-    if latest_active:
-        print(f"Latest active: {latest_active['contract']} {latest_active['settlement']}")
-    print(f"Output: {OUT_FILE}")
-
-
-if __name__ == "__main__":
-    main()
+if __name__=='__main__':main()
