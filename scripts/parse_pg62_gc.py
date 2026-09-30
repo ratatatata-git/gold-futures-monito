@@ -154,6 +154,10 @@ def extract(path):
                     layout.append({'page':pn,'header_anchors':a,'bands':b,'anchor_mode':'dynamic_header'}); continue
                 if not ingc: continue
                 if total(ws): break
+                # A GC page can contain rows before the wrapped header has been
+                # recognized by the line parser. Never call parse_row without bands.
+                if b is None:
+                    continue
                 r=parse_row(ws,date,path.name,st,bno,b)
                 if r:r['source_page']=pn; rows.append(r)
             if ingc and any(x['source_page']==pn for x in rows) and total(lines[-1]['words']): break
