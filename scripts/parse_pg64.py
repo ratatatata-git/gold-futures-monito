@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Parse CME PG62 Gold futures bulletins into production MASTER JSON.
+"""Parse CME PG64 Gold options bulletins into production MASTER JSON.
 
-PG62 follows the same parser architecture as the production PG64 parser:
-- semantic page discovery, never page-number semantics
-- pdfplumber word coordinates + visual row grouping
-- column geometry is discovered/validated from CME table headers
-- GC futures rows are parsed only inside the GC FUT COMEX GOLD FUTURES section
-- PRELIMINARY and FINAL source observations are retained independently
-- MASTER contains observed source facts only
-- invalid/incomplete extraction fails before MASTER is written
+RAW -> MASTER only.
+No IV / Gamma / GEX / dealer positioning / trading-regime analytics are written.
+
+Design:
+- Input: one PDF or all PDFs under data/cme-pg64/
+- Output: one MASTER JSON per bulletin under data/pg64/
+- Gold sections are discovered semantically; page number never defines meaning.
+- Gold Weekly PDF family labels are mapped to official CME product codes via WEEK.
+- PDF word coordinates are used for local table extraction.
+- TOTAL rows are preserved separately and never parsed as option strikes.
+- EOO / Block is preserved separately from the main option table.
+- PRELIMINARY and FINAL bulletins are retained independently.
 """
 from __future__ import annotations
 
@@ -23,643 +27,781 @@ from typing import Any
 
 import pdfplumber
 
-PARSER_VERSION = "pg62-gold-v2.4.0"
-SCHEMA_VERSION = "pg62-gc-master-v2.4"
+try:
+    import pypdf
+except ImportError:  # pragma: no cover
+    pypdf = None
 
-CONTRACT_RE = re.compile(r"^(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2}$", re.I)
-GC_HEADER_RE = re.compile(r"\bGC\s+FUT\s+COMEX\s+GOLD\s+FUTURES\b", re.I)
-TOTAL_GC_RE = re.compile(r"^TOTAL\s+GC\s+FUT\b", re.I)
-NEXT_PRODUCT_RE = re.compile(r"^(?:[A-Z0-9]+\s+){1,5}FUT(?:URES)?\b", re.I)
-NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:,\d{3})*(?:\.\d+)?|\.\d+)$")
+PARSER_VERSION = "pg64-gold-v1.1.0"
+SCHEMA_VERSION = "pg64.master.v1"
 
-MAX_VOLUME = 2_000_000
-MAX_OI = 10_000_000
-MAX_PRICE = 20_000.0
+# Possible CME Product Master codes, not simultaneously listed contracts.
+PRODUCT_CODES = {"OG", "OMG", *(f"OG{i}" for i in range(1, 6))}
+PRODUCT_CODES |= {f"G{i}{d}" for d in "MTWR" for i in range(1, 6)}
+PRODUCT_CODES |= {f"{i}MG" for i in range(1, 6)}
+PRODUCT_CODES |= {f"{i}WG" for i in range(1, 6)}
+PRODUCT_CODES |= {f"{i}FG" for i in range(1, 6)}
 
-# These are geometry validation anchors, not a second parser.  PG64 uses the
-# same design: semantic header recognition + local row geometry.
-EXPECTED_X = {
-    "open": 120.0,
-    "high_low": 204.0,
-    "settlement": 294.0,
-    "change": 321.0,
-    "globex_volume": 414.0,
-    "pnt_volume": 468.0,
-    "open_interest": 552.0,
+FAMILY_META = {
+    "GMW": ("GOLD_WEEKLY", "MONDAY"),
+    "GWT": ("GOLD_WEEKLY", "TUESDAY"),
+    "GWW": ("GOLD_WEEKLY", "WEDNESDAY"),
+    "GWR": ("GOLD_WEEKLY", "THURSDAY"),
+    "MMG": ("MICRO_GOLD_WEEKLY", "MONDAY"),
+    "WMG": ("MICRO_GOLD_WEEKLY", "WEDNESDAY"),
+    "FMG": ("MICRO_GOLD_WEEKLY", "FRIDAY"),
 }
 
+# These are validation anchors only. Meaning is discovered from the page/header.
+EXPECTED_X = {
+    "delta": 411,
+    "exercises": 437,
+    "pnt_volume": 521,
+    "open_interest": 574,
+}
 
-def clean(value: Any) -> str:
-    return str(value or "").strip()
+EXPIRY_RE = re.compile(r"^(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2}$", re.I)
+STRIKE_RE = re.compile(r"^\d{2,5}(?:\.\d+)?$")
+NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:,\d{3})*(?:\.\d+)?|\.\d+)$")
+
+GOLD_HEADER_RE = re.compile(
+    r"\b(?:OG\d?|OMG|GMW|GWT|GWW|GWR|MMG|WMG|FMG)\b.*\bGOLD\b.*\bOPTION",
+    re.I,
+)
 
 
-def is_missing(value: Any) -> bool:
-    return clean(value).upper() in {"", "-", "--", "---", "----", "—"}
-
-
-def number(value: Any):
-    s = clean(value).replace(",", "")
-    if is_missing(s):
+def clean_text(value: str | None) -> str | None:
+    if value is None:
         return None
-    if s.upper() in {"UNCH", "NEW"}:
-        return 0.0 if s.upper() == "UNCH" else None
-    if not NUMBER_RE.fullmatch(s):
+    value = re.sub(r"\s+", " ", value).strip()
+    return None if value in {"----", "—", "- - - -"} else value
+
+
+def number(value: str | None):
+    value = clean_text(value)
+    if value is None:
         return None
-    n = float(s)
+    value = value.replace(",", "")
+    if not NUMBER_RE.fullmatch(value):
+        return None
+    try:
+        n = float(value)
+    except ValueError:
+        return None
     return int(n) if n.is_integer() else n
 
 
-def integer(value: Any):
+def parse_change(value: str | None):
+    value = clean_text(value)
+    if value is None:
+        return None, None
+    u = value.upper()
+    if u == "NEW":
+        return None, "NEW"
+    if u == "UNCH":
+        return 0, "UNCH"
     n = number(value)
-    return None if n is None else int(round(n))
+    return n, None
 
 
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+def parse_bulletin_meta(text: str) -> dict[str, Any]:
+    status = None
+    head = text[:3000].upper()
+    if re.search(r"\bFINAL\b", head):
+        status = "FINAL"
+    elif re.search(r"\bPRELIMINARY\b", head):
+        status = "PRELIMINARY"
 
-
-def parse_signed_words(words: list[dict[str, Any]]):
-    tokens = [clean(w.get("text")) for w in sorted(words, key=lambda w: w["x0"])]
-    joined = "".join(tokens).replace(" ", "")
-    if not joined or is_missing(joined):
-        return None
-    if joined.upper() == "UNCH":
-        return 0.0
-    if joined.upper() == "NEW":
-        return None
-    try:
-        return float(joined.replace("B", "").replace("A", ""))
-    except ValueError:
-        return None
-
-
-def parse_signed_change(words: list[dict[str, Any]]):
-    # PG62 price change and OI change can be split into sign + number words.
-    return parse_signed_words(words)
-
-
-def parse_prices(words: list[dict[str, Any]]):
-    """Extract one or two prices from the PG62 high/low cell."""
-    vals = []
-    for w in sorted(words, key=lambda w: w["x0"]):
-        s = clean(w.get("text")).replace(",", "").replace("B", "").replace("A", "")
-        # The PDF can split 4374.00 /4277.60 into separate words or combine it.
-        for part in s.replace("/", " ").split():
-            if NUMBER_RE.fullmatch(part):
-                vals.append(float(part))
-    return vals
-
-
-def extract_bulletin_meta(pdf) -> dict[str, Any]:
-    text = "\n".join((p.extract_text() or "") for p in pdf.pages[:4])
-    head = text[:6000]
-    status = "FINAL" if re.search(r"\bFINAL\b", head, re.I) else (
-        "PRELIMINARY" if re.search(r"\bPRELIMINARY\b", head, re.I) else None
-    )
     m = re.search(
-        r"PG62\s+BULLETIN\s*#\s*(\d+).*?"
-        r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+"
+        r"PG64\s+BULLETIN\s*#\s*(\d+).*?"
+        r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s*"
         r"([A-Z][a-z]{2})\s+(\d{1,2}),\s*(\d{4})",
         text,
         re.I | re.S,
     )
     if not m:
-        return {"bulletin_number": None, "trade_date": None, "bulletin_status": status}
+        m = re.search(
+            r"PG64\s+BULLETIN\s*#\s*(\d+).*?"
+            r"([A-Z][a-z]{2})\s+(\d{1,2}),\s*(\d{4})",
+            text,
+            re.I | re.S,
+        )
+    if not m:
+        return {
+            "bulletin_number": None,
+            "trade_date": None,
+            "bulletin_status": status,
+        }
+
     month, day, year = m.group(2), int(m.group(3)), int(m.group(4))
-    date = datetime.strptime(f"{month} {day} {year}", "%b %d %Y").date().isoformat()
+    trade_date = datetime.strptime(
+        f"{month} {day} {year}", "%b %d %Y"
+    ).date().isoformat()
     return {
         "bulletin_number": int(m.group(1)),
-        "trade_date": date,
+        "trade_date": trade_date,
         "bulletin_status": status,
     }
 
 
-def visual_groups(words: list[dict[str, Any]], tolerance: float = 1.5):
-    groups: list[dict[str, Any]] = []
-    for w in sorted(words, key=lambda x: (x["top"], x["x0"])):
-        if not groups or abs(w["top"] - groups[-1]["top"]) > tolerance:
-            groups.append({"top": w["top"], "words": [w]})
-        else:
-            groups[-1]["words"].append(w)
-            groups[-1]["top"] = sum(x["top"] for x in groups[-1]["words"]) / len(groups[-1]["words"])
-    for g in groups:
-        g["words"].sort(key=lambda x: x["x0"])
-    return groups
+def family_to_code(label: str, week: int | None, direct: str | None):
+    if direct:
+        return direct if direct in PRODUCT_CODES else None
+    if week is None:
+        return None
+    mapping = {"GMW": "M", "GWT": "T", "GWW": "W", "GWR": "R"}
+    if label in mapping:
+        code = f"G{week}{mapping[label]}"
+    elif label == "MMG":
+        code = f"{week}MG"
+    elif label == "WMG":
+        code = f"{week}WG"
+    elif label == "FMG":
+        code = f"{week}FG"
+    else:
+        return None
+    return code if code in PRODUCT_CODES else None
 
 
-def line_text(words: list[dict[str, Any]]) -> str:
-    return " ".join(clean(w.get("text")) for w in words).strip()
+def parse_family_header(line: str):
+    u = re.sub(r"\s+", " ", line.upper()).strip()
+    m = re.match(r"(OG\d?|OMG|GMW|GWT|GWW|GWR|MMG|WMG|FMG)\b", u)
+    if not m or "GOLD" not in u or "OPTION" not in u:
+        return None
 
+    label = m.group(1)
+    week_m = re.search(r"\bWEEK\s*([1-5])\b", u)
+    week = int(week_m.group(1)) if week_m else None
 
-def find_header_anchors(words: list[dict[str, Any]]):
-    """Find the CME PG62 column-header anchors by semantic labels.
+    if label == "OG":
+        family, weekday = "GOLD_MONTHLY", None
+        direct = "OG"
+    elif label in {f"OG{i}" for i in range(1, 6)}:
+        family, weekday = "GOLD_WEEKLY", "FRIDAY"
+        direct = label
+    elif label == "OMG":
+        family, weekday = "MICRO_GOLD_MONTHLY", None
+        direct = "OMG"
+    elif label in FAMILY_META:
+        family, weekday = FAMILY_META[label]
+        direct = None
+    else:
+        return None
 
-    Header words are intentionally matched by label and x-position.  We do
-    not manufacture a band if a required label is absent.
-    """
-    anchors: dict[str, float] = {}
-    ws = sorted(words, key=lambda w: (w["top"], w["x0"]))
-    for w in ws:
-        t = clean(w.get("text")).upper().replace("®", "")
-        x = float(w["x0"])
-        if t == "GLOBEX" and 100 <= x <= 140:
-            # PG62 labels the first price column as the two-word header
-            # GLOBEX / OPEN.  The left-hand GLOBEX word is the column anchor;
-            # the row values themselves begin around x=126.
-            anchors["open"] = x
-        elif t in {"HIGH/LOW", "HIGH/LOW."} or t.startswith("HIGH/LOW"):
-            anchors["high_low"] = x
-        elif t in {"SETT.", "SETT"}:
-            anchors["settlement"] = x
-        elif t == "CHGE" or t == "PT.CHGE":
-            anchors["change"] = x
-        elif t == "VOLUME" and 390 <= x <= 450:
-            anchors["globex_volume"] = x
-        elif t == "VOLUME" and 450 <= x <= 510:
-            anchors["pnt_volume"] = x
-        elif t == "INTEREST" and 530 <= x <= 590:
-            anchors["open_interest"] = x
-
-    # Header text can be split across two rows; the semantic labels above are
-    # sufficient for the observed CME PG62 geometry.
-    return anchors
-
-
-def validate_header_anchors(anchors: dict[str, float], tolerance: float = 14.0):
-    required = set(EXPECTED_X)
-    missing = sorted(required - set(anchors))
-    if missing:
-        return False, {"missing": missing, "anchors": anchors}
-    bad = {
-        k: {"observed": anchors[k], "expected": EXPECTED_X[k]}
-        for k in required
-        if abs(anchors[k] - EXPECTED_X[k]) > tolerance
+    return {
+        "product_family": family,
+        "product_family_label": label,
+        "product_code": family_to_code(label, week, direct),
+        "weekday": weekday,
+        "week_number": week,
+        "header_raw": line,
     }
-    if bad:
-        return False, {"bad": bad, "anchors": anchors}
-    return True, {"anchors": anchors}
 
 
-def build_bands(anchors: dict[str, float], page_width: float):
-    # Column boundaries are derived from validated header centers.  This is
-    # deterministic and mirrors PG64's local-coordinate row parser.
-    centers = sorted((x, k) for k, x in anchors.items())
-    boundaries = {}
-    for i, (x, key) in enumerate(centers):
-        left = 70.0 if i == 0 else (centers[i - 1][0] + x) / 2
-        right = page_width - 2.0 if i == len(centers) - 1 else (x + centers[i + 1][0]) / 2
-        boundaries[key] = (left, right)
-    # Contract is before the first numeric column.
-    boundaries["contract"] = (0.0, 70.0)
-    # PG62 prints OI and its signed change under the same OPEN INTEREST
-    # header. The source geometry consistently separates the OI value around
-    # x=542-552 from the sign/value pair around x=564-590. Preserve that
-    # source geometry explicitly rather than guessing from a missing header.
-    boundaries["open_interest"] = (510.0, 562.0)
-    boundaries["oi_change"] = (562.0, 610.0)
-    return boundaries
-
-
-def in_band(words, band):
-    lo, hi = band
-    return [w for w in words if lo <= w["x0"] < hi]
-
-
-def first_text(words):
-    return clean(words[0].get("text")) if words else ""
-
-
-def parse_contract(words, bands):
-    for w in in_band(words, bands["contract"]):
-        token = clean(w.get("text")).upper()
-        if CONTRACT_RE.fullmatch(token):
-            return token
+def parse_option_type(line: str):
+    u = line.upper()
+    if re.search(r"\bCALL\b", u):
+        return "CALL"
+    if re.search(r"\bPUT\b", u):
+        return "PUT"
     return None
 
 
-def validate_row(row: dict[str, Any]):
-    errors = []
-    for key in ("volume", "volume_globex", "volume_pnt_pit", "open_interest"):
-        value = row.get(key)
-        if value is not None and value < 0:
-            errors.append(f"negative {key}={value}")
-    for key in ("open", "high", "low", "settlement"):
-        value = row.get(key)
-        if value is not None and abs(value) > MAX_PRICE:
-            errors.append(f"implausible {key}={value}")
-    if row.get("high") is not None and row.get("low") is not None and row["high"] < row["low"]:
-        errors.append("high<low")
-    for key in ("volume_globex", "volume_pnt_pit"):
-        value = row.get(key)
-        if value is not None and value > MAX_VOLUME:
-            errors.append(f"implausible {key}={value}")
-    if row.get("open_interest") is not None and row["open_interest"] > MAX_OI:
-        errors.append("implausible open_interest")
-    parts = (row.get("volume_globex"), row.get("volume_pnt_pit"))
-    if all(v is not None for v in parts):
-        expected = parts[0] + parts[1]
-        if row.get("volume") != expected:
-            errors.append(f"volume mismatch: {row.get('volume')} != {expected}")
-    if errors:
-        raise ValueError(
-            f"PG62 row validation failed for {row.get('date')} {row.get('contract')}: "
-            + "; ".join(errors)
+def value_near_x(words: list[dict[str, Any]], lo: float, hi: float):
+    vals = [w["text"] for w in words if lo <= w["x0"] < hi]
+    return "".join(vals) if vals else None
+
+
+def signed_change(words: list[dict[str, Any]]):
+    # Price-change column is commonly split into sign and number.
+    for w in words:
+        t = w["text"].upper()
+        if t == "UNCH":
+            return 0, "UNCH"
+        if t == "NEW":
+            return None, "NEW"
+
+    vals = [w["text"] for w in words if 360 <= w["x0"] < 400]
+    joined = "".join(vals).replace(" ", "")
+    m = re.fullmatch(r"([+-]?)(\d+(?:\.\d+)?)", joined)
+    if not m:
+        return None, None
+    n = float(m.group(2))
+    if m.group(1) == "-":
+        n = -n
+    return (int(n) if n.is_integer() else n), None
+
+
+def row_groups(page, words: list[dict[str, Any]] | None = None):
+    """Return visually aligned rows using the Strike column as anchor.
+
+    The original production parser used a per-strike scan over every word.
+    That works, but PG64 pages are large enough that the O(words^2) behavior
+    becomes unnecessarily slow. We first cluster words into visual lines and
+    then identify strike-anchored lines, preserving the same observed ~0.7pt
+    vertical offset behavior.
+    """
+    if words is None:
+        words = page.extract_words(
+            x_tolerance=1,
+            y_tolerance=2,
+            keep_blank_chars=False,
         )
 
+    words = sorted(words, key=lambda w: (w["top"], w["x0"]))
+    line_groups: list[list[dict[str, Any]]] = []
+    line_tops: list[float] = []
 
-def parse_futures_row(words, date, source_file, source_status, bulletin_number, bands, page_no):
-    contract = parse_contract(words, bands)
-    if not contract:
+    for word in words:
+        if not line_groups or abs(word["top"] - line_tops[-1]) > 1.5:
+            line_groups.append([word])
+            line_tops.append(word["top"])
+        else:
+            line_groups[-1].append(word)
+
+    out: list[list[dict[str, Any]]] = []
+    for group in line_groups:
+        group = sorted(group, key=lambda w: w["x0"])
+        line_text = " ".join(w["text"] for w in group).upper()
+
+        # TOTAL rows are retained for separate handling by the caller, but
+        # never enter the strike-row candidate path.
+        if re.search(r"\bTOTAL(?:S)?\b", line_text):
+            out.append(group)
+            continue
+
+        strike_words = [
+            w for w in group
+            if w["x0"] < 35 and STRIKE_RE.fullmatch(w["text"])
+        ]
+        if strike_words:
+            valid = False
+            for w in strike_words:
+                try:
+                    if float(w["text"].replace(",", "")) >= 1000:
+                        valid = True
+                        break
+                except ValueError:
+                    pass
+            if valid:
+                out.append(group)
+                continue
+
+        out.append(group)
+
+    return out
+
+
+def header_validation(words):
+    anchors = {}
+    for w in words:
+        t = w["text"].upper()
+        cx = (w["x0"] + w["x1"]) / 2
+        if t == "DELTA":
+            anchors["delta"] = cx
+        elif t in {"EXER", "EXERCISES"}:
+            anchors["exercises"] = cx
+        elif t == "PNT":
+            anchors["pnt_volume"] = cx
+        elif t == "INTEREST":
+            anchors["open_interest"] = cx
+
+    checks = [abs(x - EXPECTED_X[k]) <= 12 for k, x in anchors.items()]
+    return len(checks) >= 3 and sum(checks) >= 3, anchors
+
+
+def parse_option_row(words: list[dict[str, Any]]):
+    words = sorted(words, key=lambda w: w["x0"])
+    if not words or not STRIKE_RE.fullmatch(words[0]["text"]):
         return None
 
-    def cell(key):
-        return in_band(words, bands[key])
+    row_text = " ".join(w["text"] for w in words).upper()
+    if re.search(r"\bTOTAL\b", row_text):
+        return None
 
-    open_value = number(first_text(cell("open")))
-    hl = parse_prices(cell("high_low"))
-    high = hl[0] if hl else None
-    low = hl[1] if len(hl) > 1 else None
-    settlement = number(first_text(cell("settlement")))
-    price_change = parse_signed_change(cell("change"))
-    globex_volume = integer(first_text(cell("globex_volume")))
-    pnt_volume = integer(first_text(cell("pnt_volume")))
-    open_interest_words = cell("open_interest")
-    open_interest = integer(first_text(open_interest_words))
+    strike = number(words[0]["text"])
+    if strike is None or strike < 1000:
+        return None
 
-    # OI change is printed immediately after OI in the same header group.
-    oi_change = parse_signed_change(in_band(words, bands["oi_change"]))
+    # PG64 main-table local coordinate bands. These are based on the
+    # observed column geometry of the option table; semantic discovery and
+    # row identity do not depend on page number.
+    bands = {
+        "open_outcry_volume": (40, 68),
+        "open_range": (68, 108),
+        "open_outcry_high_low": (108, 188),
+        "globex_high_low": (188, 260),
+        "open_outcry_close_range": (260, 310),
+        "settlement": (310, 363),
+        "price_change": (363, 397),
+        "delta": (397, 426),
+        "exercises": (426, 452),
+        "globex_open": (452, 482),
+        "pnt_volume": (482, 512),
+        "globex_volume": (512, 546),
+        "open_interest": (546, 575),
+        "oi_change": (575, 610),
+    }
 
-    if globex_volume is None and pnt_volume is None:
-        volume = None
-    else:
-        volume = (globex_volume or 0) + (pnt_volume or 0)
+    def cell(name):
+        lo, hi = bands[name]
+        vals = [w["text"] for w in words if lo <= w["x0"] < hi]
+        return "".join(vals) if vals else None
 
-    row = {
-        "date": date,
-        "contract": contract,
-        "open": open_value,
-        "high": high,
-        "low": low,
-        "close": settlement,
+    settlement = number(cell("settlement"))
+    price_change, price_change_status = signed_change(words)
+    delta = number(cell("delta"))
+    exercises = number(cell("exercises"))
+    open_outcry_volume = number(cell("open_outcry_volume"))
+    pnt_volume = number(cell("pnt_volume"))
+    globex_volume = number(cell("globex_volume"))
+    open_interest = number(cell("open_interest"))
+    oi_change, oi_change_status = parse_change(cell("oi_change"))
+    globex_open = number(cell("globex_open"))
+
+    # Preserve range / quote cells as observed strings. "----" becomes null.
+    open_range = clean_text(cell("open_range"))
+    open_outcry_high_low = clean_text(cell("open_outcry_high_low"))
+    globex_high_low = clean_text(cell("globex_high_low"))
+    open_outcry_close_range = clean_text(cell("open_outcry_close_range"))
+
+    # Require evidence that this is an option row, while allowing sparse rows.
+    if settlement is None and open_interest is None and delta is None and not any(
+        isinstance(x, (int, float))
+        for x in (open_outcry_volume, pnt_volume, globex_volume, exercises)
+    ):
+        return None
+
+    return {
+        "strike": strike,
+        "open_outcry_volume": open_outcry_volume,
+        "open_outcry_open_range": open_range,
+        "open_outcry_high_low": open_outcry_high_low,
+        "globex_high_low": globex_high_low,
+        "open_outcry_close_range": open_outcry_close_range,
         "settlement": settlement,
         "price_change": price_change,
-        "volume": volume,
-        "volume_globex": globex_volume,
-        "volume_pnt_pit": pnt_volume,
+        "price_change_status": price_change_status,
         "open_interest": open_interest,
-        "oi_change": None if oi_change is None else int(round(oi_change)),
-        "is_active": False,
-        "source_file": source_file,
-        "source_status": source_status,
-        "bulletin_number": bulletin_number,
-        "source_page": page_no,
+        "oi_change": oi_change,
+        "oi_change_status": oi_change_status,
+        "delta": delta,
+        "exercises": exercises,
+        "globex_open": globex_open,
+        "pnt_volume": pnt_volume,
+        "globex_volume": globex_volume,
+        "raw_row": " ".join(w["text"] for w in words),
     }
-    validate_row(row)
-    return row
 
 
-def is_header_line(words):
-    u = line_text(words).upper()
-    return "GLOBEX" in u and "PNT/PIT" in u and "OPEN" in u and "INTEREST" in u
+def parse_total(words, state, page_no):
+    raw = " ".join(w["text"] for w in words)
+    return {
+        **state,
+        "page": page_no,
+        "total_tokens": [w["text"] for w in words[1:]],
+        "raw": raw,
+    }
 
 
-def discover_layout(pdf):
-    layouts = []
-    for page_no, page in enumerate(pdf.pages, 1):
-        words = page.extract_words(x_tolerance=1, y_tolerance=2, keep_blank_chars=False)
-        text = line_text(words).upper()
-        if "GLOBEX" not in text or "PNT/PIT" not in text or "INTEREST" not in text:
+def parse_eoo_block_text(text: str, page_no: int, warnings: list[dict[str, Any]]):
+    """Parse the separate OPTIONS EOO'S AND BLOCKS table from page text.
+
+    The EOO/Block table is structurally simpler than the main table and is
+    kept separate. Observed rows are typically:
+      OG 4300 0 350
+    with section headers such as:
+      OG CALL COMEX GOLD OPTIONS
+      NOV26 CALL
+    """
+    records = []
+    in_section = False
+    current_product = None
+    current_option_type = None
+    current_expiry = None
+
+    for raw_line in text.splitlines():
+        line = re.sub(r"\s+", " ", raw_line).strip()
+        u = line.upper()
+        if not line:
             continue
-        anchors = find_header_anchors(words)
-        ok, detail = validate_header_anchors(anchors)
-        if ok:
-            bands = build_bands(anchors, float(page.width))
-            if any(a >= b for a, b in bands.values()):
-                raise RuntimeError(f"Invalid PG62 column geometry on page {page_no}: {bands}")
-            layouts.append({
-                "page": page_no,
-                "header_anchors": anchors,
-                "bands": bands,
-                "anchor_mode": "validated_semantic_header",
-            })
-    if not layouts:
-        raise RuntimeError("Could not discover a validated PG62 futures table header")
-    # Prefer the first validated geometry; verify all discovered layouts agree.
-    base = layouts[0]
-    for other in layouts[1:]:
-        for key in base["bands"]:
-            if key not in other["bands"]:
-                raise RuntimeError(f"Inconsistent PG62 layout on page {other['page']}: missing {key}")
-            a0, a1 = base["bands"][key]
-            b0, b1 = other["bands"][key]
-            if abs(a0 - b0) > 8 or abs(a1 - b1) > 8:
-                raise RuntimeError(f"Inconsistent PG62 column geometry between pages {base['page']} and {other['page']}")
-    return base["bands"], layouts
+
+        if "OPTIONS EOO" in u and "BLOCK" in u:
+            in_section = True
+            continue
+        if not in_section:
+            continue
+
+        # Stop when the next metals product begins.
+        if re.match(r"^(?:COMEX\s+)?(?:SILVER|COPPER|PLATINUM|PALLADIUM)", u):
+            break
+
+        m = re.search(
+            r"(OG\d?|OMG|GMW|GWT|GWW|GWR|MMG|WMG|FMG)\s*"
+            r"(CALL|PUT)?\s*COMEX GOLD OPTIONS",
+            u,
+        )
+        if not m:
+            m = re.search(
+                r"COMEX GOLD OPTIONS\s*(OG\d?|OMG|GMW|GWT|GWW|GWR|MMG|WMG|FMG)\s*"
+                r"(CALL|PUT)?",
+                u,
+            )
+        if m:
+            current_product = m.group(1)
+            current_option_type = m.group(2)
+            continue
+
+        if current_product:
+            exp_m = re.search(
+                r"\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2}\b",
+                u,
+            )
+            if exp_m:
+                current_expiry = exp_m.group(0)
+                if re.search(r"\bCALL\b", u):
+                    current_option_type = "CALL"
+                elif re.search(r"\bPUT\b", u):
+                    current_option_type = "PUT"
+                continue
+
+        if "TOTALS" in u or u.startswith("TOTAL"):
+            continue
+
+        m = re.match(
+            r"^(OG\d?|OMG|GMW|GWT|GWW|GWR|MMG|WMG|FMG)\s+"
+            r"(\d{2,5}(?:\.\d+)?)\s+(.+?)\s+(\d+)\s*$",
+            u,
+        )
+        if not m:
+            continue
+
+        product_code = m.group(1)
+        strike = number(m.group(2))
+        middle = m.group(3).strip()
+        block_volume = number(m.group(4))
+
+        # In the observed EOO/Block layout, the middle value is EOO volume
+        # when no price is printed. Preserve a numeric price separately only
+        # when there are two numeric values in the middle field.
+        middle_tokens = middle.split()
+        numeric_middle = [number(x) for x in middle_tokens if number(x) is not None]
+        price = None
+        eoo_volume = None
+        if len(numeric_middle) >= 2:
+            price = numeric_middle[-2]
+            eoo_volume = numeric_middle[-1]
+        elif len(numeric_middle) == 1:
+            eoo_volume = numeric_middle[0]
+
+        records.append({
+            "page": page_no,
+            "product_code": product_code,
+            "option_type": current_option_type,
+            "expiry": current_expiry,
+            "strike": strike,
+            "price": price,
+            "eoo_volume": eoo_volume,
+            "block_volume": block_volume,
+            "raw": line,
+        })
+
+    return records
 
 
-def gc_pages(pdf):
+def fast_gold_pages(pdf_path: Path) -> list[int]:
+    if pypdf is None:
+        return []
+    reader = pypdf.PdfReader(str(pdf_path))
     pages = []
-    for page_no, page in enumerate(pdf.pages, 1):
-        t = page.extract_text() or ""
-        if GC_HEADER_RE.search(re.sub(r"\s+", " ", t)):
-            pages.append(page_no)
+    for idx, page in enumerate(reader.pages):
+        text = page.extract_text() or ""
+        u = text.upper()
+        normalized = re.sub(r"\s+", " ", u)
+        is_gold = bool(
+            GOLD_HEADER_RE.search(normalized)
+            or re.search(r"COMEX GOLD OPTIONS\s*(?:OG\d?|OMG)", normalized)
+            or re.search(r"GOLD WEEKLY .* OPTION", normalized)
+            or re.search(r"MICRO GOLD .* OPTION", normalized)
+        )
+        is_table = bool(re.search(r"OPEN\s+OUTCRY\s+VOLUME", u)) or ("OPTIONS EOO" in u and "BLOCK" in u)
+        if is_gold and is_table:
+            pages.append(idx)
     return pages
 
 
-def extract_pdf(path: Path):
-    raw_sha = sha256(path)
+def parse_pdf(path: Path) -> dict[str, Any]:
+    raw = path.read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    ingested_at = datetime.now(timezone.utc).isoformat()
+
+    rows: list[dict[str, Any]] = []
+    totals: list[dict[str, Any]] = []
+    eoo_block: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+
     with pdfplumber.open(path) as pdf:
-        meta = extract_bulletin_meta(pdf)
-        if not meta["trade_date"]:
-            raise RuntimeError(f"Missing PG62 trade date: {path.name}")
-        if not meta["bulletin_number"]:
-            raise RuntimeError(f"Missing PG62 bulletin number: {path.name}")
-        if meta["bulletin_status"] not in {"PRELIMINARY", "FINAL"}:
-            raise RuntimeError(f"Missing/invalid bulletin status: {path.name}")
+        first_text = "\n".join((p.extract_text() or "") for p in pdf.pages[:3])
+        bulletin = parse_bulletin_meta(first_text)
 
-        bands, layouts = discover_layout(pdf)
-        candidates = gc_pages(pdf)
-        if not candidates:
-            raise RuntimeError(f"No GC futures section found: {path.name}")
+        candidate_pages = fast_gold_pages(path)
+        if not candidate_pages:
+            # Fallback: pdfplumber semantic scan. This is slower but avoids a
+            # hard dependency on pypdf for correctness.
+            candidate_pages = []
+            for idx, page in enumerate(pdf.pages):
+                text = page.extract_text() or ""
+                u = text.upper()
+                normalized = re.sub(r"\s+", " ", u)
+                gold_semantic = bool(
+                    GOLD_HEADER_RE.search(normalized)
+                    or re.search(r"COMEX GOLD OPTIONS\s*(?:OG\d?|OMG)", normalized)
+                    or re.search(r"GOLD WEEKLY .* OPTION", normalized)
+                    or re.search(r"MICRO GOLD .* OPTION", normalized)
+                )
+                if gold_semantic and (
+                    re.search(r"OPEN\s+OUTCRY\s+VOLUME", u) or ("OPTIONS EOO" in u and "BLOCK" in u)
+                ):
+                    candidate_pages.append(idx)
 
-        rows = []
-        section_active = False
-        for page_no, page in enumerate(pdf.pages, 1):
-            # GC can be a section at the bottom of a page. We only enter it on
-            # an explicit semantic GC header; subsequent pages are allowed to
-            # continue while they contain contract rows and no new product.
+        state: dict[str, Any] | None = None
+
+        for idx in candidate_pages:
+            page_no = idx + 1
+            page = pdf.pages[idx]
             text = page.extract_text() or ""
-            compact = re.sub(r"\s+", " ", text)
-            explicit_gc = bool(GC_HEADER_RE.search(compact))
-            if explicit_gc:
-                section_active = True
-            if not section_active:
+            words = page.extract_words(
+                x_tolerance=1,
+                y_tolerance=2,
+                keep_blank_chars=False,
+            )
+
+            header_ok, anchors = header_validation(words)
+            if not header_ok:
+                warnings.append({
+                    "page": page_no,
+                    "type": "header_validation",
+                    "anchors": anchors,
+                })
+
+            visual_rows = row_groups(page, words)
+            eoo_block.extend(parse_eoo_block_text(text, page_no, warnings))
+
+            # A Gold semantic page can contain continuation rows. State is
+            # carried only while the page itself remains semantically Gold.
+            page_has_gold = bool(
+                GOLD_HEADER_RE.search(text)
+                or "GOLD OPTIONS" in text.upper()
+                or "MICRO GOLD" in text.upper()
+                or "GOLD WEEKLY" in text.upper()
+            )
+            if not page_has_gold:
+                state = None
                 continue
 
-            words = page.extract_words(x_tolerance=1, y_tolerance=2, keep_blank_chars=False)
-            groups = visual_groups(words)
-            page_started_gc = False
-            for g in groups:
-                ws = g["words"]
-                line = line_text(ws)
+            current_state = dict(state) if state else None
+
+            for ws in visual_rows:
+                if not ws:
+                    continue
+                line = re.sub(r"\s+", " ", " ".join(w["text"] for w in ws)).strip()
                 upper = line.upper()
-                if GC_HEADER_RE.search(upper):
-                    page_started_gc = True
+
+                fh = parse_family_header(line)
+                if fh:
+                    current_state = fh
+                    current_state["option_type"] = parse_option_type(line)
+                    current_state.pop("expiry", None)
                     continue
-                if TOTAL_GC_RE.search(upper):
-                    section_active = False
-                    break
-                if explicit_gc and not page_started_gc:
-                    # The GC section can be near the bottom of a page; ignore
-                    # the page header and all preceding products until the
-                    # explicit GC section header is reached.
+
+                ot = parse_option_type(line)
+                if ot and current_state:
+                    current_state["option_type"] = ot
                     continue
-                if not page_started_gc and not explicit_gc:
-                    # Continuation page: only contract-looking rows are allowed.
-                    if not any(CONTRACT_RE.fullmatch(clean(w.get("text")).upper()) for w in ws):
-                        continue
-                # Stop at a new futures product heading. A contract row has a
-                # contract token in column 0, so it is handled first.
-                if NEXT_PRODUCT_RE.match(upper) and not CONTRACT_RE.fullmatch(clean(ws[0].get("text")).upper()):
-                    section_active = False
-                    break
-                rec = parse_futures_row(
-                    ws,
-                    meta["trade_date"],
-                    path.name,
-                    meta["bulletin_status"],
-                    meta["bulletin_number"],
-                    bands,
-                    page_no,
-                )
-                if rec:
-                    rows.append(rec)
 
-        # Exact source row identity. A contract should occur once per bulletin
-        # in the GC section.
-        unique = {}
-        for r in rows:
-            key = (r["date"], r["contract"], r["source_file"], r["source_page"])
-            unique[key] = r
-        rows = list(unique.values())
+                # Standalone expiry line.
+                expiry_words = [w["text"].upper() for w in ws if EXPIRY_RE.fullmatch(w["text"].upper())]
+                if current_state and len(ws) <= 3 and expiry_words:
+                    current_state["expiry"] = expiry_words[0]
+                    continue
 
-        if not rows:
-            raise RuntimeError(f"No GC futures rows extracted: {path.name}")
-        if len(rows) < 3:
-            raise RuntimeError(f"Suspiciously few GC futures rows ({len(rows)}): {path.name}")
+                if current_state and upper.startswith("TOTAL"):
+                    totals.append(parse_total(ws, current_state, page_no))
+                    continue
 
-        volume_rows = [r for r in rows if r["volume"] is not None]
-        if not volume_rows:
-            raise RuntimeError(f"No usable GC volume rows extracted: {path.name}")
-        if any(r["volume"] != (r["volume_globex"] or 0) + (r["volume_pnt_pit"] or 0) for r in volume_rows):
-            raise RuntimeError(f"GC volume consistency failure: {path.name}")
+                if current_state and current_state.get("expiry"):
+                    rec = parse_option_row(ws)
+                    if rec:
+                        rec = {
+                            "trade_date": bulletin.get("trade_date"),
+                            "bulletin_number": bulletin.get("bulletin_number"),
+                            "bulletin_status": bulletin.get("bulletin_status"),
+                            "page": page_no,
+                            "product_family": current_state.get("product_family"),
+                            "product_family_label": current_state.get("product_family_label"),
+                            "product_code": current_state.get("product_code"),
+                            "weekday": current_state.get("weekday"),
+                            "week_number": current_state.get("week_number"),
+                            "option_type": current_state.get("option_type"),
+                            "expiry": current_state.get("expiry"),
+                            **rec,
+                        }
+                        rows.append(rec)
 
-        # Active contract is an EOD representative, not intraday knowledge.
-        active = max(
-            rows,
-            key=lambda r: (
-                r["volume"] if r["volume"] is not None else -1,
-                r["open_interest"] if r["open_interest"] is not None else -1,
-            ),
-        )["contract"]
-        for r in rows:
-            r["is_active"] = r["contract"] == active
+            state = current_state
 
-        provenance = {
-            "source": "CME Daily Bulletin PG62",
-            "source_file": path.name,
-            "source_sha256": raw_sha,
-            "trade_date": meta["trade_date"],
-            "bulletin_number": meta["bulletin_number"],
-            "source_status": meta["bulletin_status"],
-            "parser_version": PARSER_VERSION,
-            "ingested_at": datetime.now(timezone.utc).isoformat(),
-            "active_selection_method": "highest_volume_eod_then_open_interest",
-            "layout_discovery": layouts,
-        }
-        return meta, rows, provenance
+    # Validation warnings are source/parser quality warnings, not analytics.
+    unknown_codes = sorted({
+        r["product_code"] for r in rows
+        if r.get("product_code") and r["product_code"] not in PRODUCT_CODES
+    })
+    if unknown_codes:
+        warnings.append({"type": "unknown_product_codes", "codes": unknown_codes})
 
+    unresolved_product_rows = sum(1 for r in rows if not r.get("product_code"))
+    if unresolved_product_rows:
+        warnings.append({
+            "type": "unresolved_product_code_rows",
+            "count": unresolved_product_rows,
+        })
 
-def load_existing(path: Path):
-    if not path.exists():
-        return {"observations": [], "provenance": []}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise RuntimeError(f"Cannot read existing MASTER {path}: {exc}")
+    if not bulletin.get("trade_date"):
+        warnings.append({"type": "missing_trade_date"})
+
+    if not bulletin.get("bulletin_status"):
+        warnings.append({"type": "missing_bulletin_status"})
+
+    provenance = {
+        "source": "CME Daily Bulletin PG64",
+        "source_file": path.name,
+        "sha256": sha,
+        "parser_version": PARSER_VERSION,
+        "ingested_at": ingested_at,
+    }
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "provenance": provenance,
+        "bulletin": bulletin,
+        "rows": rows,
+        "totals": totals,
+        "eoo_block": eoo_block,
+        "warnings": warnings,
+    }
 
 
-def observation_key(row):
-    return (
-        row.get("date"),
-        row.get("contract"),
-        row.get("source_file"),
-        row.get("source_status"),
-        row.get("source_sha256"),
-    )
+def output_name(data: dict[str, Any], pdf_path: Path) -> str:
+    date = data.get("bulletin", {}).get("trade_date")
+    status = data.get("bulletin", {}).get("bulletin_status") or "UNKNOWN"
+    if date:
+        return f"{date}_{status}.json"
+    return f"{pdf_path.stem}_{status}.json"
 
 
-def rebuild(observations):
-    rank = {"FINAL": 2, "PRELIMINARY": 1}
-    latest = {}
-    for row in observations:
-        key = (row.get("date"), row.get("contract"))
-        old = latest.get(key)
-        if old is None or rank.get(row.get("source_status"), -1) > rank.get(old.get("source_status"), -1):
-            latest[key] = row
-
-    candles = sorted(latest.values(), key=lambda r: (r.get("date") or "", r.get("contract") or ""))
-    by_date = {}
-    for row in candles:
-        row["is_active"] = False
-        by_date.setdefault(row["date"], []).append(row)
-    for date_rows in by_date.values():
-        active = max(
-            date_rows,
-            key=lambda r: (
-                r["volume"] if r.get("volume") is not None else -1,
-                r["open_interest"] if r.get("open_interest") is not None else -1,
-            ),
-        )["contract"]
-        for row in date_rows:
-            row["is_active"] = row["contract"] == active
-
-    contracts = {}
-    for row in candles:
-        contracts.setdefault(row["contract"], []).append(row)
-    dates = sorted(by_date)
-    active = next((r for r in candles if dates and r["date"] == dates[-1] and r["is_active"]), None)
-    return candles, contracts, dates, active
-
-
-def validate_master(data):
+def validate_master(data: dict[str, Any]) -> list[str]:
     errors = []
     if data.get("schema_version") != SCHEMA_VERSION:
         errors.append("schema_version")
-    if data.get("parser_version") != PARSER_VERSION:
-        errors.append("parser_version")
-    if not isinstance(data.get("observations"), list) or not data["observations"]:
-        errors.append("observations")
-    if not isinstance(data.get("candles"), list):
-        errors.append("candles")
+    bulletin = data.get("bulletin") or {}
+    if not bulletin.get("trade_date"):
+        errors.append("missing trade_date")
+    if not bulletin.get("bulletin_number"):
+        errors.append("missing bulletin_number")
+    if bulletin.get("bulletin_status") not in {"PRELIMINARY", "FINAL"}:
+        errors.append("invalid bulletin_status")
+    if not isinstance(data.get("rows"), list):
+        errors.append("rows not list")
+    if not isinstance(data.get("totals"), list):
+        errors.append("totals not list")
+    if not isinstance(data.get("eoo_block"), list):
+        errors.append("eoo_block not list")
+
     required = {
-        "date", "contract", "open", "high", "low", "close", "settlement",
-        "price_change", "volume", "volume_globex", "volume_pnt_pit",
-        "open_interest", "oi_change", "source_file", "source_status",
-        "bulletin_number", "source_page", "source_sha256", "parser_version",
+        "trade_date", "bulletin_number", "bulletin_status", "page",
+        "product_family", "product_family_label", "product_code",
+        "option_type", "expiry", "strike", "settlement", "open_interest",
+        "delta", "exercises", "pnt_volume", "globex_volume",
     }
-    for i, row in enumerate(data.get("observations", [])):
+    for i, row in enumerate(data.get("rows", [])):
         missing = sorted(required - set(row))
         if missing:
-            errors.append(f"observation[{i}] missing: {','.join(missing)}")
+            errors.append(f"row[{i}] missing: {','.join(missing)}")
             break
-        if not CONTRACT_RE.fullmatch(str(row["contract"])):
-            errors.append(f"observation[{i}] invalid contract")
+        if row.get("product_code") and row["product_code"] not in PRODUCT_CODES:
+            errors.append(f"row[{i}] invalid product_code: {row['product_code']}")
             break
-        if row["source_status"] not in {"PRELIMINARY", "FINAL"}:
-            errors.append(f"observation[{i}] invalid source_status")
+        if row.get("option_type") not in {"CALL", "PUT", None}:
+            errors.append(f"row[{i}] invalid option_type")
             break
-        if row["volume"] is not None:
-            expected = (row["volume_globex"] or 0) + (row["volume_pnt_pit"] or 0)
-            if row["volume"] != expected:
-                errors.append(f"observation[{i}] volume mismatch")
-                break
     return errors
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("pdf", nargs="?", type=Path)
-    ap.add_argument("--input-dir", type=Path, default=Path("data/cme-pg62"))
-    ap.add_argument("--output", type=Path, default=Path("data/cme-gc-history.json"))
+    ap.add_argument("--input-dir", type=Path, default=Path("data/cme-pg64"))
+    ap.add_argument("--output-dir", type=Path, default=Path("data/pg64"))
+    ap.add_argument("--keep-existing", action="store_true", default=True,
+                    help="Keep existing MASTER JSON files; default behavior.")
     args = ap.parse_args()
 
-    pdfs = [args.pdf] if args.pdf else sorted(args.input_dir.glob("*.pdf"))
-    if not pdfs:
-        raise SystemExit(f"No PG62 PDF files found in {args.input_dir}")
+    if args.pdf:
+        pdf_paths = [args.pdf]
+    else:
+        pdf_paths = sorted(args.input_dir.glob("*.pdf"))
 
-    existing = load_existing(args.output)
-    obs_map = {observation_key(r): r for r in existing.get("observations", [])}
-    provenance_map = {
-        (p.get("source_file"), p.get("source_sha256")): p
-        for p in existing.get("provenance", [])
-    }
+    if not pdf_paths:
+        raise SystemExit(f"No PG64 PDF files found in {args.input_dir}")
 
-    parsed = []
-    for path in pdfs:
-        print(f"Parsing: {path}")
-        meta, rows, provenance = extract_pdf(path)
-        digest = provenance["source_sha256"]
-        # Replace only the exact same source artifact; keep PRELIM/FINAL and
-        # different bulletin files as independent observed records.
-        for key in list(obs_map):
-            if obs_map[key].get("source_file") == path.name and obs_map[key].get("source_sha256") == digest:
-                del obs_map[key]
-        for row in rows:
-            row["source_sha256"] = digest
-            row["parser_version"] = PARSER_VERSION
-            obs_map[observation_key(row)] = row
-        provenance_map[(path.name, digest)] = provenance
-        parsed.append((path.name, meta, len(rows)))
-        print(f"  {meta['trade_date']} {meta['bulletin_status']} bulletin={meta['bulletin_number']} rows={len(rows)}")
+    args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    observations = sorted(
-        obs_map.values(),
-        key=lambda r: (
-            r.get("date") or "",
-            r.get("contract") or "",
-            r.get("source_status") or "",
-            r.get("source_file") or "",
-        ),
-    )
-    candles, contracts, dates, latest_active = rebuild(observations)
+    print(f"Found {len(pdf_paths)} PG64 PDF(s)")
+    failures = 0
+    all_outputs = []
 
-    data = {
-        "schema_version": SCHEMA_VERSION,
-        "parser_version": PARSER_VERSION,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "latest_date": dates[-1] if dates else None,
-        "latest_active": latest_active,
-        "dates": dates,
-        "contracts": contracts,
-        "candles": candles,
-        "observations": observations,
-        "provenance": sorted(
-            provenance_map.values(),
-            key=lambda p: (p.get("trade_date") or "", p.get("source_file") or ""),
-        ),
-        "notes": {
-            "master_semantics": "Observed source facts only",
-            "candles_semantics": "Latest/default observation view; FINAL preferred over PRELIMINARY",
-            "active_semantics": "EOD representative only; highest volume then open interest",
-            "missing_value": "---- is stored as null, never as zero",
-            "analysis_boundary": "IV/Gamma/GEX/regime/dealer positioning are not calculated here",
-        },
-    }
+    for pdf_path in pdf_paths:
+        print(f"\nParsing: {pdf_path}")
+        try:
+            data = parse_pdf(pdf_path)
+            errors = validate_master(data)
+            if errors:
+                failures += 1
+                print("  VALIDATION ERROR:", "; ".join(errors))
+                continue
 
-    errors = validate_master(data)
-    if errors:
-        raise RuntimeError("MASTER validation failed: " + "; ".join(errors))
+            filename = output_name(data, pdf_path)
+            output_path = args.output_dir / filename
+            output_path.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            all_outputs.append(output_path)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    tmp = args.output.with_suffix(args.output.suffix + ".tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(args.output)
+            bulletin = data["bulletin"]
+            print(f"  Date:     {bulletin.get('trade_date')}")
+            print(f"  Bulletin: {bulletin.get('bulletin_number')}")
+            print(f"  Status:   {bulletin.get('bulletin_status')}")
+            print(f"  Rows:     {len(data['rows'])}")
+            print(f"  Totals:   {len(data['totals'])}")
+            print(f"  EOO/Block:{len(data['eoo_block'])}")
+            print(f"  Warnings: {len(data['warnings'])}")
+            print(f"  Output:   {output_path}")
+
+            products = Counter(r.get("product_code") for r in data["rows"])
+            print(f"  Products: {dict(products)}")
+        except Exception as exc:
+            failures += 1
+            print(f"  ERROR: {type(exc).__name__}: {exc}")
 
     print("\n========================================")
-    print("PG62 MASTER generation complete")
+    print("PG64 MASTER generation complete")
     print("========================================")
-    print(f"Generated source files: {len(parsed)}")
-    print(f"Observations:           {len(observations)}")
-    print(f"Default rows:           {len(candles)}")
-    print(f"Dates:                  {len(dates)}")
-    if latest_active:
-        print(f"Latest active:          {latest_active['contract']} {latest_active['settlement']}")
-    print(f"Output:                 {args.output}")
+    print(f"Generated: {len(all_outputs)}")
+    print(f"Failures:  {failures}")
+    print(f"Output:    {args.output_dir}")
+
+    if failures:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
