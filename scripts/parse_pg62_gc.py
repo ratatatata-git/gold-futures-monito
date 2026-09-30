@@ -127,6 +127,49 @@ def validate(r):
     if bad: raise ValueError(f"PG62 validation failed for {r['date']} {r['contract']}: {'; '.join(bad)}")
 
 
+
+def validate_final_rows(rows, date, pdf_name):
+    """Production gate before a bulletin can be written."""
+    if len(rows) < 5:
+        raise RuntimeError(
+            f"{pdf_name}: {date}: only {len(rows)} GC rows extracted. "
+            "Refusing to write MASTER."
+        )
+
+    usable = 0
+    for r in rows:
+        vg = r.get("volume_globex")
+        vp = r.get("volume_pnt_pit")
+        vt = r.get("volume")
+
+        if vg is not None or vp is not None or vt is not None:
+            usable += 1
+
+        for name, value in (
+            ("volume_globex", vg),
+            ("volume_pnt_pit", vp),
+            ("volume", vt),
+        ):
+            if value is not None and value < 0:
+                raise RuntimeError(
+                    f"{pdf_name}: {date}: negative {name}={value} "
+                    f"contract={r.get('contract')}"
+                )
+
+        if vg is not None and vp is not None and vt is not None:
+            if abs(vt - (vg + vp)) > 1:
+                raise RuntimeError(
+                    f"{pdf_name}: {date}: volume mismatch "
+                    f"contract={r.get('contract')}: "
+                    f"volume={vt}, globex={vg}, pnt={vp}"
+                )
+
+    if usable == 0:
+        raise RuntimeError(
+            f"{pdf_name}: {date}: no usable volume fields extracted. "
+            "Refusing to write MASTER."
+        )
+
 def validate_extraction(rows, date, pdf_name):
     """
     Production guardrail:
@@ -188,28 +231,100 @@ def validate_extraction(rows, date, pdf_name):
     return True
 
 
-def validate_bands(b):
-    """Reject missing/reversed/overlapping critical x-bands."""
+
+def safe_band(x0, x1, default_width=80):
+    """Return a valid x band; fail-safe for missing/reversed endpoints."""
+    if x0 is None:
+        return None
+    try:
+        x0 = float(x0)
+    except (TypeError, ValueError):
+        return None
+
+    if x1 is None:
+        return (x0, x0 + default_width)
+
+    try:
+        x1 = float(x1)
+    except (TypeError, ValueError):
+        return (x0, x0 + default_width)
+
+    if x1 <= x0:
+        return (x0, x0 + default_width)
+    return (x0, x1)
+
+
+def normalize_bands(b):
+    """Normalize required GC bands and reject missing columns."""
     if not b:
-        raise RuntimeError("GC header bands are missing; refusing row extraction.")
+        raise RuntimeError("GC header bands are missing.")
 
     required = (
         "contract", "open", "high_low", "settlement", "change",
-        "open_interest", "delta", "globex_open", "pnt_volume",
-        "globex_volume",
+        "open_interest", "delta", "globex_open",
+        "pnt_volume", "globex_volume",
     )
+    widths = {
+        "contract": 70, "open": 90, "high_low": 90,
+        "settlement": 60, "change": 60,
+        "open_interest": 70, "delta": 70,
+        "globex_open": 60, "pnt_volume": 60,
+        "globex_volume": 80,
+    }
+
+    out = dict(b)
     for key in required:
-        band = b.get(key)
+        band = out.get(key)
         if not band or len(band) != 2:
-            raise RuntimeError(f"Invalid GC header band: {key}={band!r}")
-        x0, x1 = band
-        if x0 >= x1:
+            raise RuntimeError(f"Missing GC header band: {key}={band!r}")
+        out[key] = safe_band(band[0], band[1], widths[key])
+        if out[key] is None or out[key][0] >= out[key][1]:
             raise RuntimeError(
-                f"Invalid GC header band: {key}={band!r}; x0 must be < x1."
+                f"Invalid GC header band: {key}={out[key]!r}"
             )
-    return True
+    return out
+
+def validate_bands(b):
+    """Validate and return normalized GC x-bands."""
+    return normalize_bands(b)
+
+
+def extract_volume_fields(words, b):
+    """Extract PNT, Globex and total volume from validated local bands."""
+    def values(band):
+        out = []
+        for w in inband(words, band):
+            raw = str(getattr(w, "text", "")).strip().replace(",", "")
+            if not raw or raw in {"----", "—", "–", "-"}:
+                continue
+            if re.fullmatch(r"-?\d+(?:\.\d+)?", raw):
+                try:
+                    out.append(float(raw))
+                except ValueError:
+                    pass
+        return out
+
+    def pick(vals):
+        if not vals:
+            return None
+        v = vals[-1]
+        return int(v) if v.is_integer() else v
+
+    vg = pick(values(b["globex_volume"]))
+    vp = pick(values(b["pnt_volume"]))
+
+    total = None
+    if vg is not None and vp is not None:
+        total = vg + vp
+    elif vg is not None:
+        total = vg
+    elif vp is not None:
+        total = vp
+
+    return vg, vp, total
 
 def parse_row(words,date,source,st,bno,b):
+    volume_globex, volume_pnt_pit, volume = extract_volume_fields(words, b)
     c=contract(words,b)
     if not c:return None
     def t(k):return ' '.join(w['text'] for w in inband(words,b[k]))
