@@ -126,6 +126,89 @@ def validate(r):
     if all(r[k] is not None for k in ('volume','volume_globex','volume_pnt_pit')) and r['volume']!=r['volume_globex']+r['volume_pnt_pit']: bad.append('volume != globex + pnt/pit')
     if bad: raise ValueError(f"PG62 validation failed for {r['date']} {r['contract']}: {'; '.join(bad)}")
 
+
+def validate_extraction(rows, date, pdf_name):
+    """
+    Production guardrail:
+    - Never treat a PDF as successfully parsed when only a few GC rows were found.
+    - Require usable volume extraction because active-contract selection depends on it.
+    - Reject impossible/partial volume states instead of silently producing nulls.
+    """
+    if not rows:
+        raise RuntimeError(
+            f"{pdf_name}: {date}: GC extraction returned 0 rows. "
+            "Header/section discovery failed."
+        )
+
+    # A normal GC futures page contains substantially more than three contracts.
+    # Keep this deliberately conservative so the parser fails rather than fabricates
+    # an apparently valid MASTER from a partial extraction.
+    if len(rows) < 5:
+        raise RuntimeError(
+            f"{pdf_name}: {date}: only {len(rows)} GC rows extracted. "
+            "Refusing to write MASTER; likely column/header/row discovery failure."
+        )
+
+    volume_rows = [
+        r for r in rows
+        if r.get("volume") is not None
+        or r.get("volume_globex") is not None
+        or r.get("volume_pnt_pit") is not None
+    ]
+    if not volume_rows:
+        raise RuntimeError(
+            f"{pdf_name}: {date}: no usable volume values extracted. "
+            "Refusing active-contract selection."
+        )
+
+    for r in rows:
+        vg = r.get("volume_globex")
+        vp = r.get("volume_pnt_pit")
+        vol = r.get("volume")
+
+        for name, value in (
+            ("volume_globex", vg),
+            ("volume_pnt_pit", vp),
+            ("volume", vol),
+        ):
+            if value is not None and value < 0:
+                raise RuntimeError(
+                    f"{pdf_name}: {date}: negative {name}={value} "
+                    f"for contract={r.get('contract')}"
+                )
+
+        if vg is not None and vp is not None and vol is not None:
+            if abs(vol - (vg + vp)) > 1:
+                raise RuntimeError(
+                    f"{pdf_name}: {date}: volume mismatch for "
+                    f"{r.get('contract')}: volume={vol}, "
+                    f"globex={vg}, pnt={vp}"
+                )
+
+    return True
+
+
+def validate_bands(b):
+    """Reject missing/reversed/overlapping critical x-bands."""
+    if not b:
+        raise RuntimeError("GC header bands are missing; refusing row extraction.")
+
+    required = (
+        "contract", "open", "high_low", "settlement", "change",
+        "open_interest", "delta", "globex_open", "pnt_volume",
+        "globex_volume",
+    )
+    for key in required:
+        band = b.get(key)
+        if not band or len(band) != 2:
+            raise RuntimeError(f"Invalid GC header band: {key}={band!r}")
+        x0, x1 = band
+        if x0 >= x1:
+            raise RuntimeError(
+                f"Invalid GC header band: {key}={band!r}; x0 must be < x1."
+            )
+    return True
+
 def parse_row(words,date,source,st,bno,b):
     c=contract(words,b)
     if not c:return None
@@ -213,3 +296,13 @@ def main():
     print(f'Output: {OUT_FILE}')
 
 if __name__=='__main__':main()
+
+
+# v2.2.0 production contract:
+# This parser intentionally fails rather than writing a partially extracted
+# PG62 MASTER. A successful run must have:
+#   1) recognized GC header bands,
+#   2) >=5 GC contract rows per bulletin,
+#   3) usable volume extraction,
+#   4) non-negative volumes,
+#   5) volume == Globex + PNT/Pit when all three are present.
