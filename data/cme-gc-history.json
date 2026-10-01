@@ -1,7 +1,7 @@
 {
   "schema_version": "pg62-gc-master-v2.4",
   "parser_version": "pg62-gold-v2.4.0",
-  "updated_at": "2026-09-30T23:48:52.495461+00:00",
+  "updated_at": "2026-10-01T04:04:41.086886+00:00",
   "latest_date": "2026-09-28",
   "latest_active": {
     "date": "2026-09-28",
@@ -9601,7 +9601,7 @@
       "bulletin_number": 181,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-09-30T23:48:46.351840+00:00",
+      "ingested_at": "2026-10-01T04:04:35.239521+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -9716,7 +9716,7 @@
       "bulletin_number": 182,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-09-30T23:48:47.865463+00:00",
+      "ingested_at": "2026-10-01T04:04:36.721500+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -9831,7 +9831,7 @@
       "bulletin_number": 183,
       "source_status": "FINAL",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-09-30T23:48:49.427244+00:00",
+      "ingested_at": "2026-10-01T04:04:38.199333+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -9946,7 +9946,7 @@
       "bulletin_number": 185,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-09-30T23:48:50.913581+00:00",
+      "ingested_at": "2026-10-01T04:04:39.600267+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -10061,7 +10061,7 @@
       "bulletin_number": 186,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-09-30T23:48:52.494561+00:00",
+      "ingested_at": "2026-10-01T04:04:41.086038+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
