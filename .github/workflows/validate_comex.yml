@@ -1,0 +1,66 @@
+name: Validate COMEX PDFs
+
+on:
+  push:
+    paths:
+      - "data/cme-pg62/**/*.pdf"
+      - "data/cme-pg64/**/*.pdf"
+      - "scripts/**/*.py"
+      - "tests/**/*.py"
+      - ".github/workflows/validate-comex.yml"
+
+  pull_request:
+    paths:
+      - "data/cme-pg62/**/*.pdf"
+      - "data/cme-pg64/**/*.pdf"
+      - "scripts/**/*.py"
+      - "tests/**/*.py"
+      - ".github/workflows/validate-comex.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-comex:
+    name: Validate COMEX PG62 / PG64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pdfplumber pytest
+
+      - name: Show repository structure
+        run: |
+          echo "=== PG62 PDFs ==="
+          find data/cme-pg62 -maxdepth 1 -type f -name "*.pdf" -print 2>/dev/null || true
+
+          echo "=== PG64 PDFs ==="
+          find data/cme-pg64 -maxdepth 1 -type f -name "*.pdf" -print 2>/dev/null || true
+
+          echo "=== Scripts ==="
+          find scripts -maxdepth 1 -type f -name "*.py" -print 2>/dev/null || true
+
+      - name: Run COMEX tests
+        run: |
+          pytest -q tests
+
+      - name: Validate PG62 PDFs
+        run: |
+          python scripts/parse_pg62.py
+
+      - name: Validate PG64 PDFs
+        run: |
+          python scripts/parse_pg64.py
