@@ -1,0 +1,288 @@
+name: Save PG62 MASTER to Repository
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: save-pg62-master
+  cancel-in-progress: false
+
+jobs:
+  save-master:
+    name: Validate and Save PG62 MASTER
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+          if [ -f pg64-requirements.txt ]; then
+            pip install -r pg64-requirements.txt
+          fi
+
+          pip install pdfplumber
+
+      - name: Check required files
+        run: |
+          set -e
+
+          test -f scripts/parse_pg62_v5.py
+          test -f scripts/build_pg62_master.py
+
+          test -f data/cme-pg62/PG62_2026-09-23.pdf
+          test -f data/cme-pg62/PG62_2026-09-25.pdf
+
+          echo "Required files exist."
+
+      - name: Compile parser and MASTER builder
+        run: |
+          set -e
+
+          python -m py_compile \
+            scripts/parse_pg62_v5.py \
+            scripts/build_pg62_master.py
+
+          echo "Compilation passed."
+
+      - name: Build validated PG62 MASTER
+        run: |
+          set -e
+
+          rm -rf data/master/pg62
+
+          mkdir -p data/master/pg62
+
+          echo "=== Building 2026-09-23 FINAL ==="
+
+          python scripts/build_pg62_master.py \
+            data/cme-pg62/PG62_2026-09-23.pdf \
+            --output-root data/master/pg62
+
+          echo ""
+          echo "=== Building 2026-09-25 PRELIMINARY ==="
+
+          python scripts/build_pg62_master.py \
+            data/cme-pg62/PG62_2026-09-25.pdf \
+            --output-root data/master/pg62
+
+      - name: Verify MASTER files
+        run: |
+          set -e
+
+          FINAL_FILE="data/master/pg62/2026/09/2026-09-23_FINAL.json"
+          PRELIM_FILE="data/master/pg62/2026/09/2026-09-25_PRELIMINARY.json"
+
+          test -f "$FINAL_FILE"
+          test -f "$PRELIM_FILE"
+
+          echo "MASTER files found:"
+          echo "  $FINAL_FILE"
+          echo "  $PRELIM_FILE"
+
+      - name: Validate MASTER contents
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = [
+              (
+                  Path("data/master/pg62/2026/09/2026-09-23_FINAL.json"),
+                  "2026-09-23",
+                  "FINAL",
+              ),
+              (
+                  Path("data/master/pg62/2026/09/2026-09-25_PRELIMINARY.json"),
+                  "2026-09-25",
+                  "PRELIMINARY",
+              ),
+          ]
+
+          required_reconciliation_fields = {
+              "volume_globex",
+              "volume_pnt_pit",
+              "open_interest",
+              "oi_change",
+          }
+
+          for path, expected_date, expected_status in files:
+              print(f"Checking {path}")
+
+              data = json.loads(path.read_text(encoding="utf-8"))
+
+              assert data["trade_date"] == expected_date
+              assert data["bulletin"]["status"] == expected_status
+              assert data["validation"]["status"] == "PASS"
+
+              assert data["dataset"] == "PG62_GC_FUTURES"
+              assert len(data["contracts"]) == 28
+
+              assert data["master"]["status"] == "VALIDATED"
+              assert data["master"]["source_observation"] is True
+              assert data["master"]["derived_analysis"] is False
+
+              source_sha = data.get("source", {}).get("sha256")
+              assert source_sha
+              assert len(source_sha) == 64
+
+              parser_version = data.get("parser_version")
+              assert parser_version
+
+              schema_version = data.get("schema_version")
+              assert schema_version
+
+              reconciliation = data["validation"]["total_reconciliation"]
+
+              found_fields = {
+                  item["field"]
+                  for item in reconciliation
+              }
+
+              assert required_reconciliation_fields.issubset(found_fields), (
+                  f"Missing reconciliation fields in {path}: "
+                  f"{required_reconciliation_fields - found_fields}"
+              )
+
+              for item in reconciliation:
+                  assert item["pass"] is True, (
+                      f"TOTAL reconciliation failed: "
+                      f"{path} / {item['field']}"
+                  )
+
+              def contains_parser_error(value):
+                  if isinstance(value, dict):
+                      if value.get("state") == "PARSER_ERROR":
+                          return True
+                      return any(
+                          contains_parser_error(v)
+                          for v in value.values()
+                      )
+
+                  if isinstance(value, list):
+                      return any(
+                          contains_parser_error(v)
+                          for v in value
+                      )
+
+                  return False
+
+              assert not contains_parser_error(data), (
+                  f"PARSER_ERROR found in {path}"
+              )
+
+              print(
+                  f"PASS: {path} "
+                  f"date={expected_date} "
+                  f"status={expected_status} "
+                  f"contracts={len(data['contracts'])} "
+                  f"sha256={source_sha}"
+              )
+
+          print("")
+          print("All MASTER content checks passed.")
+          PY
+
+      - name: Show repository changes
+        run: |
+          set -e
+
+          echo "=== Git status ==="
+          git status --short
+
+          echo ""
+          echo "=== MASTER files ==="
+          find data/master/pg62 \
+            -type f \
+            -name "*.json" \
+            -print \
+            | sort
+
+      - name: Configure Git identity
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Stage only PG62 MASTER
+        run: |
+          set -e
+
+          git add data/master/pg62
+
+          echo "=== Staged changes ==="
+          git diff --cached --stat
+
+          echo ""
+          echo "=== Staged files ==="
+          git diff --cached --name-status
+
+      - name: Commit MASTER if changed
+        id: commit
+        run: |
+          set -e
+
+          if git diff --cached --quiet; then
+            echo "No MASTER changes detected."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit \
+            -m "data: save validated PG62 MASTER"
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push MASTER to repository
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          set -e
+
+          git push origin HEAD:${GITHUB_REF_NAME}
+
+          echo "MASTER successfully pushed to ${GITHUB_REF_NAME}."
+
+      - name: Final summary
+        run: |
+          echo "========================================"
+          echo "PG62 MASTER SAVE COMPLETED"
+          echo "========================================"
+          echo ""
+          echo "Saved:"
+          echo "  2026-09-23 FINAL"
+          echo "  2026-09-25 PRELIMINARY"
+          echo ""
+          echo "Location:"
+          echo "  data/master/pg62/2026/09/"
+          echo ""
+          echo "Rules:"
+          echo "  - Parser validation required"
+          echo "  - TOTAL reconciliation required"
+          echo "  - No PARSER_ERROR allowed"
+          echo "  - Existing MASTER is never overwritten"
+          echo "  - PRELIMINARY and FINAL are separate artifacts"
+          echo "  - Only data/master/pg62 is committed"
+          echo "========================================"
