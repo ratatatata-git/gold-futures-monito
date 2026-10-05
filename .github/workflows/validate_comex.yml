@@ -7,6 +7,7 @@ on:
       - "data/cme-pg64/**"
       - "scripts/**"
       - "tests/test_comex_v5.py"
+      - "tests/test_pg62_master.py"
       - ".github/workflows/validate_comex.yml"
 
   pull_request:
@@ -15,6 +16,7 @@ on:
       - "data/cme-pg64/**"
       - "scripts/**"
       - "tests/test_comex_v5.py"
+      - "tests/test_pg62_master.py"
       - ".github/workflows/validate_comex.yml"
 
   workflow_dispatch:
@@ -28,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -74,14 +75,21 @@ jobs:
             -print 2>/dev/null || true
 
           echo ""
-          echo "=== v5 parsers ==="
+          echo "=== PG62 parser / MASTER builder ==="
           ls -l \
             scripts/parse_pg62_v5.py \
+            scripts/build_pg62_master.py
+
+          echo ""
+          echo "=== PG64 parser ==="
+          ls -l \
             scripts/parse_pg64_v5.py
 
           echo ""
-          echo "=== v5 test ==="
-          ls -l tests/test_comex_v5.py
+          echo "=== Tests ==="
+          ls -l \
+            tests/test_comex_v5.py \
+            tests/test_pg62_master.py
 
       - name: Check required files
         run: |
@@ -89,7 +97,10 @@ jobs:
 
           test -f scripts/parse_pg62_v5.py
           test -f scripts/parse_pg64_v5.py
+          test -f scripts/build_pg62_master.py
+
           test -f tests/test_comex_v5.py
+          test -f tests/test_pg62_master.py
 
           test -f data/cme-pg62/PG62_2026-09-23.pdf
           test -f data/cme-pg62/PG62_2026-09-25.pdf
@@ -102,7 +113,9 @@ jobs:
           python -m py_compile \
             scripts/parse_pg62_v5.py \
             scripts/parse_pg64_v5.py \
-            tests/test_comex_v5.py
+            scripts/build_pg62_master.py \
+            tests/test_comex_v5.py \
+            tests/test_pg62_master.py
 
           echo "Python compilation passed."
 
@@ -110,19 +123,36 @@ jobs:
         run: |
           pytest -q tests/test_comex_v5.py
 
+      - name: Run PG62 MASTER tests
+        run: |
+          pytest -q tests/test_pg62_master.py
+
       - name: Validation summary
         if: success()
         run: |
           echo "========================================"
           echo "COMEX VALIDATION PASSED"
           echo "========================================"
+
+          echo ""
           echo "PG62:"
           echo "  2026-09-23 FINAL"
           echo "  2026-09-25 PRELIMINARY"
+
+          echo ""
+          echo "PG62 MASTER:"
+          echo "  Builder compilation: PASSED"
+          echo "  FINAL MASTER test: PASSED"
+          echo "  PRELIMINARY MASTER test: PASSED"
+          echo "  Immutable overwrite test: PASSED"
+
           echo ""
           echo "PG64:"
           echo "  2026-09-25 diagnostic/audit only"
+
           echo ""
           echo "Production MASTER:"
-          echo "  PG64 remains BLOCKED_DIAGNOSTIC_ONLY"
+          echo "  PG62: validated"
+          echo "  PG64: BLOCKED_DIAGNOSTIC_ONLY"
+
           echo "========================================"
