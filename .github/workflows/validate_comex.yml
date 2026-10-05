@@ -3,19 +3,19 @@ name: Validate COMEX PDFs
 on:
   push:
     paths:
-      - "data/cme-pg62/**/*.pdf"
-      - "data/cme-pg64/**/*.pdf"
-      - "scripts/**/*.py"
-      - "tests/**/*.py"
-      - ".github/workflows/validate-comex.yml"
+      - "data/cme-pg62/**"
+      - "data/cme-pg64/**"
+      - "scripts/**"
+      - "tests/test_comex_v5.py"
+      - ".github/workflows/validate_comex.yml"
 
   pull_request:
     paths:
-      - "data/cme-pg62/**/*.pdf"
-      - "data/cme-pg64/**/*.pdf"
-      - "scripts/**/*.py"
-      - "tests/**/*.py"
-      - ".github/workflows/validate-comex.yml"
+      - "data/cme-pg62/**"
+      - "data/cme-pg64/**"
+      - "scripts/**"
+      - "tests/test_comex_v5.py"
+      - ".github/workflows/validate_comex.yml"
 
   workflow_dispatch:
 
@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -40,27 +41,88 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pdfplumber pytest
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+          if [ -f pg64-requirements.txt ]; then
+            pip install -r pg64-requirements.txt
+          fi
+
+          pip install pytest pdfplumber
 
       - name: Show repository structure
         run: |
+          echo "=== Repository ==="
+          pwd
+
+          echo ""
           echo "=== PG62 PDFs ==="
-          find data/cme-pg62 -maxdepth 1 -type f -name "*.pdf" -print 2>/dev/null || true
+          find data/cme-pg62 \
+            -maxdepth 1 \
+            -type f \
+            -name "*.pdf" \
+            -print 2>/dev/null || true
 
+          echo ""
           echo "=== PG64 PDFs ==="
-          find data/cme-pg64 -maxdepth 1 -type f -name "*.pdf" -print 2>/dev/null || true
+          find data/cme-pg64 \
+            -maxdepth 1 \
+            -type f \
+            -name "*.pdf" \
+            -print 2>/dev/null || true
 
-          echo "=== Scripts ==="
-          find scripts -maxdepth 1 -type f -name "*.py" -print 2>/dev/null || true
+          echo ""
+          echo "=== v5 parsers ==="
+          ls -l \
+            scripts/parse_pg62_v5.py \
+            scripts/parse_pg64_v5.py
 
-      - name: Run COMEX tests
+          echo ""
+          echo "=== v5 test ==="
+          ls -l tests/test_comex_v5.py
+
+      - name: Check required files
         run: |
-          pytest -q tests
+          set -e
 
-      - name: Validate PG62 PDFs
-        run: |
-          python scripts/parse_pg62.py
+          test -f scripts/parse_pg62_v5.py
+          test -f scripts/parse_pg64_v5.py
+          test -f tests/test_comex_v5.py
 
-      - name: Validate PG64 PDFs
+          test -f data/cme-pg62/PG62_2026-09-23.pdf
+          test -f data/cme-pg62/PG62_2026-09-25.pdf
+          test -f data/cme-pg64/PG64_2026-09-25.pdf
+
+          echo "All required files exist."
+
+      - name: Compile Python files
         run: |
-          python scripts/parse_pg64.py
+          python -m py_compile \
+            scripts/parse_pg62_v5.py \
+            scripts/parse_pg64_v5.py \
+            tests/test_comex_v5.py
+
+          echo "Python compilation passed."
+
+      - name: Run COMEX v5 integration tests
+        run: |
+          pytest -q tests/test_comex_v5.py
+
+      - name: Validation summary
+        if: success()
+        run: |
+          echo "========================================"
+          echo "COMEX VALIDATION PASSED"
+          echo "========================================"
+          echo "PG62:"
+          echo "  2026-09-23 FINAL"
+          echo "  2026-09-25 PRELIMINARY"
+          echo ""
+          echo "PG64:"
+          echo "  2026-09-25 diagnostic/audit only"
+          echo ""
+          echo "Production MASTER:"
+          echo "  PG64 remains BLOCKED_DIAGNOSTIC_ONLY"
+          echo "========================================"
