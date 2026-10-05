@@ -1,0 +1,410 @@
+name: Build PG62 MASTER Artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-pg62-master:
+    name: Build and Inspect PG62 MASTER
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+          if [ -f pg64-requirements.txt ]; then
+            pip install -r pg64-requirements.txt
+          fi
+
+          pip install pdfplumber
+
+      - name: Check required files
+        run: |
+          set -e
+
+          test -f scripts/parse_pg62_v5.py
+          test -f scripts/build_pg62_master.py
+
+          test -f data/cme-pg62/PG62_2026-09-23.pdf
+          test -f data/cme-pg62/PG62_2026-09-25.pdf
+
+          echo "All required files exist."
+
+      - name: Compile PG62 parser and MASTER builder
+        run: |
+          python -m py_compile \
+            scripts/parse_pg62_v5.py \
+            scripts/build_pg62_master.py
+
+          echo "Compilation passed."
+
+      - name: Build 2026-09-23 FINAL MASTER
+        run: |
+          python scripts/build_pg62_master.py \
+            data/cme-pg62/PG62_2026-09-23.pdf \
+            --output-root data/master/pg62
+
+      - name: Build 2026-09-25 PRELIMINARY MASTER
+        run: |
+          python scripts/build_pg62_master.py \
+            data/cme-pg62/PG62_2026-09-25.pdf \
+            --output-root data/master/pg62
+
+      - name: List generated MASTER files
+        run: |
+          echo "=== Generated MASTER files ==="
+
+          find data/master/pg62 \
+            -type f \
+            -name "*.json" \
+            -print
+
+      - name: Inspect MASTER structure
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data/master/pg62")
+
+          files = sorted(root.rglob("*.json"))
+
+          if not files:
+              raise SystemExit("No MASTER JSON files were generated.")
+
+          print(f"MASTER files found: {len(files)}")
+
+          expected = {
+              "2026-09-23_FINAL.json": {
+                  "trade_date": "2026-09-23",
+                  "status": "FINAL",
+              },
+              "2026-09-25_PRELIMINARY.json": {
+                  "trade_date": "2026-09-25",
+                  "status": "PRELIMINARY",
+              },
+          }
+
+          found_names = {p.name for p in files}
+
+          for filename, expectation in expected.items():
+              if filename not in found_names:
+                  raise SystemExit(
+                      f"Missing expected MASTER: {filename}"
+                  )
+
+              path = next(
+                  p for p in files
+                  if p.name == filename
+              )
+
+              data = json.loads(
+                  path.read_text(encoding="utf-8")
+              )
+
+              print("")
+              print("========================================")
+              print(f"MASTER: {path}")
+              print("========================================")
+
+              print(
+                  f"trade_date: "
+                  f"{data.get('trade_date')}"
+              )
+
+              print(
+                  f"bulletin number: "
+                  f"{data.get('bulletin', {}).get('number')}"
+              )
+
+              print(
+                  f"bulletin status: "
+                  f"{data.get('bulletin', {}).get('status')}"
+              )
+
+              print(
+                  f"parser version: "
+                  f"{data.get('parser_version')}"
+              )
+
+              print(
+                  f"schema version: "
+                  f"{data.get('schema_version')}"
+              )
+
+              print(
+                  f"validation status: "
+                  f"{data.get('validation', {}).get('status')}"
+              )
+
+              print(
+                  f"contract rows: "
+                  f"{len(data.get('contracts', []))}"
+              )
+
+              print(
+                  f"source SHA256: "
+                  f"{data.get('source', {}).get('sha256')}"
+              )
+
+              if data.get("trade_date") != expectation["trade_date"]:
+                  raise SystemExit(
+                      f"{filename}: unexpected trade_date"
+                  )
+
+              if (
+                  data.get("bulletin", {}).get("status")
+                  != expectation["status"]
+              ):
+                  raise SystemExit(
+                      f"{filename}: unexpected bulletin status"
+                  )
+
+              if (
+                  data.get("validation", {}).get("status")
+                  != "PASS"
+              ):
+                  raise SystemExit(
+                      f"{filename}: validation is not PASS"
+                  )
+
+              if len(data.get("contracts", [])) != 28:
+                  raise SystemExit(
+                      f"{filename}: expected 28 contracts, "
+                      f"got {len(data.get('contracts', []))}"
+                  )
+
+              if not data.get("source", {}).get("sha256"):
+                  raise SystemExit(
+                      f"{filename}: missing source SHA256"
+                  )
+
+              if not data.get("parser_version"):
+                  raise SystemExit(
+                      f"{filename}: missing parser version"
+                  )
+
+              if not data.get("schema_version"):
+                  raise SystemExit(
+                      f"{filename}: missing schema version"
+                  )
+
+          print("")
+          print("========================================")
+          print("MASTER STRUCTURE INSPECTION PASSED")
+          print("========================================")
+          PY
+
+      - name: Check MASTER for PARSER_ERROR
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data/master/pg62")
+
+          def find_parser_errors(value, path="$"):
+              errors = []
+
+              if isinstance(value, dict):
+                  if value.get("state") == "PARSER_ERROR":
+                      errors.append(path)
+
+                  for key, child in value.items():
+                      errors.extend(
+                          find_parser_errors(
+                              child,
+                              f"{path}.{key}"
+                          )
+                      )
+
+              elif isinstance(value, list):
+                  for index, child in enumerate(value):
+                      errors.extend(
+                          find_parser_errors(
+                              child,
+                              f"{path}[{index}]"
+                          )
+                      )
+
+              return errors
+
+          for path in sorted(root.rglob("*.json")):
+              data = json.loads(
+                  path.read_text(encoding="utf-8")
+              )
+
+              errors = find_parser_errors(data)
+
+              if errors:
+                  print(
+                      f"PARSER_ERROR found in {path}:"
+                  )
+
+                  for error in errors:
+                      print(f"  {error}")
+
+                  raise SystemExit(
+                      "MASTER contains PARSER_ERROR."
+                  )
+
+              print(
+                  f"PASS: no PARSER_ERROR -> {path}"
+              )
+
+          print("")
+          print(
+              "MASTER PARSER_ERROR inspection PASSED."
+          )
+          PY
+
+      - name: Inspect TOTAL reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data/master/pg62")
+
+          required_fields = {
+              "volume_globex",
+              "volume_pnt_pit",
+              "open_interest",
+              "oi_change",
+          }
+
+          for path in sorted(root.rglob("*.json")):
+              data = json.loads(
+                  path.read_text(encoding="utf-8")
+              )
+
+              checks = data.get(
+                  "validation",
+                  {}
+              ).get(
+                  "total_reconciliation",
+                  []
+              )
+
+              fields = {
+                  item.get("field")
+                  for item in checks
+              }
+
+              if fields != required_fields:
+                  raise SystemExit(
+                      f"{path}: TOTAL reconciliation "
+                      f"fields mismatch: {fields}"
+                  )
+
+              failed = [
+                  item
+                  for item in checks
+                  if item.get("pass") is not True
+              ]
+
+              if failed:
+                  raise SystemExit(
+                      f"{path}: TOTAL reconciliation failed: "
+                      f"{failed}"
+                  )
+
+              print(
+                  f"PASS: TOTAL reconciliation -> {path}"
+              )
+
+          print("")
+          print(
+              "TOTAL reconciliation inspection PASSED."
+          )
+          PY
+
+      - name: Show MASTER preview
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in sorted(
+              Path("data/master/pg62").rglob("*.json")
+          ):
+              data = json.loads(
+                  path.read_text(encoding="utf-8")
+              )
+
+              print("")
+              print("========================================")
+              print(path)
+              print("========================================")
+
+              print(
+                  json.dumps(
+                      {
+                          "trade_date": data.get(
+                              "trade_date"
+                          ),
+                          "bulletin": data.get(
+                              "bulletin"
+                          ),
+                          "validation": data.get(
+                              "validation"
+                          ),
+                          "first_contract": (
+                              data.get("contracts", [None])[0]
+                          ),
+                          "last_contract": (
+                              data.get("contracts", [None])[-1]
+                          ),
+                      },
+                      ensure_ascii=False,
+                      indent=2,
+                  )
+              )
+          PY
+
+      - name: Upload PG62 MASTER Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pg62-master-2026-09
+          path: data/master/pg62/**/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Final summary
+        if: success()
+        run: |
+          echo "========================================"
+          echo "PG62 MASTER ARTIFACT BUILD PASSED"
+          echo "========================================"
+          echo ""
+          echo "Generated:"
+          echo "  2026-09-23 FINAL"
+          echo "  2026-09-25 PRELIMINARY"
+          echo ""
+          echo "Validated:"
+          echo "  28 contracts each"
+          echo "  TOTAL reconciliation"
+          echo "  SHA256"
+          echo "  parser/schema version"
+          echo "  no PARSER_ERROR"
+          echo ""
+          echo "Artifact:"
+          echo "  pg62-master-2026-09"
+          echo "========================================"
