@@ -1,241 +1,181 @@
-#!/usr/bin/env python3
-"""
-Integration checks for the current COMEX parser prototype.
+name: Validate COMEX PDFs
 
-Repository layout:
+on:
+  push:
+    paths:
+      - "data/cme-pg62/**/*.pdf"
+      - "data/cme-pg64/**/*.pdf"
+      - "scripts/**/*.py"
+      - "tests/test_comex_v5.py"
+      - ".github/workflows/validate_comex.yml"
 
-    scripts/
-        parse_pg62_v5.py
-        parse_pg64_v5.py
+  pull_request:
+    paths:
+      - "data/cme-pg62/**/*.pdf"
+      - "data/cme-pg64/**/*.pdf"
+      - "scripts/**/*.py"
+      - "tests/test_comex_v5.py"
+      - ".github/workflows/validate_comex.yml"
 
-    data/
-        cme-pg62/
-            PG62_YYYY-MM-DD.pdf
-        cme-pg64/
-            PG64_YYYY-MM-DD.pdf
+  workflow_dispatch:
 
-    tests/
-        test_comex_v5.py
-"""
+permissions:
+  contents: read
 
-import importlib.util
-from pathlib import Path
-import unittest
+jobs:
+  validate-comex:
+    name: Validate COMEX PG62 / PG64
+    runs-on: ubuntu-latest
 
+    steps:
 
-# ----------------------------------------------------------------------
-# Repository paths
-# ----------------------------------------------------------------------
+      # ------------------------------------------------------------
+      # Checkout
+      # ------------------------------------------------------------
 
-ROOT = Path(__file__).resolve().parents[1]
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-SCRIPTS_DIR = ROOT / "scripts"
-PG62_DATA_DIR = ROOT / "data" / "cme-pg62"
-PG64_DATA_DIR = ROOT / "data" / "cme-pg64"
+      # ------------------------------------------------------------
+      # Python
+      # ------------------------------------------------------------
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-# ----------------------------------------------------------------------
-# Dynamic parser loader
-# ----------------------------------------------------------------------
+      # ------------------------------------------------------------
+      # Install dependencies
+      # ------------------------------------------------------------
 
-def load_parser(name: str, filename: str):
-    """
-    Load a parser module from scripts/.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
 
-    This deliberately does not rely on the current working directory.
-    GitHub Actions, local pytest, and IDE execution therefore all resolve
-    the parser from the same repository-relative location.
-    """
-    path = SCRIPTS_DIR / filename
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Parser not found: {path}"
-        )
+          if [ -f pg64-requirements.txt ]; then
+            pip install -r pg64-requirements.txt
+          fi
 
-    spec = importlib.util.spec_from_file_location(name, path)
+          pip install pytest pdfplumber
 
-    if spec is None or spec.loader is None:
-        raise ImportError(
-            f"Cannot create import specification for: {path}"
-        )
+      # ------------------------------------------------------------
+      # Repository structure
+      # ------------------------------------------------------------
 
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+      - name: Show repository structure
+        run: |
+          echo "========================================"
+          echo "Repository"
+          echo "========================================"
+          pwd
+          find . -maxdepth 3 -type f | sort
 
-    return module
+          echo ""
+          echo "========================================"
+          echo "PG62 PDFs"
+          echo "========================================"
+          find data/cme-pg62 \
+            -maxdepth 1 \
+            -type f \
+            -name "*.pdf" \
+            -print \
+            2>/dev/null || true
 
+          echo ""
+          echo "========================================"
+          echo "PG64 PDFs"
+          echo "========================================"
+          find data/cme-pg64 \
+            -maxdepth 1 \
+            -type f \
+            -name "*.pdf" \
+            -print \
+            2>/dev/null || true
 
-pg62 = load_parser(
-    "pg62v5",
-    "parse_pg62_v5.py",
-)
+          echo ""
+          echo "========================================"
+          echo "Parser scripts"
+          echo "========================================"
+          find scripts \
+            -maxdepth 1 \
+            -type f \
+            -name "*.py" \
+            -print \
+            2>/dev/null || true
 
-pg64 = load_parser(
-    "pg64v5",
-    "parse_pg64_v5.py",
-)
+      # ------------------------------------------------------------
+      # Required files
+      # ------------------------------------------------------------
 
+      - name: Check required parser files
+        run: |
+          set -e
 
-# ----------------------------------------------------------------------
-# PG62 integration tests
-# ----------------------------------------------------------------------
+          test -f scripts/parse_pg62_v5.py
+          test -f scripts/parse_pg64_v5.py
+          test -f tests/test_comex_v5.py
 
-class PG62Integration(unittest.TestCase):
+          echo "Required parser/test files exist."
 
-    def test_2026_09_23(self):
-        """
-        PG62 2026-09-23
+      # ------------------------------------------------------------
+      # Required fixture PDFs
+      # ------------------------------------------------------------
 
-        Expected:
-        - trade date = 2026-09-23
-        - 28 GC contracts
-        - FINAL bulletin
-        - TOTAL reconciliation passes
-        """
-        p = PG62_DATA_DIR / "PG62_2026-09-23.pdf"
+      - name: Check COMEX fixture PDFs
+        run: |
+          set -e
 
-        if not p.exists():
-            self.skipTest(
-                f"fixture PDF not present: {p}"
-            )
+          test -f data/cme-pg62/PG62_2026-09-23.pdf
+          test -f data/cme-pg62/PG62_2026-09-25.pdf
+          test -f data/cme-pg64/PG64_2026-09-25.pdf
 
-        d = pg62.parse_pdf(p)
+          echo "Required COMEX fixture PDFs exist."
 
-        self.assertEqual(
-            d["trade_date"],
-            "2026-09-23",
-        )
+      # ------------------------------------------------------------
+      # Python compile check
+      # ------------------------------------------------------------
 
-        self.assertEqual(
-            len(d["contracts"]),
-            28,
-        )
+      - name: Compile parser and test files
+        run: |
+          python -m py_compile \
+            scripts/parse_pg62_v5.py \
+            scripts/parse_pg64_v5.py \
+            tests/test_comex_v5.py
 
-        self.assertEqual(
-            d["bulletin"]["status"],
-            "FINAL",
-        )
+          echo "Python compilation passed."
 
-        reconciliation = d["validation"]["total_reconciliation"]
+      # ------------------------------------------------------------
+      # v5 integration tests
+      # ------------------------------------------------------------
 
-        self.assertTrue(
-            reconciliation,
-            "TOTAL reconciliation result is empty",
-        )
+      - name: Run COMEX v5 integration tests
+        run: |
+          pytest -q tests/test_comex_v5.py
 
-        self.assertTrue(
-            all(x["pass"] for x in reconciliation),
-            f"TOTAL reconciliation failed: {reconciliation}",
-        )
+      # ------------------------------------------------------------
+      # Summary
+      # ------------------------------------------------------------
 
-        self.assertEqual(
-            {x["field"] for x in reconciliation},
-            {
-                "volume_globex",
-                "volume_pnt_pit",
-                "open_interest",
-                "oi_change",
-            },
-        )
-
-    def test_2026_09_25(self):
-        """
-        PG62 2026-09-25
-
-        Expected:
-        - trade date = 2026-09-25
-        - 28 GC contracts
-        - PRELIMINARY bulletin
-        - TOTAL reconciliation passes
-        """
-        p = PG62_DATA_DIR / "PG62_2026-09-25.pdf"
-
-        if not p.exists():
-            self.skipTest(
-                f"fixture PDF not present: {p}"
-            )
-
-        d = pg62.parse_pdf(p)
-
-        self.assertEqual(
-            d["trade_date"],
-            "2026-09-25",
-        )
-
-        self.assertEqual(
-            len(d["contracts"]),
-            28,
-        )
-
-        self.assertEqual(
-            d["bulletin"]["status"],
-            "PRELIMINARY",
-        )
-
-        reconciliation = d["validation"]["total_reconciliation"]
-
-        self.assertTrue(
-            reconciliation,
-            "TOTAL reconciliation result is empty",
-        )
-
-        self.assertTrue(
-            all(x["pass"] for x in reconciliation),
-            f"TOTAL reconciliation failed: {reconciliation}",
-        )
-
-
-# ----------------------------------------------------------------------
-# PG64 audit tests
-# ----------------------------------------------------------------------
-
-class PG64Audit(unittest.TestCase):
-
-    def test_audit_only_not_master(self):
-        """
-        PG64 remains diagnostic/audit-only.
-
-        It must NOT produce a production MASTER record yet.
-        """
-        p = PG64_DATA_DIR / "PG64_2026-09-25.pdf"
-
-        if not p.exists():
-            self.skipTest(
-                f"fixture PDF not present: {p}"
-            )
-
-        d = pg64.audit(p)
-
-        self.assertEqual(
-            d["production_master_status"],
-            "BLOCKED_DIAGNOSTIC_ONLY",
-        )
-
-        self.assertGreater(
-            len(d["pages_with_main_chain_header"]),
-            0,
-            "No main option-chain header pages detected",
-        )
-
-        self.assertGreater(
-            d["candidate_strike_rows"],
-            0,
-            "No candidate strike rows detected",
-        )
-
-        self.assertTrue(
-            any(
-                "character/content-stream" in x.lower()
-                for x in d["known_unhandled_risks"]
-            ),
-            "Expected character/content-stream risk was not reported",
-        )
-
-
-# ----------------------------------------------------------------------
-# Main
-# ----------------------------------------------------------------------
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+      - name: Validation summary
+        if: success()
+        run: |
+          echo "========================================"
+          echo "COMEX VALIDATION PASSED"
+          echo "========================================"
+          echo "PG62:"
+          echo "  2026-09-23 FINAL"
+          echo "  2026-09-25 PRELIMINARY"
+          echo ""
+          echo "PG64:"
+          echo "  2026-09-25 diagnostic/audit only"
+          echo ""
+          echo "Production MASTER:"
+          echo "  PG62: validation target"
+          echo "  PG64: BLOCKED_DIAGNOSTIC_ONLY"
+          echo "========================================"
