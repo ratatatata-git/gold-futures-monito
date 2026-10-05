@@ -1,0 +1,327 @@
+name: Ingest PG62 Daily MASTER
+
+on:
+  push:
+    paths:
+      - "data/cme-pg62/**"
+      - "scripts/parse_pg62_v5.py"
+      - "scripts/build_pg62_master.py"
+      - ".github/workflows/ingest-pg62-master.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pg62-master-ingestion
+  cancel-in-progress: false
+
+jobs:
+  ingest-pg62:
+    name: Build and Save PG62 MASTER
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+          if [ -f pg64-requirements.txt ]; then
+            pip install -r pg64-requirements.txt
+          fi
+
+          pip install pdfplumber
+
+      - name: Check required files
+        run: |
+          set -e
+
+          test -f scripts/parse_pg62_v5.py
+          test -f scripts/build_pg62_master.py
+
+          mkdir -p data/master/pg62
+
+          echo "Required PG62 parser and MASTER builder found."
+
+      - name: Compile PG62 parser and MASTER builder
+        run: |
+          set -e
+
+          python -m py_compile \
+            scripts/parse_pg62_v5.py \
+            scripts/build_pg62_master.py
+
+          echo "PG62 parser compilation passed."
+
+      - name: Detect PG62 PDFs
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t PDFS < <(
+            find data/cme-pg62 \
+              -maxdepth 1 \
+              -type f \
+              -iname "*.pdf" \
+              -print |
+            sort
+          )
+
+          if [ "${#PDFS[@]}" -eq 0 ]; then
+            echo "No PG62 PDFs found."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "PG62 PDFs found:"
+          printf '  %s\n' "${PDFS[@]}"
+
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build validated MASTER from every PG62 PDF
+        if: steps.detect.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p data/master/pg62
+
+          failed=0
+
+          while IFS= read -r pdf; do
+            [ -n "$pdf" ] || continue
+
+            echo ""
+            echo "========================================"
+            echo "Processing: $pdf"
+            echo "========================================"
+
+            if python scripts/build_pg62_master.py \
+              "$pdf" \
+              --output-root data/master/pg62
+            then
+              echo "MASTER processing succeeded: $pdf"
+            else
+              echo "::error::MASTER processing failed: $pdf"
+              failed=1
+            fi
+
+          done < <(
+            find data/cme-pg62 \
+              -maxdepth 1 \
+              -type f \
+              -iname "*.pdf" \
+              -print |
+            sort
+          )
+
+          if [ "$failed" -ne 0 ]; then
+            echo ""
+            echo "One or more PG62 PDFs failed MASTER ingestion."
+            exit 1
+          fi
+
+          echo ""
+          echo "All PG62 PDFs processed successfully."
+
+      - name: Validate generated MASTER files
+        if: steps.detect.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data/master/pg62")
+
+          files = sorted(root.rglob("*.json"))
+
+          print("MASTER files currently present:")
+          for path in files:
+              print(f"  {path}")
+
+          if not files:
+              raise SystemExit("No MASTER JSON files found.")
+
+          checked = 0
+
+          for path in files:
+              data = json.loads(path.read_text(encoding="utf-8"))
+
+              if data.get("dataset") != "PG62_GC_FUTURES":
+                  raise SystemExit(
+                      f"Unexpected dataset in {path}: "
+                      f"{data.get('dataset')!r}"
+                  )
+
+              if data.get("validation", {}).get("status") != "PASS":
+                  raise SystemExit(
+                      f"Validation status is not PASS: {path}"
+                  )
+
+              if data.get("master", {}).get("status") != "VALIDATED":
+                  raise SystemExit(
+                      f"MASTER status is not VALIDATED: {path}"
+                  )
+
+              if not data.get("master", {}).get("source_observation"):
+                  raise SystemExit(
+                      f"source_observation is not true: {path}"
+                  )
+
+              if data.get("master", {}).get("derived_analysis"):
+                  raise SystemExit(
+                      f"derived_analysis must be false: {path}"
+                  )
+
+              contracts = data.get("contracts", [])
+
+              if len(contracts) < 20:
+                  raise SystemExit(
+                      f"Implausibly small contract count in {path}: "
+                      f"{len(contracts)}"
+                  )
+
+              sha = data.get("source", {}).get("sha256")
+
+              if not isinstance(sha, str) or len(sha) != 64:
+                  raise SystemExit(
+                      f"Invalid source SHA256 in {path}"
+                  )
+
+              def contains_parser_error(value):
+                  if isinstance(value, dict):
+                      if value.get("state") == "PARSER_ERROR":
+                          return True
+                      return any(
+                          contains_parser_error(v)
+                          for v in value.values()
+                      )
+
+                  if isinstance(value, list):
+                      return any(
+                          contains_parser_error(v)
+                          for v in value
+                      )
+
+                  return False
+
+              if contains_parser_error(data):
+                  raise SystemExit(
+                      f"PARSER_ERROR found in {path}"
+                  )
+
+              reconciliation = data.get(
+                  "validation", {}
+              ).get(
+                  "total_reconciliation", []
+              )
+
+              required_fields = {
+                  "volume_globex",
+                  "volume_pnt_pit",
+                  "open_interest",
+                  "oi_change",
+              }
+
+              actual_fields = {
+                  item.get("field")
+                  for item in reconciliation
+              }
+
+              if actual_fields != required_fields:
+                  raise SystemExit(
+                      f"Unexpected TOTAL reconciliation fields "
+                      f"in {path}: {actual_fields}"
+                  )
+
+              for item in reconciliation:
+                  if not item.get("pass"):
+                      raise SystemExit(
+                          f"TOTAL reconciliation failed in {path}: "
+                          f"{item}"
+                      )
+
+              checked += 1
+
+          print("")
+          print(f"MASTER validation passed: {checked} files")
+          PY
+
+      - name: Show MASTER status
+        shell: bash
+        run: |
+          echo "========================================"
+          echo "PG62 MASTER STATUS"
+          echo "========================================"
+
+          find data/master/pg62 \
+            -type f \
+            -name "*.json" \
+            -print |
+          sort
+
+      - name: Commit and push MASTER files
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data/master/pg62
+
+          if git diff --cached --quiet; then
+            echo "No MASTER changes to commit."
+            exit 0
+          fi
+
+          git commit \
+            -m "Update PG62 daily MASTER"
+
+          git push
+
+      - name: Final summary
+        if: success()
+        run: |
+          echo ""
+          echo "========================================"
+          echo "PG62 DAILY MASTER INGESTION PASSED"
+          echo "========================================"
+          echo ""
+          echo "PDF source:"
+          echo "  data/cme-pg62/"
+          echo ""
+          echo "MASTER destination:"
+          echo "  data/master/pg62/YYYY/MM/"
+          echo ""
+          echo "Properties:"
+          echo "  - Source SHA256 preserved"
+          echo "  - FINAL/PRELIMINARY preserved"
+          echo "  - Parser validation required"
+          echo "  - TOTAL reconciliation required"
+          echo "  - PARSER_ERROR forbidden"
+          echo "  - Existing MASTER never overwritten"
+          echo "  - New MASTER committed automatically"
+          echo "========================================"
