@@ -125,7 +125,7 @@ jobs:
 
       - name: Run PG62 MASTER tests
         run: |
-          pytest -q tests/test_pg62_master.py
+         python -m pytest -q tests/test_pg62_master.py
 
       - name: Validation summary
         if: success()
