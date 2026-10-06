@@ -98,18 +98,22 @@ jobs:
             echo "One or more PG62 PDFs failed MASTER ingestion."
             exit 1
           fi
-      # ------------------------------------------------------------
+            # ------------------------------------------------------------
       # 6. Validate every existing PG62 MASTER
       #
-      # Production MASTER must:
-      # - be PG62_GC_FUTURES
-      # - have validation PASS
-      # - have VALIDATED master status
-      # - have source_observation=true
-      # - have derived_analysis=false
-      # - contain no PARSER_ERROR
-      # - have a valid source SHA256
-      # - have reconciliation PASS
+      # IMPORTANT:
+      # The parser stores reconciliation results in:
+      #
+      # validation.total_reconciliation
+      #
+      # This is a list of objects:
+      #   field
+      #   parsed_sum_of_numeric_cells
+      #   source_total
+      #   numeric_cells
+      #   source_null_cells_excluded
+      #   empty_cells_excluded
+      #   pass
       # ------------------------------------------------------------
       - name: Validate PG62 MASTER files
         shell: bash
@@ -118,20 +122,35 @@ jobs:
           import json
           import sys
           from pathlib import Path
+
           root = Path("data/master/pg62")
+
           if not root.exists():
               print("MASTER directory does not exist:", root)
               sys.exit(1)
+
           files = sorted(root.rglob("*.json"))
+
           if not files:
               print("No MASTER JSON files found.")
               sys.exit(1)
+
           errors = []
+
+          REQUIRED_RECONCILIATION_FIELDS = {
+              "volume_globex",
+              "volume_pnt_pit",
+              "open_interest",
+              "oi_change",
+          }
+
           def find_parser_error(value, path="$"):
               found = []
+
               if isinstance(value, dict):
                   if value.get("state") == "PARSER_ERROR":
                       found.append(path)
+
                   for key, child in value.items():
                       found.extend(
                           find_parser_error(
@@ -139,6 +158,7 @@ jobs:
                               f"{path}.{key}"
                           )
                       )
+
               elif isinstance(value, list):
                   for i, child in enumerate(value):
                       found.extend(
@@ -147,9 +167,12 @@ jobs:
                               f"{path}[{i}]"
                           )
                       )
+
               return found
+
           for path in files:
               print(f"Validating: {path}")
+
               try:
                   data = json.loads(
                       path.read_text(encoding="utf-8")
@@ -159,104 +182,205 @@ jobs:
                       f"{path}: invalid JSON: {exc}"
                   )
                   continue
+
+              # ------------------------------------------------------
               # Dataset
+              # ------------------------------------------------------
               if data.get("dataset") != "PG62_GC_FUTURES":
                   errors.append(
                       f"{path}: unexpected dataset="
                       f"{data.get('dataset')!r}"
                   )
+
+              # ------------------------------------------------------
               # Parser version
+              # ------------------------------------------------------
               parser_version = data.get("parser_version")
+
               if not parser_version:
                   errors.append(
                       f"{path}: missing parser_version"
                   )
-              # Validation
+
+              # ------------------------------------------------------
+              # Validation status
+              # ------------------------------------------------------
               validation = data.get("validation", {})
+
               if validation.get("status") != "PASS":
                   errors.append(
                       f"{path}: validation.status="
                       f"{validation.get('status')!r}"
                   )
-              # MASTER metadata
-              master = data.get("master", {})
-              if master.get("status") != "VALIDATED":
-                  errors.append(
-                      f"{path}: master.status="
-                      f"{master.get('status')!r}"
-                  )
-              if master.get("source_observation") is not True:
-                  errors.append(
-                      f"{path}: source_observation is not True"
-                  )
-              if master.get("derived_analysis") is not False:
-                  errors.append(
-                      f"{path}: derived_analysis is not False"
-                  )
-              # Contracts
+
+              # ------------------------------------------------------
+              # Contract rows
+              # ------------------------------------------------------
               contracts = data.get("contracts", [])
+
               if len(contracts) < 20:
                   errors.append(
                       f"{path}: implausibly small contract count="
                       f"{len(contracts)}"
                   )
+
+              # ------------------------------------------------------
+              # MASTER metadata
+              # ------------------------------------------------------
+              master = data.get("master", {})
+
+              if master.get("status") != "VALIDATED":
+                  errors.append(
+                      f"{path}: master.status="
+                      f"{master.get('status')!r}"
+                  )
+
+              if master.get("source_observation") is not True:
+                  errors.append(
+                      f"{path}: source_observation is not True"
+                  )
+
+              if master.get("derived_analysis") is not False:
+                  errors.append(
+                      f"{path}: derived_analysis is not False"
+                  )
+
+              # ------------------------------------------------------
               # Source SHA256
+              # ------------------------------------------------------
               source = data.get("source", {})
               sha = source.get("sha256")
+
               if not isinstance(sha, str) or len(sha) != 64:
                   errors.append(
                       f"{path}: invalid source SHA256"
                   )
-              # No parser errors
-              parser_errors = find_parser_error(data)
-              if parser_errors:
-                  errors.append(
-                      f"{path}: PARSER_ERROR at "
-                      + ", ".join(parser_errors[:10])
-                  )
-              # Reconciliation
-              reconciliation = validation.get(
-                  "reconciliation",
-                  {}
-              )
-              required_reconciliation_fields = [
-                  "volume_globex",
-                  "volume_pnt_pit",
-                  "open_interest",
-                  "oi_change",
-              ]
-              for field in required_reconciliation_fields:
-                  item = reconciliation.get(field)
-                  if not isinstance(item, dict):
-                      errors.append(
-                          f"{path}: missing reconciliation.{field}"
-                      )
-                      continue
-                  if item.get("status") != "PASS":
-                      errors.append(
-                          f"{path}: reconciliation.{field} "
-                          f"status={item.get('status')!r}"
-                      )
+
+              # ------------------------------------------------------
               # Bulletin status
+              # ------------------------------------------------------
               bulletin = data.get("bulletin", {})
               status = bulletin.get("status")
+
               if status not in {"FINAL", "PRELIMINARY"}:
                   errors.append(
                       f"{path}: invalid bulletin status="
                       f"{status!r}"
                   )
+
+              # ------------------------------------------------------
+              # Parser errors
+              # ------------------------------------------------------
+              parser_errors = find_parser_error(data)
+
+              if parser_errors:
+                  errors.append(
+                      f"{path}: PARSER_ERROR at "
+                      + ", ".join(parser_errors[:10])
+                  )
+
+              # ------------------------------------------------------
+              # Reconciliation
+              #
+              # Actual schema:
+              #
+              # validation.total_reconciliation = [
+              #   {
+              #     "field": "...",
+              #     "parsed_sum_of_numeric_cells": "...",
+              #     "source_total": "...",
+              #     "numeric_cells": ...,
+              #     "source_null_cells_excluded": ...,
+              #     "empty_cells_excluded": ...,
+              #     "pass": true
+              #   },
+              #   ...
+              # ]
+              # ------------------------------------------------------
+              reconciliation = validation.get(
+                  "total_reconciliation"
+              )
+
+              if not isinstance(reconciliation, list):
+                  errors.append(
+                      f"{path}: "
+                      "validation.total_reconciliation "
+                      "is missing or is not a list"
+                  )
+              else:
+                  seen_fields = set()
+
+                  for item in reconciliation:
+                      if not isinstance(item, dict):
+                          errors.append(
+                              f"{path}: invalid reconciliation item"
+                          )
+                          continue
+
+                      field = item.get("field")
+
+                      if field in seen_fields:
+                          errors.append(
+                              f"{path}: duplicate reconciliation "
+                              f"field={field!r}"
+                          )
+
+                      seen_fields.add(field)
+
+                      if field not in REQUIRED_RECONCILIATION_FIELDS:
+                          errors.append(
+                              f"{path}: unexpected reconciliation "
+                              f"field={field!r}"
+                          )
+
+                      if item.get("pass") is not True:
+                          errors.append(
+                              f"{path}: reconciliation field "
+                              f"{field!r} did not PASS"
+                          )
+
+                      if "parsed_sum_of_numeric_cells" not in item:
+                          errors.append(
+                              f"{path}: reconciliation field "
+                              f"{field!r} missing "
+                              "parsed_sum_of_numeric_cells"
+                          )
+
+                      if "source_total" not in item:
+                          errors.append(
+                              f"{path}: reconciliation field "
+                              f"{field!r} missing source_total"
+                          )
+
+                  missing_fields = (
+                      REQUIRED_RECONCILIATION_FIELDS - seen_fields
+                  )
+
+                  for field in sorted(missing_fields):
+                      errors.append(
+                          f"{path}: missing reconciliation field "
+                          f"{field!r}"
+                      )
+
+          # ----------------------------------------------------------
+          # Final result
+          # ----------------------------------------------------------
           print()
           print("============================================================")
           print("MASTER validation summary")
           print(f"Files checked: {len(files)}")
           print(f"Errors:       {len(errors)}")
           print("============================================================")
+
           if errors:
               print()
               print("VALIDATION ERRORS:")
+
               for error in errors:
                   print(f" - {error}")
+
               sys.exit(1)
+
           print("All PG62 MASTER files passed validation.")
           PY
       # ------------------------------------------------------------
