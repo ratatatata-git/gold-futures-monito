@@ -1,6 +1,6 @@
 {
   "schema_version": "pg62.master.daily.v5",
-  "parser_version": "pg62-gold-v5.0.0",
+  "parser_version": "pg62-gold-v5.0.1",
   "dataset": "PG62_GC_FUTURES",
   "trade_date": "2026-09-25",
   "bulletin": {
@@ -11,7 +11,7 @@
   "source": {
     "file": "PG62_2026-09-25.pdf",
     "sha256": "e8c77350ab8910735aa40dca279e56525fc7025c48d4e31dbf3ab679f63cb0d9",
-    "ingested_at": "2026-10-05T10:23:53.891102+00:00"
+    "ingested_at": "2026-10-06T12:43:15.229343+00:00"
   },
   "validation": {
     "contract_rows": 28,
@@ -69,12 +69,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4287.90/4287.90",
+        "raw": "4287.90",
         "value": "4287.90"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4287.90/4287.90",
+        "raw": "4287.90",
         "value": "4287.90"
       },
       "settlement": {
@@ -122,12 +122,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4317.50/4256.50",
+        "raw": "4317.50",
         "value": "4317.50"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4317.50/4256.50",
+        "raw": "4256.50",
         "value": "4256.50"
       },
       "settlement": {
@@ -175,12 +175,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4331.70/4274.70",
+        "raw": "4331.70",
         "value": "4331.70"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4331.70/4274.70",
+        "raw": "4274.70",
         "value": "4274.70"
       },
       "settlement": {
@@ -228,12 +228,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4351.60/4289.20",
+        "raw": "4351.60",
         "value": "4351.60"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4351.60/4289.20",
+        "raw": "4289.20",
         "value": "4289.20"
       },
       "settlement": {
@@ -281,12 +281,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4349.80/4323.50",
+        "raw": "4349.80",
         "value": "4349.80"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4349.80/4323.50",
+        "raw": "4323.50",
         "value": "4323.50"
       },
       "settlement": {
@@ -334,12 +334,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4387.30B/4326.30A",
+        "raw": "4387.30B",
         "value": "4387.30"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4387.30B/4326.30A",
+        "raw": "4326.30A",
         "value": "4326.30"
       },
       "settlement": {
@@ -387,12 +387,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4385.50/4355.30",
+        "raw": "4385.50",
         "value": "4385.50"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4385.50/4355.30",
+        "raw": "4355.30",
         "value": "4355.30"
       },
       "settlement": {
@@ -440,12 +440,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4422.20B/4362.70",
+        "raw": "4422.20B",
         "value": "4422.20"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4422.20B/4362.70",
+        "raw": "4362.70",
         "value": "4362.70"
       },
       "settlement": {
@@ -493,12 +493,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4403.80/4403.80",
+        "raw": "4403.80",
         "value": "4403.80"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4403.80/4403.80",
+        "raw": "4403.80",
         "value": "4403.80"
       },
       "settlement": {
@@ -546,12 +546,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4450.60/4411.00",
+        "raw": "4450.60",
         "value": "4450.60"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4450.60/4411.00",
+        "raw": "4411.00",
         "value": "4411.00"
       },
       "settlement": {
@@ -652,12 +652,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4479.90/4462.30",
+        "raw": "4479.90",
         "value": "4479.90"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4479.90/4462.30",
+        "raw": "4462.30",
         "value": "4462.30"
       },
       "settlement": {
@@ -864,12 +864,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4548.00/4542.70",
+        "raw": "4548.00",
         "value": "4548.00"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4548.00/4542.70",
+        "raw": "4542.70",
         "value": "4542.70"
       },
       "settlement": {
@@ -1129,12 +1129,12 @@
       },
       "high": {
         "state": "VALUE",
-        "raw": "4660.00/4660.00",
+        "raw": "4660.00",
         "value": "4660.00"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4660.00/4660.00",
+        "raw": "4660.00",
         "value": "4660.00"
       },
       "settlement": {
@@ -1583,7 +1583,13 @@
   },
   "build": {
     "builder_version": "pg62.master.daily.v5",
-    "parser_version": "pg62-gold-v5.0.0",
-    "source_sha256": "e8c77350ab8910735aa40dca279e56525fc7025c48d4e31dbf3ab679f63cb0d9"
+    "parser_version": "pg62-gold-v5.0.1",
+    "source_sha256": "e8c77350ab8910735aa40dca279e56525fc7025c48d4e31dbf3ab679f63cb0d9",
+    "rebuild": {
+      "type": "PARSER_UPGRADE",
+      "previous_parser_version": "pg62-gold-v5.0.0",
+      "new_parser_version": "pg62-gold-v5.0.1",
+      "source_sha256_unchanged": true
+    }
   }
 }

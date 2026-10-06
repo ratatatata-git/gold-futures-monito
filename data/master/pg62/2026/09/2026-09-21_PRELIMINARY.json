@@ -2,16 +2,16 @@
   "schema_version": "pg62.master.daily.v5",
   "parser_version": "pg62-gold-v5.0.1",
   "dataset": "PG62_GC_FUTURES",
-  "trade_date": "2026-09-23",
+  "trade_date": "2026-09-21",
   "bulletin": {
-    "number": 183,
-    "status": "FINAL"
+    "number": 181,
+    "status": "PRELIMINARY"
   },
   "semantics": "Source-observed facts only. Derived total volume, active contract, indicators and analysis are excluded.",
   "source": {
-    "file": "PG62_2026-09-23.pdf",
-    "sha256": "af54af98bea470aaf7e82e8db467dae19daf5e803a910bd55d080f309468f42a",
-    "ingested_at": "2026-10-06T12:43:13.709086+00:00"
+    "file": "PG62_2026-09-21.pdf",
+    "sha256": "e76c59d26368befb3ce580bfda401caa4ec8124deb5c896325032ebd8a601e2e",
+    "ingested_at": "2026-10-06T12:43:10.466440+00:00"
   },
   "validation": {
     "contract_rows": 28,
@@ -22,26 +22,26 @@
     "total_reconciliation": [
       {
         "field": "volume_globex",
-        "parsed_sum_of_numeric_cells": "165757",
-        "source_total": "165757",
-        "numeric_cells": 22,
-        "source_null_cells_excluded": 6,
+        "parsed_sum_of_numeric_cells": "150369",
+        "source_total": "150369",
+        "numeric_cells": 20,
+        "source_null_cells_excluded": 8,
         "empty_cells_excluded": 0,
         "pass": true
       },
       {
         "field": "volume_pnt_pit",
-        "parsed_sum_of_numeric_cells": "1893",
-        "source_total": "1893",
-        "numeric_cells": 3,
-        "source_null_cells_excluded": 25,
+        "parsed_sum_of_numeric_cells": "7712",
+        "source_total": "7712",
+        "numeric_cells": 4,
+        "source_null_cells_excluded": 24,
         "empty_cells_excluded": 0,
         "pass": true
       },
       {
         "field": "open_interest",
-        "parsed_sum_of_numeric_cells": "411932",
-        "source_total": "411932",
+        "parsed_sum_of_numeric_cells": "414524",
+        "source_total": "414524",
         "numeric_cells": 28,
         "source_null_cells_excluded": 0,
         "empty_cells_excluded": 0,
@@ -49,8 +49,8 @@
       },
       {
         "field": "oi_change",
-        "parsed_sum_of_numeric_cells": "-868",
-        "source_total": "-868",
+        "parsed_sum_of_numeric_cells": "2152",
+        "source_total": "2152",
         "numeric_cells": 28,
         "source_null_cells_excluded": 0,
         "empty_cells_excluded": 0,
@@ -64,33 +64,33 @@
       "contract": "SEP26",
       "open": {
         "state": "VALUE",
-        "raw": "4280.00",
-        "value": "4280.00"
+        "raw": "4366.70",
+        "value": "4366.70"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4280.00",
-        "value": "4280.00"
+        "raw": "4368.10",
+        "value": "4368.10"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4280.00",
-        "value": "4280.00"
+        "raw": "4366.70",
+        "value": "4366.70"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4281.30",
-        "value": "4281.30"
+        "raw": "4345.80",
+        "value": "4345.80"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-57.60",
-        "value": "-57.60"
+        "raw": "-40.10",
+        "value": "-40.10"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "86",
-        "value": "86"
+        "raw": "18",
+        "value": "18"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -99,17 +99,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "198",
-        "value": "198"
+        "raw": "191",
+        "value": "191"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-332",
-        "value": "-332"
+        "raw": "-312",
+        "value": "-312"
       },
       "source": {
         "page": 2,
-        "raw_line": "SEP26 4280.00 4280.00 /4280.00 4281.30 - 57.60 86 ---- 198 - 332",
+        "raw_line": "SEP26 4366.70 4368.10 /4366.70 4345.80 - 40.10 18 ---- 191 - 312",
         "top": 942.721
       }
     },
@@ -117,52 +117,52 @@
       "contract": "OCT26",
       "open": {
         "state": "VALUE",
-        "raw": "4363.10",
-        "value": "4363.10"
+        "raw": "4381.80",
+        "value": "4381.80"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4374.00",
-        "value": "4374.00"
+        "raw": "4387.80",
+        "value": "4387.80"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4277.60",
-        "value": "4277.60"
+        "raw": "4326.60",
+        "value": "4326.60"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4284.80",
-        "value": "4284.80"
+        "raw": "4350.20",
+        "value": "4350.20"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-57.90",
-        "value": "-57.90"
+        "raw": "-40.50",
+        "value": "-40.50"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "12802",
-        "value": "12802"
+        "raw": "10225",
+        "value": "10225"
       },
       "volume_pnt_pit": {
         "state": "VALUE",
-        "raw": "64",
-        "value": "64"
+        "raw": "40",
+        "value": "40"
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "36432",
-        "value": "36432"
+        "raw": "42148",
+        "value": "42148"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-3062",
-        "value": "-3062"
+        "raw": "-261",
+        "value": "-261"
       },
       "source": {
         "page": 2,
-        "raw_line": "OCT26 4363.10 4374.00 /4277.60 4284.80 - 57.90 12802 64 36432 - 3062",
+        "raw_line": "OCT26 4381.80 4387.80 /4326.60 4350.20 - 40.50 10225 40 42148 - 261",
         "top": 950.271
       }
     },
@@ -170,33 +170,33 @@
       "contract": "NOV26",
       "open": {
         "state": "VALUE",
-        "raw": "4382.10",
-        "value": "4382.10"
+        "raw": "4395.60",
+        "value": "4395.60"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4386.60",
-        "value": "4386.60"
+        "raw": "4405.20",
+        "value": "4405.20"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4296.00",
-        "value": "4296.00"
+        "raw": "4348.10",
+        "value": "4348.10"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4302.10",
-        "value": "4302.10"
+        "raw": "4367.40",
+        "value": "4367.40"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.00",
-        "value": "-58.00"
+        "raw": "-40.90",
+        "value": "-40.90"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "423",
-        "value": "423"
+        "raw": "313",
+        "value": "313"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -205,17 +205,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "1261",
-        "value": "1261"
+        "raw": "1149",
+        "value": "1149"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+44",
-        "value": "44"
+        "raw": "+53",
+        "value": "53"
       },
       "source": {
         "page": 2,
-        "raw_line": "NOV26 4382.10 4386.60 /4296.00 4302.10 - 58.00 423 ---- 1261 + 44",
+        "raw_line": "NOV26 4395.60 4405.20 /4348.10 4367.40 - 40.90 313 ---- 1149 + 53",
         "top": 957.821
       }
     },
@@ -223,52 +223,52 @@
       "contract": "DEC26",
       "open": {
         "state": "VALUE",
-        "raw": "4394.70",
-        "value": "4394.70"
+        "raw": "4413.00",
+        "value": "4413.00"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4407.50",
-        "value": "4407.50"
+        "raw": "4422.10",
+        "value": "4422.10"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4310.70",
-        "value": "4310.70"
+        "raw": "4360.30",
+        "value": "4360.30"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4318.40",
-        "value": "4318.40"
+        "raw": "4383.90",
+        "value": "4383.90"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.00",
-        "value": "-58.00"
+        "raw": "-41.00",
+        "value": "-41.00"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "142119",
-        "value": "142119"
+        "raw": "133469",
+        "value": "133469"
       },
       "volume_pnt_pit": {
         "state": "VALUE",
-        "raw": "1754",
-        "value": "1754"
+        "raw": "4734",
+        "value": "4734"
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "314505",
-        "value": "314505"
+        "raw": "315060",
+        "value": "315060"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+1291",
-        "value": "1291"
+        "raw": "+482",
+        "value": "482"
       },
       "source": {
         "page": 3,
-        "raw_line": "DEC26 4394.70 4407.50 /4310.70 4318.40 - 58.00 142119 1754 314505 + 1291",
+        "raw_line": "DEC26 4413.00 4422.10 /4360.30 4383.90 - 41.00 133469 4734 315060 + 482",
         "top": 102.271
       }
     },
@@ -276,33 +276,33 @@
       "contract": "JAN27",
       "open": {
         "state": "VALUE",
-        "raw": "4390.50",
-        "value": "4390.50"
+        "raw": "4419.80",
+        "value": "4419.80"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4402.00",
-        "value": "4402.00"
+        "raw": "4419.80",
+        "value": "4419.80"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4347.00",
-        "value": "4347.00"
+        "raw": "4384.20",
+        "value": "4384.20"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4338.30",
-        "value": "4338.30"
+        "raw": "4403.90",
+        "value": "4403.90"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-57.90",
-        "value": "-57.90"
+        "raw": "-41.10",
+        "value": "-41.10"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "49",
-        "value": "49"
+        "raw": "30",
+        "value": "30"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -311,17 +311,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "575",
-        "value": "575"
+        "raw": "573",
+        "value": "573"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-1",
-        "value": "-1"
+        "raw": "+5",
+        "value": "5"
       },
       "source": {
         "page": 3,
-        "raw_line": "JAN27 4390.50 4402.00 /4347.00 4338.30 - 57.90 49 ---- 575 - 1",
+        "raw_line": "JAN27 4419.80 4419.80 /4384.20 4403.90 - 41.10 30 ---- 573 + 5",
         "top": 109.821
       }
     },
@@ -329,52 +329,52 @@
       "contract": "FEB27",
       "open": {
         "state": "VALUE",
-        "raw": "4433.60",
-        "value": "4433.60"
+        "raw": "4449.50",
+        "value": "4449.50"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4444.00",
-        "value": "4444.00"
+        "raw": "4458.70B",
+        "value": "4458.70"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4347.20A",
-        "value": "4347.20"
+        "raw": "4397.60",
+        "value": "4397.60"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4354.80",
-        "value": "4354.80"
+        "raw": "4420.70",
+        "value": "4420.70"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.20",
-        "value": "-58.20"
+        "raw": "-41.40",
+        "value": "-41.40"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "6132",
-        "value": "6132"
+        "raw": "3942",
+        "value": "3942"
       },
       "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "2873",
+        "value": "2873"
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "37897",
-        "value": "37897"
+        "raw": "35600",
+        "value": "35600"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+1106",
-        "value": "1106"
+        "raw": "+2092",
+        "value": "2092"
       },
       "source": {
         "page": 3,
-        "raw_line": "FEB27 4433.60 4444.00 /4347.20A 4354.80 - 58.20 6132 ---- 37897 + 1106",
+        "raw_line": "FEB27 4449.50 4458.70B/4397.60 4420.70 - 41.40 3942 2873 35600 + 2092",
         "top": 117.371
       }
     },
@@ -382,33 +382,33 @@
       "contract": "MAR27",
       "open": {
         "state": "VALUE",
-        "raw": "4410.00",
-        "value": "4410.00"
+        "raw": "4449.30",
+        "value": "4449.30"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4410.00",
-        "value": "4410.00"
+        "raw": "4456.50",
+        "value": "4456.50"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4375.70",
-        "value": "4375.70"
+        "raw": "4443.80",
+        "value": "4443.80"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4372.40",
-        "value": "4372.40"
+        "raw": "4438.50",
+        "value": "4438.50"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.30",
-        "value": "-58.30"
+        "raw": "-41.20",
+        "value": "-41.20"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "6",
-        "value": "6"
+        "raw": "3",
+        "value": "3"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -427,7 +427,7 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "MAR27 4410.00 4410.00 /4375.70 4372.40 - 58.30 6 ---- 206 UNCH",
+        "raw_line": "MAR27 4449.30 4456.50 /4443.80 4438.50 - 41.20 3 ---- 206 UNCH",
         "top": 124.921
       }
     },
@@ -435,33 +435,33 @@
       "contract": "APR27",
       "open": {
         "state": "VALUE",
-        "raw": "4449.80",
-        "value": "4449.80"
+        "raw": "4484.80",
+        "value": "4484.80"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4466.20B",
-        "value": "4466.20"
+        "raw": "4494.00B",
+        "value": "4494.00"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4384.80A",
-        "value": "4384.80"
+        "raw": "4435.20A",
+        "value": "4435.20"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4390.70",
-        "value": "4390.70"
+        "raw": "4457.10",
+        "value": "4457.10"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.40",
-        "value": "-58.40"
+        "raw": "-41.40",
+        "value": "-41.40"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "2436",
-        "value": "2436"
+        "raw": "1323",
+        "value": "1323"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -470,51 +470,51 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "10899",
-        "value": "10899"
+        "raw": "10193",
+        "value": "10193"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-115",
-        "value": "-115"
+        "raw": "-114",
+        "value": "-114"
       },
       "source": {
         "page": 3,
-        "raw_line": "APR27 4449.80 4466.20B/4384.80A 4390.70 - 58.40 2436 ---- 10899 - 115",
+        "raw_line": "APR27 4484.80 4494.00B/4435.20A 4457.10 - 41.40 1323 ---- 10193 - 114",
         "top": 132.471
       }
     },
     {
       "contract": "MAY27",
       "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4508.70",
+        "value": "4508.70"
       },
       "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4508.70",
+        "value": "4508.70"
       },
       "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4489.70",
+        "value": "4489.70"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4410.30",
-        "value": "4410.30"
+        "raw": "4477.00",
+        "value": "4477.00"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.60",
-        "value": "-58.60"
+        "raw": "-41.00",
+        "value": "-41.00"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "8",
-        "value": "8"
+        "raw": "3",
+        "value": "3"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -523,17 +523,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "38",
-        "value": "38"
+        "raw": "36",
+        "value": "36"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+2",
-        "value": "2"
+        "raw": "+1",
+        "value": "1"
       },
       "source": {
         "page": 3,
-        "raw_line": "MAY27 ---- ---- 4410.30 - 58.60 8 ---- 38 + 2",
+        "raw_line": "MAY27 4508.70 4508.70 /4489.70 4477.00 - 41.00 3 ---- 36 + 1",
         "top": 140.021
       }
     },
@@ -541,86 +541,86 @@
       "contract": "JUN27",
       "open": {
         "state": "VALUE",
-        "raw": "4508.00",
-        "value": "4508.00"
+        "raw": "4525.10",
+        "value": "4525.10"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4508.00",
-        "value": "4508.00"
+        "raw": "4529.60",
+        "value": "4529.60"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4423.00",
-        "value": "4423.00"
+        "raw": "4477.30",
+        "value": "4477.30"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4429.60",
-        "value": "4429.60"
+        "raw": "4496.50",
+        "value": "4496.50"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-41.10",
+        "value": "-41.10"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "1205",
-        "value": "1205"
+        "raw": "713",
+        "value": "713"
       },
       "volume_pnt_pit": {
         "state": "VALUE",
-        "raw": "75",
-        "value": "75"
+        "raw": "65",
+        "value": "65"
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "6015",
-        "value": "6015"
+        "raw": "5725",
+        "value": "5725"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+136",
-        "value": "136"
+        "raw": "+161",
+        "value": "161"
       },
       "source": {
         "page": 3,
-        "raw_line": "JUN27 4508.00 4508.00 /4423.00 4429.60 - 58.70 1205 75 6015 + 136",
+        "raw_line": "JUN27 4525.10 4529.60 /4477.30 4496.50 - 41.10 713 65 5725 + 161",
         "top": 147.571
       }
     },
     {
       "contract": "JUL27",
       "open": {
-        "state": "VALUE",
-        "raw": "4535.50",
-        "value": "4535.50"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "high": {
-        "state": "VALUE",
-        "raw": "4535.50",
-        "value": "4535.50"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "low": {
-        "state": "VALUE",
-        "raw": "4503.40",
-        "value": "4503.40"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4449.30",
-        "value": "4449.30"
+        "raw": "4516.30",
+        "value": "4516.30"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-41.00",
+        "value": "-41.00"
       },
       "volume_globex": {
-        "state": "VALUE",
-        "raw": "2",
-        "value": "2"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -629,8 +629,8 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "20",
-        "value": "20"
+        "raw": "23",
+        "value": "23"
       },
       "oi_change": {
         "state": "VALUE",
@@ -639,7 +639,7 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "JUL27 4535.50 4535.50 /4503.40 4449.30 - 58.70 2 ---- 20 UNCH",
+        "raw_line": "JUL27 ---- ---- 4516.30 - 41.00 ---- ---- 23 UNCH",
         "top": 155.121
       }
     },
@@ -647,33 +647,33 @@
       "contract": "AUG27",
       "open": {
         "state": "VALUE",
-        "raw": "4468.00",
-        "value": "4468.00"
+        "raw": "4544.90",
+        "value": "4544.90"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4472.20",
-        "value": "4472.20"
+        "raw": "4544.90",
+        "value": "4544.90"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4468.00",
-        "value": "4468.00"
+        "raw": "4520.00",
+        "value": "4520.00"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4469.50",
-        "value": "4469.50"
+        "raw": "4536.70",
+        "value": "4536.70"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-40.90",
+        "value": "-40.90"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "140",
-        "value": "140"
+        "raw": "97",
+        "value": "97"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -682,51 +682,51 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "1463",
-        "value": "1463"
+        "raw": "1421",
+        "value": "1421"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+3",
-        "value": "3"
+        "raw": "+5",
+        "value": "5"
       },
       "source": {
         "page": 3,
-        "raw_line": "AUG27 4468.00 4472.20 /4468.00 4469.50 - 58.70 140 ---- 1463 + 3",
+        "raw_line": "AUG27 4544.90 4544.90 /4520.00 4536.70 - 40.90 97 ---- 1421 + 5",
         "top": 162.671
       }
     },
     {
       "contract": "SEP27",
       "open": {
-        "state": "VALUE",
-        "raw": "4499.70",
-        "value": "4499.70"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "high": {
-        "state": "VALUE",
-        "raw": "4499.70",
-        "value": "4499.70"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "low": {
-        "state": "VALUE",
-        "raw": "4499.70",
-        "value": "4499.70"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4488.70",
-        "value": "4488.70"
+        "raw": "4555.90",
+        "value": "4555.90"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-40.90",
+        "value": "-40.90"
       },
       "volume_globex": {
-        "state": "VALUE",
-        "raw": "1",
-        "value": "1"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -735,17 +735,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "6",
-        "value": "6"
+        "raw": "7",
+        "value": "7"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-1",
-        "value": "-1"
+        "raw": "UNCH",
+        "value": "0"
       },
       "source": {
         "page": 3,
-        "raw_line": "SEP27 4499.70 4499.70 /4499.70 4488.70 - 58.70 1 ---- 6 - 1",
+        "raw_line": "SEP27 ---- ---- 4555.90 - 40.90 ---- ---- 7 UNCH",
         "top": 170.221
       }
     },
@@ -768,18 +768,18 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4508.30",
-        "value": "4508.30"
+        "raw": "4575.50",
+        "value": "4575.50"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-41.00",
+        "value": "-41.00"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "105",
-        "value": "105"
+        "raw": "122",
+        "value": "122"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -788,17 +788,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "638",
-        "value": "638"
+        "raw": "520",
+        "value": "520"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+40",
-        "value": "40"
+        "raw": "-5",
+        "value": "-5"
       },
       "source": {
         "page": 3,
-        "raw_line": "OCT27 ---- ---- 4508.30 - 58.70 105 ---- 638 + 40",
+        "raw_line": "OCT27 ---- ---- 4575.50 - 41.00 122 ---- 520 - 5",
         "top": 177.771
       }
     },
@@ -821,13 +821,13 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4527.60",
-        "value": "4527.60"
+        "raw": "4594.90",
+        "value": "4594.90"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.70",
-        "value": "-58.70"
+        "raw": "-41.10",
+        "value": "-41.10"
       },
       "volume_globex": {
         "state": "SOURCE_NULL",
@@ -851,7 +851,7 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "NOV27 ---- ---- 4527.60 - 58.70 ---- ---- 28 UNCH",
+        "raw_line": "NOV27 ---- ---- 4594.90 - 41.10 ---- ---- 28 UNCH",
         "top": 185.321
       }
     },
@@ -859,33 +859,33 @@
       "contract": "DEC27",
       "open": {
         "state": "VALUE",
-        "raw": "4610.20",
-        "value": "4610.20"
+        "raw": "4630.00",
+        "value": "4630.00"
       },
       "high": {
         "state": "VALUE",
-        "raw": "4611.00",
-        "value": "4611.00"
+        "raw": "4636.00",
+        "value": "4636.00"
       },
       "low": {
         "state": "VALUE",
-        "raw": "4567.00",
-        "value": "4567.00"
+        "raw": "4610.40",
+        "value": "4610.40"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4547.10",
-        "value": "4547.10"
+        "raw": "4614.50",
+        "value": "4614.50"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
+        "raw": "-41.20",
+        "value": "-41.20"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "90",
-        "value": "90"
+        "raw": "28",
+        "value": "28"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -894,17 +894,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "934",
-        "value": "934"
+        "raw": "890",
+        "value": "890"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-25",
-        "value": "-25"
+        "raw": "+4",
+        "value": "4"
       },
       "source": {
         "page": 3,
-        "raw_line": "DEC27 4610.20 4611.00 /4567.00 4547.10 - 58.80 90 ---- 934 - 25",
+        "raw_line": "DEC27 4630.00 4636.00 /4610.40 4614.50 - 41.20 28 ---- 890 + 4",
         "top": 192.871
       }
     },
@@ -927,13 +927,13 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4566.50",
-        "value": "4566.50"
+        "raw": "4634.00",
+        "value": "4634.00"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
+        "raw": "-41.20",
+        "value": "-41.20"
       },
       "volume_globex": {
         "state": "SOURCE_NULL",
@@ -957,41 +957,41 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "JAN28 ---- ---- 4566.50 - 58.80 ---- ---- 15 UNCH",
+        "raw_line": "JAN28 ---- ---- 4634.00 - 41.20 ---- ---- 15 UNCH",
         "top": 200.421
       }
     },
     {
       "contract": "FEB28",
       "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4687.40",
+        "value": "4687.40"
       },
       "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4687.40",
+        "value": "4687.40"
       },
       "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
+        "state": "VALUE",
+        "raw": "4687.40",
+        "value": "4687.40"
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4586.20",
-        "value": "4586.20"
+        "raw": "4653.70",
+        "value": "4653.70"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
+        "raw": "-41.30",
+        "value": "-41.30"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "23",
-        "value": "23"
+        "raw": "7",
+        "value": "7"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -1000,76 +1000,23 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "162",
-        "value": "162"
+        "raw": "148",
+        "value": "148"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "+12",
-        "value": "12"
+        "raw": "-2",
+        "value": "-2"
       },
       "source": {
         "page": 3,
-        "raw_line": "FEB28 ---- ---- 4586.20 - 58.80 23 ---- 162 + 12",
+        "raw_line": "FEB28 4687.40 4687.40 /4687.40 4653.70 - 41.30 7 ---- 148 - 2",
         "top": 207.971
       }
     },
     {
       "contract": "MAR28",
       "open": {
-        "state": "VALUE",
-        "raw": "4610.00",
-        "value": "4610.00"
-      },
-      "high": {
-        "state": "VALUE",
-        "raw": "4610.00",
-        "value": "4610.00"
-      },
-      "low": {
-        "state": "VALUE",
-        "raw": "4610.00",
-        "value": "4610.00"
-      },
-      "settlement": {
-        "state": "VALUE",
-        "raw": "4605.20",
-        "value": "4605.20"
-      },
-      "price_change": {
-        "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
-      },
-      "volume_globex": {
-        "state": "VALUE",
-        "raw": "2",
-        "value": "2"
-      },
-      "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "open_interest": {
-        "state": "VALUE",
-        "raw": "8",
-        "value": "8"
-      },
-      "oi_change": {
-        "state": "VALUE",
-        "raw": "-1",
-        "value": "-1"
-      },
-      "source": {
-        "page": 3,
-        "raw_line": "MAR28 4610.00 4610.00 /4610.00 4605.20 - 58.80 2 ---- 8 - 1",
-        "top": 215.521
-      }
-    },
-    {
-      "contract": "APR28",
-      "open": {
         "state": "SOURCE_NULL",
         "raw": "----",
         "value": null
@@ -1086,225 +1033,13 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4624.60",
-        "value": "4624.60"
+        "raw": "4672.70",
+        "value": "4672.70"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
-      },
-      "volume_globex": {
-        "state": "VALUE",
-        "raw": "44",
-        "value": "44"
-      },
-      "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "open_interest": {
-        "state": "VALUE",
-        "raw": "241",
-        "value": "241"
-      },
-      "oi_change": {
-        "state": "VALUE",
-        "raw": "+32",
-        "value": "32"
-      },
-      "source": {
-        "page": 3,
-        "raw_line": "APR28 ---- ---- 4624.60 - 58.80 44 ---- 241 + 32",
-        "top": 223.071
-      }
-    },
-    {
-      "contract": "MAY28",
-      "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "settlement": {
-        "state": "VALUE",
-        "raw": "4643.30",
-        "value": "4643.30"
-      },
-      "price_change": {
-        "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
-      },
-      "volume_globex": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "open_interest": {
-        "state": "VALUE",
-        "raw": "1",
-        "value": "1"
-      },
-      "oi_change": {
-        "state": "VALUE",
-        "raw": "UNCH",
-        "value": "0"
-      },
-      "source": {
-        "page": 3,
-        "raw_line": "MAY28 ---- ---- 4643.30 - 58.80 ---- ---- 1 UNCH",
-        "top": 230.621
-      }
-    },
-    {
-      "contract": "JUN28",
-      "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "settlement": {
-        "state": "VALUE",
-        "raw": "4662.40",
-        "value": "4662.40"
-      },
-      "price_change": {
-        "state": "VALUE",
-        "raw": "-58.80",
-        "value": "-58.80"
-      },
-      "volume_globex": {
-        "state": "VALUE",
-        "raw": "66",
-        "value": "66"
-      },
-      "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "open_interest": {
-        "state": "VALUE",
-        "raw": "136",
-        "value": "136"
-      },
-      "oi_change": {
-        "state": "VALUE",
-        "raw": "+4",
-        "value": "4"
-      },
-      "source": {
-        "page": 3,
-        "raw_line": "JUN28 ---- ---- 4662.40 - 58.80 66 ---- 136 + 4",
-        "top": 238.171
-      }
-    },
-    {
-      "contract": "JUL28",
-      "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "settlement": {
-        "state": "VALUE",
-        "raw": "4681.20",
-        "value": "4681.20"
-      },
-      "price_change": {
-        "state": "VALUE",
-        "raw": "-58.90",
-        "value": "-58.90"
-      },
-      "volume_globex": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "volume_pnt_pit": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "open_interest": {
-        "state": "VALUE",
-        "raw": "2",
-        "value": "2"
-      },
-      "oi_change": {
-        "state": "VALUE",
-        "raw": "UNCH",
-        "value": "0"
-      },
-      "source": {
-        "page": 3,
-        "raw_line": "JUL28 ---- ---- 4681.20 - 58.90 ---- ---- 2 UNCH",
-        "top": 245.721
-      }
-    },
-    {
-      "contract": "AUG28",
-      "open": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "high": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "low": {
-        "state": "SOURCE_NULL",
-        "raw": "----",
-        "value": null
-      },
-      "settlement": {
-        "state": "VALUE",
-        "raw": "4700.30",
-        "value": "4700.30"
-      },
-      "price_change": {
-        "state": "VALUE",
-        "raw": "-58.90",
-        "value": "-58.90"
+        "raw": "-41.40",
+        "value": "-41.40"
       },
       "volume_globex": {
         "state": "SOURCE_NULL",
@@ -1328,7 +1063,272 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "AUG28 ---- ---- 4700.30 - 58.90 ---- ---- 9 UNCH",
+        "raw_line": "MAR28 ---- ---- 4672.70 - 41.40 ---- ---- 9 UNCH",
+        "top": 215.521
+      }
+    },
+    {
+      "contract": "APR28",
+      "open": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "high": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "low": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "settlement": {
+        "state": "VALUE",
+        "raw": "4692.10",
+        "value": "4692.10"
+      },
+      "price_change": {
+        "state": "VALUE",
+        "raw": "-41.50",
+        "value": "-41.50"
+      },
+      "volume_globex": {
+        "state": "VALUE",
+        "raw": "26",
+        "value": "26"
+      },
+      "volume_pnt_pit": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "open_interest": {
+        "state": "VALUE",
+        "raw": "198",
+        "value": "198"
+      },
+      "oi_change": {
+        "state": "VALUE",
+        "raw": "+17",
+        "value": "17"
+      },
+      "source": {
+        "page": 3,
+        "raw_line": "APR28 ---- ---- 4692.10 - 41.50 26 ---- 198 + 17",
+        "top": 223.071
+      }
+    },
+    {
+      "contract": "MAY28",
+      "open": {
+        "state": "VALUE",
+        "raw": "4750.00",
+        "value": "4750.00"
+      },
+      "high": {
+        "state": "VALUE",
+        "raw": "4750.00",
+        "value": "4750.00"
+      },
+      "low": {
+        "state": "VALUE",
+        "raw": "4750.00",
+        "value": "4750.00"
+      },
+      "settlement": {
+        "state": "VALUE",
+        "raw": "4710.80",
+        "value": "4710.80"
+      },
+      "price_change": {
+        "state": "VALUE",
+        "raw": "-41.70",
+        "value": "-41.70"
+      },
+      "volume_globex": {
+        "state": "VALUE",
+        "raw": "1",
+        "value": "1"
+      },
+      "volume_pnt_pit": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "open_interest": {
+        "state": "VALUE",
+        "raw": "2",
+        "value": "2"
+      },
+      "oi_change": {
+        "state": "VALUE",
+        "raw": "-1",
+        "value": "-1"
+      },
+      "source": {
+        "page": 3,
+        "raw_line": "MAY28 4750.00 4750.00 /4750.00 4710.80 - 41.70 1 ---- 2 - 1",
+        "top": 230.621
+      }
+    },
+    {
+      "contract": "JUN28",
+      "open": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "high": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "low": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "settlement": {
+        "state": "VALUE",
+        "raw": "4729.90",
+        "value": "4729.90"
+      },
+      "price_change": {
+        "state": "VALUE",
+        "raw": "-41.90",
+        "value": "-41.90"
+      },
+      "volume_globex": {
+        "state": "VALUE",
+        "raw": "25",
+        "value": "25"
+      },
+      "volume_pnt_pit": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "open_interest": {
+        "state": "VALUE",
+        "raw": "127",
+        "value": "127"
+      },
+      "oi_change": {
+        "state": "VALUE",
+        "raw": "+15",
+        "value": "15"
+      },
+      "source": {
+        "page": 3,
+        "raw_line": "JUN28 ---- ---- 4729.90 - 41.90 25 ---- 127 + 15",
+        "top": 238.171
+      }
+    },
+    {
+      "contract": "JUL28",
+      "open": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "high": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "low": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "settlement": {
+        "state": "VALUE",
+        "raw": "4748.80",
+        "value": "4748.80"
+      },
+      "price_change": {
+        "state": "VALUE",
+        "raw": "-41.90",
+        "value": "-41.90"
+      },
+      "volume_globex": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "volume_pnt_pit": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "open_interest": {
+        "state": "VALUE",
+        "raw": "2",
+        "value": "2"
+      },
+      "oi_change": {
+        "state": "VALUE",
+        "raw": "UNCH",
+        "value": "0"
+      },
+      "source": {
+        "page": 3,
+        "raw_line": "JUL28 ---- ---- 4748.80 - 41.90 ---- ---- 2 UNCH",
+        "top": 245.721
+      }
+    },
+    {
+      "contract": "AUG28",
+      "open": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "high": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "low": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "settlement": {
+        "state": "VALUE",
+        "raw": "4767.90",
+        "value": "4767.90"
+      },
+      "price_change": {
+        "state": "VALUE",
+        "raw": "-42.00",
+        "value": "-42.00"
+      },
+      "volume_globex": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "volume_pnt_pit": {
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
+      },
+      "open_interest": {
+        "state": "VALUE",
+        "raw": "9",
+        "value": "9"
+      },
+      "oi_change": {
+        "state": "VALUE",
+        "raw": "UNCH",
+        "value": "0"
+      },
+      "source": {
+        "page": 3,
+        "raw_line": "AUG28 ---- ---- 4767.90 - 42.00 ---- ---- 9 UNCH",
         "top": 253.271
       }
     },
@@ -1351,13 +1351,13 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4738.00",
-        "value": "4738.00"
+        "raw": "4805.70",
+        "value": "4805.70"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-59.00",
-        "value": "-59.00"
+        "raw": "-42.00",
+        "value": "-42.00"
       },
       "volume_globex": {
         "state": "SOURCE_NULL",
@@ -1381,41 +1381,41 @@
       },
       "source": {
         "page": 3,
-        "raw_line": "OCT28 ---- ---- 4738.00 - 59.00 ---- ---- 10 UNCH",
+        "raw_line": "OCT28 ---- ---- 4805.70 - 42.00 ---- ---- 10 UNCH",
         "top": 260.821
       }
     },
     {
       "contract": "DEC28",
       "open": {
-        "state": "VALUE",
-        "raw": "4806.50",
-        "value": "4806.50"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "high": {
-        "state": "VALUE",
-        "raw": "4806.50",
-        "value": "4806.50"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "low": {
-        "state": "VALUE",
-        "raw": "4806.50",
-        "value": "4806.50"
+        "state": "SOURCE_NULL",
+        "raw": "----",
+        "value": null
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4775.50",
-        "value": "4775.50"
+        "raw": "4843.20",
+        "value": "4843.20"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-59.00",
-        "value": "-59.00"
+        "raw": "-42.30",
+        "value": "-42.30"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "7",
-        "value": "7"
+        "raw": "5",
+        "value": "5"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -1429,12 +1429,12 @@
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "UNCH",
-        "value": "0"
+        "raw": "-1",
+        "value": "-1"
       },
       "source": {
         "page": 3,
-        "raw_line": "DEC28 4806.50 4806.50 /4806.50 4775.50 - 59.00 7 ---- 131 UNCH",
+        "raw_line": "DEC28 ---- ---- 4843.20 - 42.30 5 ---- 131 - 1",
         "top": 268.371
       }
     },
@@ -1457,18 +1457,18 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4884.90",
-        "value": "4884.90"
+        "raw": "4952.60",
+        "value": "4952.60"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-59.00",
-        "value": "-59.00"
+        "raw": "-42.80",
+        "value": "-42.80"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "8",
-        "value": "8"
+        "raw": "11",
+        "value": "11"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -1477,17 +1477,17 @@
       },
       "open_interest": {
         "state": "VALUE",
-        "raw": "45",
-        "value": "45"
+        "raw": "46",
+        "value": "46"
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "-1",
-        "value": "-1"
+        "raw": "+9",
+        "value": "9"
       },
       "source": {
         "page": 3,
-        "raw_line": "JUN29 ---- ---- 4884.90 - 59.00 8 ---- 45 - 1",
+        "raw_line": "JUN29 ---- ---- 4952.60 - 42.80 11 ---- 46 + 9",
         "top": 275.921
       }
     },
@@ -1510,18 +1510,18 @@
       },
       "settlement": {
         "state": "VALUE",
-        "raw": "4995.10",
-        "value": "4995.10"
+        "raw": "5062.80",
+        "value": "5062.80"
       },
       "price_change": {
         "state": "VALUE",
-        "raw": "-59.00",
-        "value": "-59.00"
+        "raw": "-44.00",
+        "value": "-44.00"
       },
       "volume_globex": {
         "state": "VALUE",
-        "raw": "3",
-        "value": "3"
+        "raw": "8",
+        "value": "8"
       },
       "volume_pnt_pit": {
         "state": "SOURCE_NULL",
@@ -1535,43 +1535,43 @@
       },
       "oi_change": {
         "state": "VALUE",
-        "raw": "UNCH",
-        "value": "0"
+        "raw": "+4",
+        "value": "4"
       },
       "source": {
         "page": 3,
-        "raw_line": "DEC29 ---- ---- 4995.10 - 59.00 3 ---- 57 UNCH",
+        "raw_line": "DEC29 ---- ---- 5062.80 - 44.00 8 ---- 57 + 4",
         "top": 283.471
       }
     }
   ],
   "source_total": {
     "page": 3,
-    "raw_line": "TOTAL GC FUT 165757 1893 411932 - 868",
+    "raw_line": "TOTAL GC FUT 150369 7712 414524 + 2152",
     "cells": [
       {
         "field": "volume_globex",
         "state": "VALUE",
-        "raw": "165757",
-        "value": "165757"
+        "raw": "150369",
+        "value": "150369"
       },
       {
         "field": "volume_pnt_pit",
         "state": "VALUE",
-        "raw": "1893",
-        "value": "1893"
+        "raw": "7712",
+        "value": "7712"
       },
       {
         "field": "open_interest",
         "state": "VALUE",
-        "raw": "411932",
-        "value": "411932"
+        "raw": "414524",
+        "value": "414524"
       },
       {
         "field": "oi_change",
         "state": "VALUE",
-        "raw": "-868",
-        "value": "-868"
+        "raw": "+2152",
+        "value": "2152"
       }
     ]
   },
@@ -1584,12 +1584,6 @@
   "build": {
     "builder_version": "pg62.master.daily.v5",
     "parser_version": "pg62-gold-v5.0.1",
-    "source_sha256": "af54af98bea470aaf7e82e8db467dae19daf5e803a910bd55d080f309468f42a",
-    "rebuild": {
-      "type": "PARSER_UPGRADE",
-      "previous_parser_version": "pg62-gold-v5.0.0",
-      "new_parser_version": "pg62-gold-v5.0.1",
-      "source_sha256_unchanged": true
-    }
+    "source_sha256": "e76c59d26368befb3ce580bfda401caa4ec8124deb5c896325032ebd8a601e2e"
   }
 }
