@@ -1,0 +1,118 @@
+product_code,product_name,exchange,product_family,instrument,underlying_code,weekly,weekly_day,weekly_number,status
+ALO,Aluminum MW U.S. Transaction Premium Platts (25MT) Average Price Option,COMEX,Aluminum,AVERAGE_PRICE_OPTION,AUP,false,,,OFFICIAL_CURRENT_CME
+AX,Aluminum Option,COMEX,Aluminum,OPTION,ALI,false,,,OFFICIAL_CURRENT_CME
+COO,Cobalt Metal (Fastmarkets) Average Price Option,COMEX,Cobalt,AVERAGE_PRICE_OPTION,COB,false,,,OFFICIAL_CURRENT_CME
+CAP,Copper Average Price Option,COMEX,Copper,AVERAGE_PRICE_OPTION,HGS,false,,,OFFICIAL_CURRENT_CME
+H1E,Copper Weekly Friday Option - Week 1,COMEX,Copper,OPTION,HG,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+H1M,Copper Weekly Monday Option - Week 1,COMEX,Copper,OPTION,HG,true,MONDAY,1,OFFICIAL_CURRENT_CME
+H1R,Copper Weekly Thursday Option - Week 1,COMEX,Copper,OPTION,HG,true,THURSDAY,1,OFFICIAL_CURRENT_CME
+H1T,Copper Weekly Tuesday Option - Week 1,COMEX,Copper,OPTION,HG,true,TUESDAY,1,OFFICIAL_CURRENT_CME
+H1W,Copper Weekly Wednesday Option - Week 1,COMEX,Copper,OPTION,HG,true,WEDNESDAY,1,OFFICIAL_CURRENT_CME
+H2E,Copper Weekly Friday Option - Week 2,COMEX,Copper,OPTION,HG,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+H2M,Copper Weekly Monday Option - Week 2,COMEX,Copper,OPTION,HG,true,MONDAY,2,OFFICIAL_CURRENT_CME
+H2R,Copper Weekly Thursday Option - Week 2,COMEX,Copper,OPTION,HG,true,THURSDAY,2,OFFICIAL_CURRENT_CME
+H2T,Copper Weekly Tuesday Option - Week 2,COMEX,Copper,OPTION,HG,true,TUESDAY,2,OFFICIAL_CURRENT_CME
+H2W,Copper Weekly Wednesday Option - Week 2,COMEX,Copper,OPTION,HG,true,WEDNESDAY,2,OFFICIAL_CURRENT_CME
+H3E,Copper Weekly Friday Option - Week 3,COMEX,Copper,OPTION,HG,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+H3M,Copper Weekly Monday Option - Week 3,COMEX,Copper,OPTION,HG,true,MONDAY,3,OFFICIAL_CURRENT_CME
+H3R,Copper Weekly Thursday Option - Week 3,COMEX,Copper,OPTION,HG,true,THURSDAY,3,OFFICIAL_CURRENT_CME
+H3T,Copper Weekly Tuesday Option - Week 3,COMEX,Copper,OPTION,HG,true,TUESDAY,3,OFFICIAL_CURRENT_CME
+H3W,Copper Weekly Wednesday Option - Week 3,COMEX,Copper,OPTION,HG,true,WEDNESDAY,3,OFFICIAL_CURRENT_CME
+H4E,Copper Weekly Friday Option - Week 4,COMEX,Copper,OPTION,HG,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+H4M,Copper Weekly Monday Option - Week 4,COMEX,Copper,OPTION,HG,true,MONDAY,4,OFFICIAL_CURRENT_CME
+H4R,Copper Weekly Thursday Option - Week 4,COMEX,Copper,OPTION,HG,true,THURSDAY,4,OFFICIAL_CURRENT_CME
+H4T,Copper Weekly Tuesday Option - Week 4,COMEX,Copper,OPTION,HG,true,TUESDAY,4,OFFICIAL_CURRENT_CME
+H4W,Copper Weekly Wednesday Option - Week 4,COMEX,Copper,OPTION,HG,true,WEDNESDAY,4,OFFICIAL_CURRENT_CME
+H5E,Copper Weekly Friday Option - Week 5,COMEX,Copper,OPTION,HG,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+H5M,Copper Weekly Monday Option - Week 5,COMEX,Copper,OPTION,HG,true,MONDAY,5,OFFICIAL_CURRENT_CME
+H5R,Copper Weekly Thursday Option - Week 5,COMEX,Copper,OPTION,HG,true,THURSDAY,5,OFFICIAL_CURRENT_CME
+H5T,Copper Weekly Tuesday Option - Week 5,COMEX,Copper,OPTION,HG,true,TUESDAY,5,OFFICIAL_CURRENT_CME
+H5W,Copper Weekly Wednesday Option - Week 5,COMEX,Copper,OPTION,HG,true,WEDNESDAY,5,OFFICIAL_CURRENT_CME
+HX,Copper Option,COMEX,Copper,OPTION,HG,false,,,OFFICIAL_CURRENT_CME
+CHX,Chicago No1 Busheling Ferrous Scrap (Fastmarkets) Option,COMEX,Ferrous Scrap,OPTION,BCH,false,,,OFFICIAL_CURRENT_CME
+FSO,"HMS 80/20 Ferrous Scrap, CFR Turkey (Platts TSI) Average Price Option",COMEX,Ferrous Scrap,AVERAGE_PRICE_OPTION,FSF,false,,,OFFICIAL_CURRENT_CME
+G1M,Gold Weekly Monday Option - Week 1,COMEX,Gold,OPTION,GC,true,MONDAY,1,OFFICIAL_CURRENT_CME
+G1R,Gold Weekly Thursday Option - Week 1,COMEX,Gold,OPTION,GC,true,THURSDAY,1,OFFICIAL_CURRENT_CME
+G1T,Gold Weekly Tuesday Option - Week 1,COMEX,Gold,OPTION,GC,true,TUESDAY,1,OFFICIAL_CURRENT_CME
+G1W,Gold Weekly Wednesday Option - Week 1,COMEX,Gold,OPTION,GC,true,WEDNESDAY,1,OFFICIAL_CURRENT_CME
+G2M,Gold Weekly Monday Option - Week 2,COMEX,Gold,OPTION,GC,true,MONDAY,2,OFFICIAL_CURRENT_CME
+G2R,Gold Weekly Thursday Option - Week 2,COMEX,Gold,OPTION,GC,true,THURSDAY,2,OFFICIAL_CURRENT_CME
+G2T,Gold Weekly Tuesday Option - Week 2,COMEX,Gold,OPTION,GC,true,TUESDAY,2,OFFICIAL_CURRENT_CME
+G2W,Gold Weekly Wednesday Option - Week 2,COMEX,Gold,OPTION,GC,true,WEDNESDAY,2,OFFICIAL_CURRENT_CME
+G3M,Gold Weekly Monday Option - Week 3,COMEX,Gold,OPTION,GC,true,MONDAY,3,OFFICIAL_CURRENT_CME
+G3R,Gold Weekly Thursday Option - Week 3,COMEX,Gold,OPTION,GC,true,THURSDAY,3,OFFICIAL_CURRENT_CME
+G3T,Gold Weekly Tuesday Option - Week 3,COMEX,Gold,OPTION,GC,true,TUESDAY,3,OFFICIAL_CURRENT_CME
+G3W,Gold Weekly Wednesday Option - Week 3,COMEX,Gold,OPTION,GC,true,WEDNESDAY,3,OFFICIAL_CURRENT_CME
+G4M,Gold Weekly Monday Option - Week 4,COMEX,Gold,OPTION,GC,true,MONDAY,4,OFFICIAL_CURRENT_CME
+G4R,Gold Weekly Thursday Option - Week 4,COMEX,Gold,OPTION,GC,true,THURSDAY,4,OFFICIAL_CURRENT_CME
+G4T,Gold Weekly Tuesday Option - Week 4,COMEX,Gold,OPTION,GC,true,TUESDAY,4,OFFICIAL_CURRENT_CME
+G4W,Gold Weekly Wednesday Option - Week 4,COMEX,Gold,OPTION,GC,true,WEDNESDAY,4,OFFICIAL_CURRENT_CME
+G5M,Gold Weekly Monday Option - Week 5,COMEX,Gold,OPTION,GC,true,MONDAY,5,OFFICIAL_CURRENT_CME
+G5R,Gold Weekly Thursday Option - Week 5,COMEX,Gold,OPTION,GC,true,THURSDAY,5,OFFICIAL_CURRENT_CME
+G5T,Gold Weekly Tuesday Option - Week 5,COMEX,Gold,OPTION,GC,true,TUESDAY,5,OFFICIAL_CURRENT_CME
+G5W,Gold Weekly Wednesday Option - Week 5,COMEX,Gold,OPTION,GC,true,WEDNESDAY,5,OFFICIAL_CURRENT_CME
+OG,Gold Option,COMEX,Gold,OPTION,GC,false,,,OFFICIAL_CURRENT_CME
+OG1,Gold Weekly Friday Option - Week 1,COMEX,Gold,OPTION,GC,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+OG2,Gold Weekly Friday Option - Week 2,COMEX,Gold,OPTION,GC,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+OG3,Gold Weekly Friday Option - Week 3,COMEX,Gold,OPTION,GC,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+OG4,Gold Weekly Friday Option - Week 4,COMEX,Gold,OPTION,GC,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+OG5,Gold Weekly Friday Option - Week 5,COMEX,Gold,OPTION,GC,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+EHO,North European Hot-Rolled Coil Steel (Argus) Average Price Option,COMEX,Hot-Rolled Coil Steel,AVERAGE_PRICE_OPTION,EHR,false,,,OFFICIAL_CURRENT_CME
+HRO,U.S. Midwest Domestic Hot-Rolled Coil Steel (CRU) Index Average Price Option,COMEX,Hot-Rolled Coil Steel,AVERAGE_PRICE_OPTION,HR,false,,,OFFICIAL_CURRENT_CME
+ICT,"Iron Ore 62% Fe, CFR China (TSI) Average Price Option",COMEX,Iron Ore,AVERAGE_PRICE_OPTION,TIO,false,,,OFFICIAL_CURRENT_CME
+LCO,Lithium Carbonate CIF CJK (Fastmarkets) Average Price Option,COMEX,Lithium Carbonate,AVERAGE_PRICE_OPTION,LTC,false,,,OFFICIAL_CURRENT_CME
+LHO,Lithium Hydroxide CIF CJK (Fastmarkets) Average Price Option,COMEX,Lithium Hydroxide,AVERAGE_PRICE_OPTION,LTH,false,,,OFFICIAL_CURRENT_CME
+1FG,Micro Gold Weekly Friday Option - Week 1,COMEX,Micro Gold,OPTION,MGC,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+1MG,Micro Gold Weekly Monday Option - Week 1,COMEX,Micro Gold,OPTION,MGC,true,MONDAY,1,OFFICIAL_CURRENT_CME
+1WG,Micro Gold Weekly Wednesday Option - Week 1,COMEX,Micro Gold,OPTION,MGC,true,WEDNESDAY,1,OFFICIAL_CURRENT_CME
+2FG,Micro Gold Weekly Friday Option - Week 2,COMEX,Micro Gold,OPTION,MGC,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+2MG,Micro Gold Weekly Monday Option - Week 2,COMEX,Micro Gold,OPTION,MGC,true,MONDAY,2,OFFICIAL_CURRENT_CME
+2WG,Micro Gold Weekly Wednesday Option - Week 2,COMEX,Micro Gold,OPTION,MGC,true,WEDNESDAY,2,OFFICIAL_CURRENT_CME
+3FG,Micro Gold Weekly Friday Option - Week 3,COMEX,Micro Gold,OPTION,MGC,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+3MG,Micro Gold Weekly Monday Option - Week 3,COMEX,Micro Gold,OPTION,MGC,true,MONDAY,3,OFFICIAL_CURRENT_CME
+3WG,Micro Gold Weekly Wednesday Option - Week 3,COMEX,Micro Gold,OPTION,MGC,true,WEDNESDAY,3,OFFICIAL_CURRENT_CME
+4FG,Micro Gold Weekly Friday Option - Week 4,COMEX,Micro Gold,OPTION,MGC,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+4MG,Micro Gold Weekly Monday Option - Week 4,COMEX,Micro Gold,OPTION,MGC,true,MONDAY,4,OFFICIAL_CURRENT_CME
+4WG,Micro Gold Weekly Wednesday Option - Week 4,COMEX,Micro Gold,OPTION,MGC,true,WEDNESDAY,4,OFFICIAL_CURRENT_CME
+5FG,Micro Gold Weekly Friday Option - Week 5,COMEX,Micro Gold,OPTION,MGC,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+5MG,Micro Gold Weekly Monday Option - Week 5,COMEX,Micro Gold,OPTION,MGC,true,MONDAY,5,OFFICIAL_CURRENT_CME
+5WG,Micro Gold Weekly Wednesday Option - Week 5,COMEX,Micro Gold,OPTION,MGC,true,WEDNESDAY,5,OFFICIAL_CURRENT_CME
+OMG,Micro Gold Option,COMEX,Micro Gold,OPTION,MGC,false,,,OFFICIAL_CURRENT_CME
+PAO,Palladium Option,NYMEX,Palladium,OPTION,PA,false,,,OFFICIAL_CURRENT_CME
+PE1,Palladium Weekly Friday Option - Week 1,NYMEX,Palladium,OPTION,PA,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+PE2,Palladium Weekly Friday Option - Week 2,NYMEX,Palladium,OPTION,PA,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+PE3,Palladium Weekly Friday Option - Week 3,NYMEX,Palladium,OPTION,PA,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+PE4,Palladium Weekly Friday Option - Week 4,NYMEX,Palladium,OPTION,PA,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+PE5,Palladium Weekly Friday Option - Week 5,NYMEX,Palladium,OPTION,PA,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+P1L,Platinum Weekly Friday Option - Week 1,NYMEX,Platinum,OPTION,PL,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+P2L,Platinum Weekly Friday Option - Week 2,NYMEX,Platinum,OPTION,PL,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+P3L,Platinum Weekly Friday Option - Week 3,NYMEX,Platinum,OPTION,PL,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+P4L,Platinum Weekly Friday Option - Week 4,NYMEX,Platinum,OPTION,PL,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+P5L,Platinum Weekly Friday Option - Week 5,NYMEX,Platinum,OPTION,PL,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+PO,Platinum Option,NYMEX,Platinum,OPTION,PL,false,,,OFFICIAL_CURRENT_CME
+M1S,Silver Weekly Monday Option - Week 1,COMEX,Silver,OPTION,SI,true,MONDAY,1,OFFICIAL_CURRENT_CME
+M2S,Silver Weekly Monday Option - Week 2,COMEX,Silver,OPTION,SI,true,MONDAY,2,OFFICIAL_CURRENT_CME
+M3S,Silver Weekly Monday Option - Week 3,COMEX,Silver,OPTION,SI,true,MONDAY,3,OFFICIAL_CURRENT_CME
+M4S,Silver Weekly Monday Option - Week 4,COMEX,Silver,OPTION,SI,true,MONDAY,4,OFFICIAL_CURRENT_CME
+M5S,Silver Weekly Monday Option - Week 5,COMEX,Silver,OPTION,SI,true,MONDAY,5,OFFICIAL_CURRENT_CME
+R1S,Silver Weekly Thursday Option - Week 1,COMEX,Silver,OPTION,SI,true,THURSDAY,1,OFFICIAL_CURRENT_CME
+R2S,Silver Weekly Thursday Option - Week 2,COMEX,Silver,OPTION,SI,true,THURSDAY,2,OFFICIAL_CURRENT_CME
+R3S,Silver Weekly Thursday Option - Week 3,COMEX,Silver,OPTION,SI,true,THURSDAY,3,OFFICIAL_CURRENT_CME
+R4S,Silver Weekly Thursday Option - Week 4,COMEX,Silver,OPTION,SI,true,THURSDAY,4,OFFICIAL_CURRENT_CME
+R5S,Silver Weekly Thursday Option - Week 5,COMEX,Silver,OPTION,SI,true,THURSDAY,5,OFFICIAL_CURRENT_CME
+S1T,Silver Weekly Tuesday Option - Week 1,COMEX,Silver,OPTION,SI,true,TUESDAY,1,OFFICIAL_CURRENT_CME
+S2T,Silver Weekly Tuesday Option - Week 2,COMEX,Silver,OPTION,SI,true,TUESDAY,2,OFFICIAL_CURRENT_CME
+S3T,Silver Weekly Tuesday Option - Week 3,COMEX,Silver,OPTION,SI,true,TUESDAY,3,OFFICIAL_CURRENT_CME
+S4T,Silver Weekly Tuesday Option - Week 4,COMEX,Silver,OPTION,SI,true,TUESDAY,4,OFFICIAL_CURRENT_CME
+S5T,Silver Weekly Tuesday Option - Week 5,COMEX,Silver,OPTION,SI,true,TUESDAY,5,OFFICIAL_CURRENT_CME
+SO,Silver Option,COMEX,Silver,OPTION,SI,false,,,OFFICIAL_CURRENT_CME
+SO1,Silver Weekly Friday Option - Week 1,COMEX,Silver,OPTION,SI,true,FRIDAY,1,OFFICIAL_CURRENT_CME
+SO2,Silver Weekly Friday Option - Week 2,COMEX,Silver,OPTION,SI,true,FRIDAY,2,OFFICIAL_CURRENT_CME
+SO3,Silver Weekly Friday Option - Week 3,COMEX,Silver,OPTION,SI,true,FRIDAY,3,OFFICIAL_CURRENT_CME
+SO4,Silver Weekly Friday Option - Week 4,COMEX,Silver,OPTION,SI,true,FRIDAY,4,OFFICIAL_CURRENT_CME
+SO5,Silver Weekly Friday Option - Week 5,COMEX,Silver,OPTION,SI,true,FRIDAY,5,OFFICIAL_CURRENT_CME
+W1S,Silver Weekly Wednesday Option - Week 1,COMEX,Silver,OPTION,SI,true,WEDNESDAY,1,OFFICIAL_CURRENT_CME
+W2S,Silver Weekly Wednesday Option - Week 2,COMEX,Silver,OPTION,SI,true,WEDNESDAY,2,OFFICIAL_CURRENT_CME
+W3S,Silver Weekly Wednesday Option - Week 3,COMEX,Silver,OPTION,SI,true,WEDNESDAY,3,OFFICIAL_CURRENT_CME
+W4S,Silver Weekly Wednesday Option - Week 4,COMEX,Silver,OPTION,SI,true,WEDNESDAY,4,OFFICIAL_CURRENT_CME
+W5S,Silver Weekly Wednesday Option - Week 5,COMEX,Silver,OPTION,SI,true,WEDNESDAY,5,OFFICIAL_CURRENT_CME
