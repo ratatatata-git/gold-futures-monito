@@ -33,10 +33,11 @@ VERSION = "pg64-gold-v5.0.2-product-master-diagnostic"
 DIAGNOSTIC_SCHEMA = "pg64.audit.v5"
 
 DEFAULT_PRODUCT_MASTER = Path(
-    "data/master/product/product_master.csv"
+    "data/master/product/comex_metals_options_product_master_v2.csv"
 )
+
 DEFAULT_ALIAS_MASTER = Path(
-    "data/master/product/pg64_alias_master.csv"
+    "data/master/product/pg64_product_alias_master_v1.csv"
 )
 
 MONTH = r"(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2}"
