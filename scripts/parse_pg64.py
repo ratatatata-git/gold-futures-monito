@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pdfplumber
 
-VERSION = "pg64-gold-v5.0.4-product-master-diagnostic"
+VERSION = "pg64-gold-v5.0.6-product-master-diagnostic"
 DIAGNOSTIC_SCHEMA = "pg64.audit.v5"
 
 DEFAULT_PRODUCT_MASTER = Path(
@@ -301,49 +301,28 @@ class ProductResolver:
         self,
         display: str,
     ) -> dict[str, str] | None:
-        """Find a direct mapping explicitly represented by the masters.
+        """Resolve a no-week header only when the alias master is unique.
 
-        Some existing PG64 alias-master rows for OG/OG1..OG5 carry a
-        numeric pg64_week_number even though the source header itself
-        contains no WEEKn token. We do not convert that number from the
-        display code. Instead, we accept the row only when the alias
-        itself points to the same canonical code and that canonical
-        product is marked non-weekly in the product master.
+        The alias master can contain either: 
 
-        This keeps the resolver master-driven and prevents GMW/GWT/etc.
-        from silently falling back to a direct product.
+        * one row for a direct PG64 display code (for example OG1/OG5), or
+        * multiple rows for a weekly display code (for example GMW).
+
+        A no-week PDF header is allowed to resolve only when exactly one
+        alias row exists for that display code. This uses the master as the
+        source of the mapping and never derives a week number from the code.
+        Therefore GMW without Week1..Week5 remains UNKNOWN_PRODUCT.
         """
-
-        candidates = []
-
-        for (alias_display, _week), alias in self.aliases.items():
-            if alias_display != display:
-                continue
-
-            canonical = normalize_header_code(
-                alias.get("canonical_product_code", "")
-            )
-
-            if not canonical or canonical != display:
-                continue
-
-            product = self.products.get(canonical)
-            if product is None:
-                continue
-
-            weekly = norm(
-                product.get("weekly")
-            ).upper()
-
-            if weekly in {"TRUE", "YES", "Y", "1"}:
-                continue
-
-            candidates.append(alias)
+        candidates = [
+            alias
+            for (alias_display, _week), alias in self.aliases.items()
+            if alias_display == display
+        ]
 
         if len(candidates) == 1:
             return candidates[0]
 
-        # Ambiguous master data is fail-closed.
+        # Zero candidates or multiple weekly candidates are fail-closed.
         return None
 
     def _unknown_result(
@@ -565,13 +544,14 @@ def parse_bulletin_metadata(
     first_pages_text: str,
 ):
     m = re.search(
-        r"PG64\s+BULLETIN\s*#\s*(\d+)\s*@?.?"
+        r"PG64\s+BULLETIN\s*#\s*(\d+)\s*@?\s*"
+        r"METALS\s+OPTION\s+PRODUCTS\s+"
         r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+"
         r"([A-Z][a-z]{2})\s+"
         r"(\d{1,2}),\s"
         r"(\d{4})",
         alltext,
-        re.I | re.S,
+        re.I,
     )
 
     if not m:
