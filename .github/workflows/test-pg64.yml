@@ -1,46 +1,48 @@
 name: Test PG64 Parser
-
 on:
   workflow_dispatch:
   push:
     paths:
       - "scripts/parse_pg64.py"
       - "tests/**"
+      - "data/master/product/**"
+      - "data/cme-pg64/**"
       - "pg64-requirements.txt"
       - ".github/workflows/test-pg64.yml"
   pull_request:
     paths:
       - "scripts/parse_pg64.py"
       - "tests/**"
+      - "data/master/product/**"
+      - "data/cme-pg64/**"
       - "pg64-requirements.txt"
       - ".github/workflows/test-pg64.yml"
-
 jobs:
   test-pg64:
     name: PG64 Parser Tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
           cache-dependency-path: "pg64-requirements.txt"
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r pg64-requirements.txt
           pip install pytest
-
       - name: Check Python syntax
         run: |
           python -m py_compile scripts/parse_pg64.py
-
-      - name: Run PG64 tests
+          python -m py_compile tests/test_pg64.py
+          python -m py_compile tests/test_pg64_product_master.py
+      - name: Run legacy PG64 regression tests
         run: |
           python -m pytest -q tests/test_pg64.py
+      - name: Run product-master integration tests
+        run: |
+          python -m pytest -q tests/test_pg64_product_master.py
