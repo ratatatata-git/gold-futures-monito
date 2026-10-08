@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pdfplumber
 
-VERSION = "pg64-gold-v5.0.6-product-master-diagnostic"
+VERSION = "pg64-gold-v5.0.7-product-master-source-expiry-resolution"
 DIAGNOSTIC_SCHEMA = "pg64.audit.v5"
 
 DEFAULT_PRODUCT_MASTER = Path(
@@ -374,6 +374,58 @@ class ProductResolver:
             ),
         }
 
+
+    @staticmethod
+    def _week_from_source_expiry_date(
+        display: str,
+        source_weekly_day: str,
+        source_expiry_dates: dict[str, list[str]] | None,
+    ) -> str:
+        """Resolve a missing weekly number from explicit bulletin expiry data.
+
+        This is intentionally narrow: the bulletin must publish exactly one
+        expiry date for the display code, the alias master must provide the
+        weekday, and the published date must match that weekday. The week
+        number is then the calendar occurrence of that weekday in the month.
+        Multiple published dates remain unresolved.
+        """
+        if not source_expiry_dates or not source_weekly_day:
+            return ""
+
+        dates = source_expiry_dates.get(display, [])
+        if len(dates) != 1:
+            return ""
+
+        m = re.fullmatch(r"(\d{1,2})/(\d{1,2})", dates[0].strip())
+        if not m:
+            return ""
+
+        year_values = source_expiry_dates.get("__YEAR__", [])
+        if len(year_values) != 1:
+            return ""
+
+        try:
+            year = int(year_values[0])
+            month = int(m.group(1))
+            day = int(m.group(2))
+            expiry = datetime(year, month, day)
+        except ValueError:
+            return ""
+
+        weekday_map = {
+            "MON": 0, "MONDAY": 0,
+            "TUE": 1, "TUESDAY": 1,
+            "WED": 2, "WEDNESDAY": 2,
+            "THU": 3, "THURSDAY": 3,
+            "FRI": 4, "FRIDAY": 4,
+        }
+        wanted = weekday_map.get(norm(source_weekly_day).upper())
+        if wanted is None or expiry.weekday() != wanted:
+            return ""
+
+        occurrence = ((expiry.day - 1) // 7) + 1
+        return str(occurrence) if occurrence in range(1, 6) else ""
+
     def resolve(
         self,
         raw_code: str,
@@ -381,6 +433,7 @@ class ProductResolver:
         *,
         page: int,
         top: float,
+        source_expiry_dates: dict[str, list[str]] | None = None,
     ) -> dict[str, object]:
         display = normalize_header_code(raw_code)
         header = norm(raw_header)
@@ -413,6 +466,44 @@ class ProductResolver:
             alias = self._find_master_declared_direct_alias(
                 display
             )
+
+        # Narrow source-evidence fallback for weekly products whose PG64
+        # heading omits WEEK1..WEEK5. The bulletin's own last-trade-date
+        # table may contain exactly one published expiry date for the code.
+        # That date, together with the alias master's weekday, determines
+        # the calendar occurrence. This is source reconstruction, not
+        # inference from the product code.
+        if alias is None and not week:
+            candidates = [
+                candidate
+                for (alias_display, _alias_week), candidate
+                in self.aliases.items()
+                if (
+                    alias_display == display
+                    and norm(candidate.get("weekly_day"))
+                )
+            ]
+
+            if candidates:
+                candidate_days = {
+                    norm(candidate["weekly_day"]).upper()
+                    for candidate in candidates
+                }
+
+                if len(candidate_days) == 1:
+                    source_week = (
+                        self._week_from_source_expiry_date(
+                            display,
+                            next(iter(candidate_days)),
+                            source_expiry_dates,
+                        )
+                    )
+                    if source_week:
+                        alias = self.aliases.get(
+                            (display, source_week)
+                        )
+                        if alias is not None:
+                            week = source_week
 
         if alias is None:
             return self._unknown_result(
@@ -592,6 +683,61 @@ def parse_bulletin_metadata(
     )
 
 
+
+def extract_source_expiry_dates(
+    first_pages_text: str,
+    trade_date: str,
+) -> dict[str, list[str]]:
+    """Extract explicit product expiry dates from the PG64 first-page table.
+
+    pdfplumber often returns the product row and its MM/DD dates as separate
+    text lines. Therefore this parser carries the current product row forward
+    until the next product row. It only records dates that are explicitly
+    printed in the bulletin.
+    """
+    out: dict[str, list[str]] = {"__YEAR__": [trade_date[:4]]}
+
+    row_re = re.compile(
+        r"^([A-Z0-9]{2,5})"
+        r"(?:\s+(?:MON|TUE|WED|THU|FRI|CALL|PUT|OPT|OP|OOF))?$",
+        re.I,
+    )
+    date_re = re.compile(r"^\d{1,2}/\d{1,2}$")
+
+    current_display: str | None = None
+    current_dates: list[str] = []
+
+    def flush() -> None:
+        nonlocal current_display, current_dates
+        if current_display and current_dates:
+            out[current_display] = list(current_dates)
+        current_display = None
+        current_dates = []
+
+    for raw_line in first_pages_text.splitlines():
+        line = norm(raw_line)
+        if not line:
+            continue
+
+        m = row_re.match(line.upper())
+        if m:
+            flush()
+            current_display = normalize_header_code(m.group(1))
+            continue
+
+        if current_display and date_re.fullmatch(line):
+            current_dates.append(line)
+            continue
+
+        # Any non-date line terminates the current source row.
+        if current_display:
+            flush()
+
+    flush()
+    return out
+
+
+
 def audit(
     path: Path,
     product_master_path: Path = DEFAULT_PRODUCT_MASTER,
@@ -632,6 +778,11 @@ def audit(
         ) = parse_bulletin_metadata(
             alltext,
             first_pages_text,
+        )
+
+        source_expiry_dates = extract_source_expiry_dates(
+            first_pages_text,
+            trade_date,
         )
 
         for pno, page in enumerate(
@@ -717,6 +868,9 @@ def audit(
                                 text,
                                 page=pno,
                                 top=g["top"],
+                                source_expiry_dates=(
+                                    source_expiry_dates
+                                ),
                             )
                         )
 
