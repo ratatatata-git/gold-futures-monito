@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pdfplumber
 
-VERSION = "pg64-gold-v5.0.7-product-master-source-expiry-resolution"
+VERSION = "pg64-gold-v5.0.8-source-expiry-same-line-fix"
 DIAGNOSTIC_SCHEMA = "pg64.audit.v5"
 
 DEFAULT_PRODUCT_MASTER = Path(
@@ -688,52 +688,39 @@ def extract_source_expiry_dates(
     first_pages_text: str,
     trade_date: str,
 ) -> dict[str, list[str]]:
-    """Extract explicit product expiry dates from the PG64 first-page table.
+    """Extract explicitly printed product expiry dates from the bulletin.
 
-    pdfplumber often returns the product row and its MM/DD dates as separate
-    text lines. Therefore this parser carries the current product row forward
-    until the next product row. It only records dates that are explicitly
-    printed in the bulletin.
+    PG64's first-page last-trade-date table commonly places the product code,
+    weekday/type, and dates on the SAME line, e.g. ``MMG MON 09/28``.  The
+    older row-carrying parser expected the code and dates on separate lines
+    and therefore missed these rows.  This parser accepts both layouts and
+    accumulates unique dates when a product has CALL and PUT rows.
     """
     out: dict[str, list[str]] = {"__YEAR__": [trade_date[:4]]}
-
     row_re = re.compile(
-        r"^([A-Z0-9]{2,5})"
-        r"(?:\s+(?:MON|TUE|WED|THU|FRI|CALL|PUT|OPT|OP|OOF))?$",
+        r"^([A-Z0-9]{2,5})\s+"
+        r"(?:MON|TUE|WED|THU|FRI|CALL|PUT|OPT|OP|OOF)\b"
+        r"(.*)$",
         re.I,
     )
-    date_re = re.compile(r"^\d{1,2}/\d{1,2}$")
-
-    current_display: str | None = None
-    current_dates: list[str] = []
-
-    def flush() -> None:
-        nonlocal current_display, current_dates
-        if current_display and current_dates:
-            out[current_display] = list(current_dates)
-        current_display = None
-        current_dates = []
+    date_re = re.compile(r"(?<!\d)(\d{1,2}/\d{1,2})(?!\d)")
 
     for raw_line in first_pages_text.splitlines():
-        line = norm(raw_line)
+        line = norm(raw_line).upper()
         if not line:
             continue
-
-        m = row_re.match(line.upper())
-        if m:
-            flush()
-            current_display = normalize_header_code(m.group(1))
+        m = row_re.match(line)
+        if not m:
             continue
-
-        if current_display and date_re.fullmatch(line):
-            current_dates.append(line)
+        display = normalize_header_code(m.group(1))
+        dates = date_re.findall(m.group(2))
+        if not dates:
             continue
+        existing = out.setdefault(display, [])
+        for date_text in dates:
+            if date_text not in existing:
+                existing.append(date_text)
 
-        # Any non-date line terminates the current source row.
-        if current_display:
-            flush()
-
-    flush()
     return out
 
 
