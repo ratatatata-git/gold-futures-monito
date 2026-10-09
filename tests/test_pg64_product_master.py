@@ -305,3 +305,28 @@ def test_unknown_alias_does_not_fallback_to_direct_product():
         "Unknown weekly product must not receive a guessed "
         f"canonical product code: {result}"
     )
+
+# ============================================================
+# Candidate-state regression test
+# ============================================================
+def test_unspecified_option_type_is_unresolved():
+    """A candidate without explicit CALL/PUT must remain unresolved."""
+    from scripts.parse_pg64 import _is_unresolved_candidate_state
+
+    known_product = {"status": "KNOWN_PRODUCT"}
+    assert not _is_unresolved_candidate_state(
+        known_product,
+        "OGZ6",
+        "CALL",
+    )
+    assert not _is_unresolved_candidate_state(
+        known_product,
+        "OGZ6",
+        "PUT",
+    )
+    assert _is_unresolved_candidate_state(
+        known_product,
+        "OGZ6",
+        "UNSPECIFIED",
+    )
+
