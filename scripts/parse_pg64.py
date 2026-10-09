@@ -114,6 +114,20 @@ def lines(page):
     return out
 
 
+def _is_unresolved_candidate_state(
+    product: dict[str, object] | None,
+    expiry: str | None,
+    option_type: str | None,
+) -> bool:
+    """Return whether a candidate row lacks a resolved source state."""
+    return (
+        not product
+        or product.get("status") != "KNOWN_PRODUCT"
+        or not expiry
+        or option_type not in {"CALL", "PUT"}
+    )
+
+
 def normalize_header_code(value: str) -> str:
     return norm(value).upper()
 
@@ -1029,13 +1043,10 @@ def audit(
                             row
                         )
 
-                        if (
-                            not cur_product
-                            or cur_product.get(
-                                "status"
-                            ) != "KNOWN_PRODUCT"
-                            or not cur_expiry
-                            or not cur_type
+                        if _is_unresolved_candidate_state(
+                            cur_product,
+                            cur_expiry,
+                            cur_type,
                         ):
                             unresolved.append(
                                 {
