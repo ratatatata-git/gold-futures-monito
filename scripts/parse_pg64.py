@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pdfplumber
 
-VERSION = "pg64-gold-v5.0.8-source-expiry-same-line-fix"
+VERSION = "pg64-gold-v5.0.9-next-unexpired-source-expiry"
 DIAGNOSTIC_SCHEMA = "pg64.audit.v5"
 
 DEFAULT_PRODUCT_MASTER = Path(
@@ -380,24 +380,22 @@ class ProductResolver:
         display: str,
         source_weekly_day: str,
         source_expiry_dates: dict[str, list[str]] | None,
+        trade_date: str,
     ) -> str:
-        """Resolve a missing weekly number from explicit bulletin expiry data.
+        """Resolve a missing weekly number from the next unexpired date.
 
-        This is intentionally narrow: the bulletin must publish exactly one
-        expiry date for the display code, the alias master must provide the
-        weekday, and the published date must match that weekday. The week
-        number is then the calendar occurrence of that weekday in the month.
-        Multiple published dates remain unresolved.
+        Use only dates explicitly printed in this bulletin. When the table
+        lists both a prior expiry and the next expiry (e.g. 09/28 and 10/05
+        on the 09/29 bulletin), select the earliest date on or after the
+        bulletin trade date. The alias master's weekday must match. The
+        calendar occurrence then identifies the weekly alias. Ambiguous or
+        malformed dates fail closed.
         """
         if not source_expiry_dates or not source_weekly_day:
             return ""
 
         dates = source_expiry_dates.get(display, [])
-        if len(dates) != 1:
-            return ""
-
-        m = re.fullmatch(r"(\d{1,2})/(\d{1,2})", dates[0].strip())
-        if not m:
+        if not dates:
             return ""
 
         year_values = source_expiry_dates.get("__YEAR__", [])
@@ -405,11 +403,25 @@ class ProductResolver:
             return ""
 
         try:
-            year = int(year_values[0])
-            month = int(m.group(1))
-            day = int(m.group(2))
-            expiry = datetime(year, month, day)
-        except ValueError:
+            bulletin_date = datetime.strptime(trade_date, "%Y-%m-%d")
+            base_year = int(year_values[0])
+            candidates = []
+            for date_text in dates:
+                m = re.fullmatch(r"(\d{1,2})/(\d{1,2})", date_text.strip())
+                if not m:
+                    continue
+                month, day = int(m.group(1)), int(m.group(2))
+                for year in (base_year - 1, base_year, base_year + 1):
+                    try:
+                        candidate_date = datetime(year, month, day)
+                    except ValueError:
+                        continue
+                    if candidate_date >= bulletin_date:
+                        candidates.append(candidate_date)
+            if not candidates:
+                return ""
+            expiry = min(candidates)
+        except (ValueError, TypeError):
             return ""
 
         weekday_map = {
@@ -434,6 +446,7 @@ class ProductResolver:
         page: int,
         top: float,
         source_expiry_dates: dict[str, list[str]] | None = None,
+        trade_date: str = "",
     ) -> dict[str, object]:
         display = normalize_header_code(raw_code)
         header = norm(raw_header)
@@ -496,6 +509,7 @@ class ProductResolver:
                             display,
                             next(iter(candidate_days)),
                             source_expiry_dates,
+                            trade_date,
                         )
                     )
                     if source_week:
@@ -858,6 +872,7 @@ def audit(
                                 source_expiry_dates=(
                                     source_expiry_dates
                                 ),
+                                trade_date=trade_date,
                             )
                         )
 
