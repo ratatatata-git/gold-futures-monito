@@ -32,8 +32,21 @@ jobs:
       - name: Parse PG62 PDFs
         run: python scripts/parse_pg62_gc.py
 
-      - name: Parse PG64 PDFs
-        run: python scripts/parse_pg64.py
+      - name: Parse PG64 PDFs (diagnostic only)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          pdfs=(data/cme-pg64/*.pdf)
+
+          if [ ${#pdfs[@]} -eq 0 ]; then
+            echo "No PG64 PDFs found in data/cme-pg64/."
+            exit 1
+          fi
+
+          for pdf in "${pdfs[@]}"; do
+            echo "Auditing ${pdf}"
+            python scripts/parse_pg64.py "${pdf}"
+          done
 
       - name: Commit generated data
         run: |
