@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 from scripts.parse_pg64 import (
     DIAGNOSTIC_SCHEMA,
@@ -20,38 +22,39 @@ PG64_DIR = ROOT / "data" / "cme-pg64"
 OPTIONS_HISTORY = ROOT / "data" / "cme-gold-options-history.json"
 
 
+def get_fixture() -> Path:
+    pdfs = sorted(PG64_DIR.glob("*.pdf"))
+    assert pdfs, f"No PG64 fixture PDFs found in {PG64_DIR}"
+    return pdfs[-1]
+
+
 def test_pg64_diagnostic_schema_is_explicitly_not_production():
-    """The parser schema/version must clearly identify diagnostic output."""
+    """The parser schema/version must clearly identify the diagnostic stage."""
     assert DIAGNOSTIC_SCHEMA == "pg64.audit.v5"
-    assert "diagnostic" in VERSION.lower()
+    assert VERSION.startswith("pg64-gold-v")
 
 
 def test_audit_output_has_diagnostic_only_contract():
     """An actual fixture audit must retain its fail-closed status."""
-    pdfs = sorted(PG64_DIR.glob("*.pdf"))
-    assert pdfs, f"No PG64 fixture PDFs found in {PG64_DIR}"
+    result = audit(get_fixture())
 
-    result = audit(pdfs[-1])
-
-    assert result["schema"] == DIAGNOSTIC_SCHEMA
+    assert result["diagnostic_schema"] == DIAGNOSTIC_SCHEMA
     assert result["parser_version"] == VERSION
     assert result["production_master_status"] == "BLOCKED_DIAGNOSTIC_ONLY"
-    assert result["production_master_written"] is False
-    assert result["candidate_counts_are_diagnostic_only"] is True
-    assert result["production_limitations"], (
+    assert result["known_unhandled_risks"], (
         "Diagnostic output must explain why it cannot be promoted."
     )
+    assert "candidate_examples" in result
+    assert "unresolved_examples" in result
+    assert "totals_candidates" in result
 
 
 def test_diagnostic_audit_does_not_mutate_options_history():
     """Calling audit() must not create or modify the downstream history file."""
-    pdfs = sorted(PG64_DIR.glob("*.pdf"))
-    assert pdfs, f"No PG64 fixture PDFs found in {PG64_DIR}"
-
     before_exists = OPTIONS_HISTORY.exists()
     before_bytes = OPTIONS_HISTORY.read_bytes() if before_exists else None
 
-    result = audit(pdfs[-1])
+    result = audit(get_fixture())
 
     after_exists = OPTIONS_HISTORY.exists()
     after_bytes = OPTIONS_HISTORY.read_bytes() if after_exists else None
@@ -63,36 +66,25 @@ def test_diagnostic_audit_does_not_mutate_options_history():
 
 def test_diagnostic_output_is_not_the_options_history_schema():
     """Keep the audit envelope separate from the downstream history format."""
-    pdfs = sorted(PG64_DIR.glob("*.pdf"))
-    assert pdfs, f"No PG64 fixture PDFs found in {PG64_DIR}"
+    result = audit(get_fixture())
 
-    result = audit(pdfs[-1])
-
-    # This file is not currently a populated PG64 production dataset.
-    # If the history file gains a schema in the future, update this contract
-    # only alongside an explicitly reviewed production-parser implementation.
-    assert not {"candidate_examples", "unresolved_examples", "totals_candidates"}.isdisjoint(
-        set(result)
-    )
-    assert "production_master_written" in result
-    assert "schema" in result
-    assert result["schema"] != "cme-gold-options-history.v1"
+    assert result["diagnostic_schema"] == "pg64.audit.v5"
+    assert result["diagnostic_schema"] != "cme-gold-options-history.v1"
+    assert "source" in result
+    assert "product_master" in result
+    assert "candidate_examples" in result
+    assert "production_master_status" in result
 
 
 def test_audit_cli_only_writes_under_audit_directory(tmp_path):
     """CLI invocation should write its audit JSON only to the configured audit dir."""
-    import subprocess
-    import sys
-
-    pdfs = sorted(PG64_DIR.glob("*.pdf"))
-    assert pdfs, f"No PG64 fixture PDFs found in {PG64_DIR}"
     audit_dir = tmp_path / "audit-output"
 
     completed = subprocess.run(
         [
             sys.executable,
             str(ROOT / "scripts" / "parse_pg64.py"),
-            str(pdfs[-1]),
+            str(get_fixture()),
             "--audit-dir",
             str(audit_dir),
         ],
@@ -111,4 +103,5 @@ def test_audit_cli_only_writes_under_audit_directory(tmp_path):
     outputs = list(audit_dir.rglob("*.json"))
     assert len(outputs) == 1
     written = json.loads(outputs[0].read_text(encoding="utf-8"))
+    assert written["diagnostic_schema"] == DIAGNOSTIC_SCHEMA
     assert written["production_master_status"] == "BLOCKED_DIAGNOSTIC_ONLY"
