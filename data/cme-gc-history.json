@@ -1,7 +1,7 @@
 {
   "schema_version": "pg62-gc-master-v2.4",
   "parser_version": "pg62-gold-v2.4.0",
-  "updated_at": "2026-10-09T22:10:59.322446+00:00",
+  "updated_at": "2026-10-10T03:30:04.780678+00:00",
   "latest_date": "2026-10-01",
   "latest_active": {
     "date": "2026-10-01",
@@ -17267,7 +17267,7 @@
       "bulletin_number": 180,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:45.520291+00:00",
+      "ingested_at": "2026-10-10T03:29:50.960499+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -17441,7 +17441,7 @@
       "bulletin_number": 181,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:47.050633+00:00",
+      "ingested_at": "2026-10-10T03:29:52.488232+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -17556,7 +17556,7 @@
       "bulletin_number": 182,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:48.588067+00:00",
+      "ingested_at": "2026-10-10T03:29:54.019971+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -17671,7 +17671,7 @@
       "bulletin_number": 183,
       "source_status": "FINAL",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:50.147880+00:00",
+      "ingested_at": "2026-10-10T03:29:55.571307+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -17786,7 +17786,7 @@
       "bulletin_number": 185,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:51.669009+00:00",
+      "ingested_at": "2026-10-10T03:29:57.112099+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -17901,7 +17901,7 @@
       "bulletin_number": 186,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:53.265811+00:00",
+      "ingested_at": "2026-10-10T03:29:58.722629+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -18016,7 +18016,7 @@
       "bulletin_number": 187,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:54.776709+00:00",
+      "ingested_at": "2026-10-10T03:30:00.240013+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -18131,7 +18131,7 @@
       "bulletin_number": 188,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:56.338894+00:00",
+      "ingested_at": "2026-10-10T03:30:01.804182+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -18246,7 +18246,7 @@
       "bulletin_number": 189,
       "source_status": "PRELIMINARY",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:57.836349+00:00",
+      "ingested_at": "2026-10-10T03:30:03.298387+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
@@ -18361,7 +18361,7 @@
       "bulletin_number": 189,
       "source_status": "FINAL",
       "parser_version": "pg62-gold-v2.4.0",
-      "ingested_at": "2026-10-09T22:10:59.321479+00:00",
+      "ingested_at": "2026-10-10T03:30:04.779600+00:00",
       "active_selection_method": "highest_volume_eod_then_open_interest",
       "layout_discovery": [
         {
