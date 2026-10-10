@@ -9,6 +9,7 @@ on:
       - "scripts/parse_pg62_gc.py"
       - "scripts/parse_pg64.py"
       - "requirements.txt"
+      - ".github/workflows/parse-cme-gold.yml"
 
 permissions:
   contents: write
