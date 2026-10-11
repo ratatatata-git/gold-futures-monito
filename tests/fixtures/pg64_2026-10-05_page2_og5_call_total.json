@@ -1,0 +1,38 @@
+{
+  "fixture_schema": "pg64.manual-source-fixture.v1",
+  "source": {
+    "repository_path": "data/cme-pg64/PG64_2026-10-05.pdf",
+    "trade_date": "2026-10-05",
+    "bulletin_number": "191",
+    "bulletin_status": "PRELIMINARY",
+    "pdf_page": 2,
+    "section_label": "OG5 CALL / GOLD OPTIONS / OCT26",
+    "verification_method": "Manual visual transcription from rendered PDF; source tokens retained",
+    "scope_note": "This fixture covers only the four visible strike rows and their printed TOTAL on page 2. It is not a general TOTAL rule."
+  },
+  "columns": {
+    "volume": "Globex Volume",
+    "open_interest": "Open Interest",
+    "open_interest_change": "Open Interest change indicator/value",
+    "settlement_price": "Settlement Price",
+    "delta": "Delta"
+  },
+  "rows": [
+    {"strike": "4100", "settlement_price_raw": "121.20", "delta_raw": ".6111", "globex_volume_raw": "1", "open_interest_raw": "1", "open_interest_change_raw": "+ 1"},
+    {"strike": "4375", "settlement_price_raw": "23.20", "delta_raw": ".1820", "globex_volume_raw": "5", "open_interest_raw": "5", "open_interest_change_raw": "+ 5"},
+    {"strike": "4500", "settlement_price_raw": "10.70", "delta_raw": ".0904", "globex_volume_raw": "3", "open_interest_raw": "3", "open_interest_change_raw": "+ 3"},
+    {"strike": "4525", "settlement_price_raw": "9.20", "delta_raw": ".0785", "globex_volume_raw": "1", "open_interest_raw": "1", "open_interest_change_raw": "+ 1"}
+  ],
+  "printed_total": {
+    "label": "TOTAL",
+    "globex_volume_raw": "10",
+    "open_interest_raw": "10",
+    "open_interest_change_raw": "+ 10"
+  },
+  "expected_reconciliation": {
+    "globex_volume": {"row_sum": 10, "printed_total": 10, "status": "MATCH"},
+    "open_interest": {"row_sum": 10, "printed_total": 10, "status": "MATCH_FOR_THIS_FIXTURE_ONLY"},
+    "open_interest_change": {"row_sum": 10, "printed_total": 10, "status": "MATCH_FOR_THIS_FIXTURE_ONLY"},
+    "production_master_status": "BLOCKED_DIAGNOSTIC_ONLY"
+  }
+}
