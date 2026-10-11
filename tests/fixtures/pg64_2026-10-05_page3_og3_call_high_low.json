@@ -1,0 +1,73 @@
+{
+  "fixture_schema": "pg64.manual-source-fixture.v1",
+  "source": {
+    "repository_path": "data/cme-pg64/PG64_2026-10-05.pdf",
+    "trade_date": "2026-10-05",
+    "bulletin_number": "191",
+    "bulletin_status": "PRELIMINARY",
+    "pdf_page": 3,
+    "section_label": "OG3 CALL / GOLD OPTIONS / OCT26",
+    "verification_method": "Manual visual transcription from rendered PDF page 3",
+    "scope_note": "Three visible strike rows are recorded to test High/Low column assignment and preservation of raw tokens. This fixture does not define general parsing or TOTAL semantics."
+  },
+  "columns": {
+    "strike": "Strike",
+    "globex_open": "Globex Open",
+    "open_outcry_open": "Open Outcry Open Range",
+    "globex_high_low": "Globex High/Low",
+    "open_outcry_high_low": "Open Outcry High/Low",
+    "settlement_price": "Settlement Price",
+    "pt_change": "PT Change",
+    "delta": "Delta",
+    "globex_volume": "Globex Volume",
+    "open_interest": "Open Interest",
+    "open_interest_change": "Open Interest change indicator/value"
+  },
+  "rows": [
+    {
+      "strike_raw": "4550",
+      "globex_open_raw": "----",
+      "open_outcry_open_raw": "----",
+      "globex_high_low_raw": "2.60B/1.70A",
+      "open_outcry_high_low_raw": "2.60B/1.70A",
+      "settlement_price_raw": "1.60",
+      "pt_change_raw": "- 0.80",
+      "delta_raw": ".0187",
+      "globex_volume_raw": "----",
+      "open_interest_raw": "18",
+      "open_interest_change_raw": "UNCH"
+    },
+    {
+      "strike_raw": "4575",
+      "globex_open_raw": "2.10",
+      "open_outcry_open_raw": "2.10",
+      "globex_high_low_raw": "2.20B/1.50A",
+      "open_outcry_high_low_raw": "2.20B/1.50A",
+      "settlement_price_raw": "1.40",
+      "pt_change_raw": "- 0.70",
+      "delta_raw": ".0160",
+      "globex_volume_raw": "1",
+      "open_interest_raw": "14",
+      "open_interest_change_raw": "+ 1"
+    },
+    {
+      "strike_raw": "4600",
+      "globex_open_raw": "1.50",
+      "open_outcry_open_raw": "1.50",
+      "globex_high_low_raw": "1.50/1.30A",
+      "open_outcry_high_low_raw": "1.80B/1.30A",
+      "settlement_price_raw": "1.20",
+      "pt_change_raw": "- 0.60",
+      "delta_raw": ".0134",
+      "globex_volume_raw": "20",
+      "open_interest_raw": "471",
+      "open_interest_change_raw": "+ 20"
+    }
+  ],
+  "expected_interpretation": {
+    "raw_tokens_must_be_preserved": true,
+    "blank_marker_policy": "The literal source token ---- is retained and is not converted to numeric zero by this fixture.",
+    "bid_ask_suffix_policy": "B and A suffixes in High/Low tokens are retained exactly; this fixture does not infer execution or normalization semantics.",
+    "production_master_status": "BLOCKED_DIAGNOSTIC_ONLY"
+  }
+}
