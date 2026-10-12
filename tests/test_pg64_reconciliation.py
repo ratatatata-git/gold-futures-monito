@@ -49,3 +49,18 @@ def test_reconciliation_fails_closed_if_any_row_or_total_is_unresolved():
     total_result = reconcile_integer_total(["1", "2"], "UNCH")
     assert total_result["status"] == "UNRESOLVED"
     assert total_result["row_sum"] is None
+
+
+def test_reconciliation_does_not_treat_missing_rows_as_zero():
+    result = reconcile_integer_total([], "0")
+    assert result["status"] == "UNRESOLVED"
+    assert result["row_sum"] is None
+    assert result["printed_total"] == 0
+    assert result["unresolved_row_indices"] == []
+
+
+def test_reconciliation_handles_unresolved_total_even_when_rows_are_numeric():
+    result = reconcile_integer_total(["1", "2"], None)
+    assert result["status"] == "UNRESOLVED"
+    assert result["row_sum"] is None
+    assert result["printed_total"] is None
