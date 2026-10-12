@@ -10,7 +10,9 @@ This checklist separates owner-provided source evidence from repository implemen
 - [ ] Confirm the intended source PDFs are the official PG64 bulletins for the dates in the test corpus, and that each PDF is final or preliminary as recorded.
 - [ ] For each golden fixture, visually verify the exact page, section header, strike rows, raw cell tokens, and printed TOTAL against the source PDF. Correct any transcription mismatch before using it as expected test data.
 - [ ] For any row or column whose meaning is uncertain (especially Open Interest TOTAL semantics and B/A quote markers), mark it unresolved; do not guess.
-- [ ] When new PDF dates are added, confirm whether the corpus should include preliminary bulletins, final bulletins, or both, and how revised bulletins should be represented.
+- [x] Include both PRELIMINARY and FINAL bulletins in the validation corpus, as requested by the project owner.
+- [ ] When both versions exist for a date, verify each against its own original PDF and record bulletin status/identity separately. Do not assume the two versions should match; document differences as revisions unless a source rule says otherwise.
+- [ ] Define how superseded/revised bulletins are represented in downstream history without overwriting provenance.
 
 ## What I can continue doing
 
