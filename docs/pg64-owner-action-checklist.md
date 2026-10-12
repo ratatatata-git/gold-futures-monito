@@ -6,7 +6,7 @@ This checklist separates owner-provided source evidence from repository implemen
 
 **No immediate code or terminal work is required.** The repository changes are made through PRs; the most useful owner contribution is source verification.
 
-- [ ] Review/merge PR #13 only after its CI checks finish successfully: https://github.com/ratatatata-git/gold-futures-monito/pull/13
+- [ ] Check the latest CI results for merged PR #13 and confirm that the fail-closed tests ran successfully: https://github.com/ratatatata-git/gold-futures-monito/pull/13
 - [ ] Confirm the intended source PDFs are the official PG64 bulletins for the dates in the test corpus, and that each PDF is final or preliminary as recorded.
 - [ ] For each golden fixture, visually verify the exact page, section header, strike rows, raw cell tokens, and printed TOTAL against the source PDF. Correct any transcription mismatch before using it as expected test data.
 - [ ] For any row or column whose meaning is uncertain (especially Open Interest TOTAL semantics and B/A quote markers), mark it unresolved; do not guess.
