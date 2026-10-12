@@ -18,9 +18,10 @@ def test_manual_pg64_fixture_keeps_source_identity_and_raw_tokens():
     assert fixture["source"]["pdf_page"] == 2
     assert fixture["source"]["section_label"] == "OG5 CALL / GOLD OPTIONS / OCT26"
     assert fixture["source"]["bulletin_status"] == "PRELIMINARY"
-    assert fixture["production_master_status"] if "production_master_status" in fixture else (
+    assert (
         fixture["expected_reconciliation"]["production_master_status"]
-    ) == "BLOCKED_DIAGNOSTIC_ONLY"
+        == "BLOCKED_DIAGNOSTIC_ONLY"
+    )
 
     rows = fixture["rows"]
     assert [row["strike"] for row in rows] == ["4100", "4375", "4500", "4525"]
