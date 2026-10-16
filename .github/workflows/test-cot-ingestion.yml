@@ -1,4 +1,4 @@
-name: Test COT Ingestion
+name: Test COT and FRED Ingestion
 
 on:
   workflow_dispatch:
@@ -8,6 +8,9 @@ on:
       - "index.html"
       - "styles.css"
       - "scripts/fetch_cot_gold.py"
+      - "scripts/fetch_fred_context.py"
+      - "tests/test_fred_context.py"
+      - "docs/fred-ingestion-mvp.md"
       - "tests/test_cot_ingestion.py"
       - ".github/workflows/test-cot-ingestion.yml"
   pull_request:
@@ -30,9 +33,13 @@ jobs:
         run: |
           python -m py_compile scripts/fetch_cot_gold.py
           python -m py_compile tests/test_cot_ingestion.py
+          python -m py_compile scripts/fetch_fred_context.py
+          python -m py_compile tests/test_fred_context.py
           node --check app.js
-      - name: Run offline ingestion tests
+      - name: Run offline COT ingestion tests
         run: python -m unittest discover -s tests -p "test_cot_ingestion.py" -v
+      - name: Run offline FRED ingestion tests
+        run: python -m unittest discover -s tests -p "test_fred_context.py" -v
 
   live-cot-api-smoke:
     runs-on: ubuntu-latest
@@ -45,3 +52,15 @@ jobs:
           python-version: "3.11"
       - name: Fetch and validate current official CFTC Gold COT history
         run: python scripts/fetch_cot_gold.py
+
+  live-fred-csv-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch and validate current FRED macro series without writing history
+        run: python scripts/fetch_fred_context.py --check
