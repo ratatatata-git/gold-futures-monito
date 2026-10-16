@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 
   <title>Gold Futures Monitor</title>
 </head>
@@ -138,6 +138,22 @@
   </section>
 
 
+  <section class="options-section fred-section" id="fredPanel">
+    <div class="section-title">FRED · Macro Context</div>
+    <div id="fredLatestDate" class="options-date">Loading macro context history…</div>
+    <div id="fredSummary" class="fred-summary">
+      <div class="cot-empty">Loading FRED observation history…</div>
+    </div>
+    <div class="chart-head fred-table-head">
+      <h2>Recent Observations</h2>
+      <span>Original units · not a signal</span>
+    </div>
+    <div class="fred-table-head fred-columns"><span>Date</span><span>10Y real yield proxy</span><span>10Y Treasury</span><span>Broad USD</span></div>
+    <div id="fredRows" class="fred-rows"></div>
+    <p class="cot-note">DFII10 is a real-yield proxy; DGS10 is the 10-year Treasury yield; DTWEXBGS is the nominal broad dollar index. Series calendars differ, missing values are not filled, and FRED may revise observations. Macro context only—not a forecast or trading signal.</p>
+  </section>
+
+
   <section class="options-section">
 
     <div class="section-title">
@@ -205,7 +221,7 @@
 </main>
 
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 
 </body>
 </html>
