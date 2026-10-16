@@ -9,8 +9,11 @@ on:
       - "styles.css"
       - "scripts/fetch_cot_gold.py"
       - "scripts/fetch_fred_context.py"
+      - "scripts/validate_dashboard_data.py"
       - "tests/test_fred_context.py"
+      - "tests/test_dashboard_data_contract.py"
       - "docs/fred-ingestion-mvp.md"
+      - "docs/dashboard-data-validation.md"
       - "tests/test_cot_ingestion.py"
       - ".github/workflows/test-cot-ingestion.yml"
   pull_request:
@@ -20,9 +23,12 @@ on:
       - "styles.css"
       - "scripts/fetch_cot_gold.py"
       - "scripts/fetch_fred_context.py"
+      - "scripts/validate_dashboard_data.py"
       - "tests/test_cot_ingestion.py"
       - "tests/test_fred_context.py"
+      - "tests/test_dashboard_data_contract.py"
       - "docs/fred-ingestion-mvp.md"
+      - "docs/dashboard-data-validation.md"
       - ".github/workflows/test-cot-ingestion.yml"
 
 jobs:
@@ -41,11 +47,15 @@ jobs:
           python -m py_compile tests/test_cot_ingestion.py
           python -m py_compile scripts/fetch_fred_context.py
           python -m py_compile tests/test_fred_context.py
+          python -m py_compile scripts/validate_dashboard_data.py
+          python -m py_compile tests/test_dashboard_data_contract.py
           node --check app.js
       - name: Run offline COT ingestion tests
         run: python -m unittest discover -s tests -p "test_cot_ingestion.py" -v
       - name: Run offline FRED ingestion tests
         run: python -m unittest discover -s tests -p "test_fred_context.py" -v
+      - name: Run dashboard data contract tests
+        run: python -m unittest discover -s tests -p "test_dashboard_data_contract.py" -v
 
   live-cot-api-smoke:
     runs-on: ubuntu-latest
