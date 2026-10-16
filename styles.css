@@ -430,3 +430,14 @@ footer{
   .fred-stat strong { font-size: 11px; }
   .fred-row, .fred-columns { font-size: 8px; gap: 3px; }
 }
+
+
+/* FRED source links */
+.fred-section a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+.fred-section a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
