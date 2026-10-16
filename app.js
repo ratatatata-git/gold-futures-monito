@@ -2,6 +2,8 @@ const state = {
   data: [],
   cot: [],
   cotMeta: null,
+  fred: [],
+  fredMeta: null,
   options: [],
   period: "1M",
   selected: null,
@@ -65,11 +67,13 @@ async function init() {
   await initFutures();
   await initOptions();
   await initCOT();
+  await initFRED();
 
   bind();
   render();
   renderOptions();
   renderCOT();
+  renderFRED();
 }
 
 
@@ -283,6 +287,89 @@ function drawCOTChart(canvas, rows) {
     ctx.fillStyle = value >= 0 ? "#62d49a" : "#ef767a";
     ctx.fillRect(x, value >= 0 ? mid - barH : mid, Math.max(2, slot * 0.7), barH);
   });
+}
+
+
+/* =========================
+   FRED — MACRO CONTEXT
+   ========================= */
+
+async function initFRED() {
+  try {
+    const response = await fetch(
+      "data/fred/gold-macro-context.json?v=1",
+      { cache: "no-store" }
+    );
+    if (!response.ok) {
+      throw new Error(`FRED HTTP ${response.status}`);
+    }
+
+    const json = await response.json();
+    if (!Array.isArray(json.records) || !json.records.length) {
+      throw new Error("No FRED macro context records found.");
+    }
+
+    state.fred = json.records
+      .filter(row => row.observation_date && row.values && typeof row.values === "object")
+      .sort((a, b) => String(a.observation_date).localeCompare(String(b.observation_date)));
+    state.fredMeta = json;
+  } catch (error) {
+    console.warn("FRED macro context unavailable:", error.message);
+    state.fred = [];
+    state.fredMeta = null;
+  }
+}
+
+function fredNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function renderFRED() {
+  const latestEl = $("fredLatestDate");
+  const summary = $("fredSummary");
+  const table = $("fredRows");
+  if (!latestEl || !summary || !table) return;
+
+  const series = [
+    { id: "DFII10", label: "10Y Real Yield Proxy", unit: "%", digits: 2 },
+    { id: "DGS10", label: "10Y Treasury Yield", unit: "%", digits: 2 },
+    { id: "DTWEXBGS", label: "Broad USD Index", unit: "", digits: 2 }
+  ];
+
+  if (!Array.isArray(state.fred) || !state.fred.length) {
+    latestEl.textContent = "History not loaded";
+    summary.innerHTML =
+      '<div class="cot-empty">FRED macro history is not in this deployment yet. ' +
+      'Run <code>python scripts/fetch_fred_context.py</code> and review publication terms before deploying ' +
+      '<code>data/fred/gold-macro-context.json</code>.</div>';
+    table.innerHTML = "";
+    return;
+  }
+
+  summary.innerHTML = series.map(item => {
+    const validRows = state.fred.filter(row => fredNumber(row.values[item.id]) !== null);
+    const latest = validRows[validRows.length - 1];
+    const value = latest ? fredNumber(latest.values[item.id]) : null;
+    const display = value === null ? "—" : value.toFixed(item.digits) + item.unit;
+    const date = latest ? fmtDate(latest.observation_date) : "No observation";
+    return '<div class="fred-stat"><span>' + item.label +
+      '</span><strong>' + display + '</strong><small>' + date + '</small></div>';
+  }).join("");
+
+  latestEl.textContent = "Latest available observation dates · values may be revised by FRED";
+
+  const recent = state.fred.slice(-8).reverse();
+  table.innerHTML = recent.map(row => {
+    const values = series.map(item => {
+      const n = fredNumber(row.values[item.id]);
+      return n === null ? "—" : n.toFixed(item.digits) + item.unit;
+    });
+    return '<div class="fred-row"><span>' + fmtDate(row.observation_date) +
+      '</span><span>' + values[0] + '</span><span>' + values[1] +
+      '</span><span>' + values[2] + '</span></div>';
+  }).join("");
 }
 
 
@@ -633,6 +720,7 @@ function render() {
 
   renderOptions();
   renderCOT();
+  renderFRED();
 }
 
 
