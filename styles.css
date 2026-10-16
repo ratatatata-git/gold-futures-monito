@@ -305,3 +305,72 @@ footer{
   color: #737e8c;
   font-size: 12px;
 }
+
+
+/* CFTC COT panel */
+.cot-section { margin-top: 14px; }
+.cot-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 10px 0 14px;
+}
+.cot-stat {
+  min-width: 0;
+  padding: 9px 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #181e25;
+}
+.cot-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  min-height: 27px;
+}
+.cot-stat strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#cotChart { height: 112px; margin: 4px 0 8px; }
+.cot-chart-head { margin-top: 8px; }
+.cot-table-head, .cot-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  gap: 5px;
+  align-items: center;
+}
+.cot-table-head {
+  color: var(--muted);
+  font-size: 9px;
+  padding: 8px 3px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.cot-table-head span:not(:first-child), .cot-row span:not(:first-child), .cot-row strong {
+  text-align: right;
+}
+.cot-row {
+  padding: 7px 3px;
+  border-bottom: 1px solid #252b3355;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.cot-row span:first-child { color: var(--muted); }
+.cot-positive { color: var(--good); }
+.cot-negative { color: var(--bad); }
+.cot-empty, .cot-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.cot-empty code { overflow-wrap: anywhere; }
+.cot-note { margin: 10px 0 0; font-size: 10px; }
+@media (max-width: 360px) {
+  .cot-stat { padding: 7px 5px; }
+  .cot-stat span { font-size: 9px; }
+  .cot-stat strong { font-size: 11px; }
+  .cot-row, .cot-table-head { font-size: 9px; gap: 3px; }
+}
