@@ -624,7 +624,7 @@ CIが成功したことと、データが正しいことは同義ではない。
 
 #### Phase 2 検証支援の実装状況
 
-- PDF照合レポートのローカル検証CLI、失敗条件の単体テスト、CI実行、運用ガイドを追加する。
+- PDF照合レポートのローカル検証CLIに加え、原本PDFのSHA-256／ページ数／版メタデータを記録するリビジョン登録CLI、失敗条件の単体テスト、CI実行、運用ガイドを整備する。
 - 実PDFそのものや実データ入りレポートは公開リポジトリへ追加しない。
 - 実PDFとの照合記録が提出・レビューされるまでは、Phase 2は継続中・ゲート未達のままとする。
 
@@ -637,7 +637,7 @@ CIが成功したことと、データが正しいことは同義ではない。
 
 #### 次の優先作業
 
-1. Phase 2では `docs/pdf-reconciliation.md` と `scripts/validate_pdf_reconciliation.py` を使い、実PDFと独立確認済みfixtureの照合範囲・結果・未解決項目を記録する。ツール実装の完了は実PDF検証の合格を意味しない。
+1. Phase 2では `scripts/register_pdf_revision.py` でローカル原本マニフェストを作成し、`docs/pdf-reconciliation.md` と `scripts/validate_pdf_reconciliation.py` を使って実PDFと独立確認済みfixtureの照合範囲・結果・未解決項目を記録する。ツール実装の完了は実PDF検証の合格を意味しない。
 2. Phase 0の権利確認を継続し、COT／FRED／CMEデータを個別に扱う。
 3. 実データを使う場合は、ローカル検証と公開承認を別々のゲートとして記録する。
 

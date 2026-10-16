@@ -11,6 +11,8 @@ on:
       - "scripts/fetch_fred_context.py"
       - "scripts/validate_dashboard_data.py"
       - "scripts/validate_pdf_reconciliation.py"
+      - "scripts/register_pdf_revision.py"
+      - "tests/test_pdf_revision_manifest.py"
       - "tests/test_pdf_reconciliation.py"
       - "docs/pdf-reconciliation.md"
       - "tests/test_fred_context.py"
@@ -44,6 +46,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install PDF parsing dependency for revision-manifest tests
+        run: python -m pip install "pypdf>=5,<7"
       - name: Check Python syntax
         run: |
           python -m py_compile scripts/fetch_cot_gold.py
@@ -52,6 +56,8 @@ jobs:
           python -m py_compile tests/test_fred_context.py
           python -m py_compile scripts/validate_dashboard_data.py
           python -m py_compile scripts/validate_pdf_reconciliation.py
+          python -m py_compile scripts/register_pdf_revision.py
+          python -m py_compile tests/test_pdf_revision_manifest.py
           python -m py_compile tests/test_pdf_reconciliation.py
           python -m py_compile tests/test_dashboard_data_contract.py
           node --check app.js
@@ -63,6 +69,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_dashboard_data_contract.py" -v
       - name: Run PDF reconciliation gate tests
         run: python -m unittest discover -s tests -p "test_pdf_reconciliation.py" -v
+      - name: Run PDF revision manifest tests
+        run: python -m unittest discover -s tests -p "test_pdf_revision_manifest.py" -v
 
   live-cot-api-smoke:
     runs-on: ubuntu-latest
