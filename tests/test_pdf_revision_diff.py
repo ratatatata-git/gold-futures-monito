@@ -64,7 +64,9 @@ class ComparePdfRevisionsTests(unittest.TestCase):
 
     def test_blocks_mismatched_bulletin_identity(self):
         self.new_m["document"]["bulletin_date"] = "2026-10-14"
+        self.new_r["document"]["bulletin_date"] = "2026-10-14"
         self.paths[2].write_text(json.dumps(self.new_m), encoding="utf-8")
+        self.paths[3].write_text(json.dumps(self.new_r), encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "share bulletin_date"):
             self.compare()
 
