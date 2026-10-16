@@ -1,5 +1,7 @@
 const state = {
   data: [],
+  cot: [],
+  cotMeta: null,
   options: [],
   period: "1M",
   selected: null,
@@ -62,10 +64,12 @@ async function init() {
 
   await initFutures();
   await initOptions();
+  await initCOT();
 
   bind();
   render();
   renderOptions();
+  renderCOT();
 }
 
 
@@ -137,6 +141,148 @@ async function initFutures() {
       "CME Futures data could not be loaded."
     );
   }
+}
+
+
+/* =========================
+   COT — DISAGGREGATED FUTURES ONLY
+   ========================= */
+
+async function initCOT() {
+  try {
+    const response = await fetch(
+      "data/cot/gold-disaggregated-futures-only.json?v=1",
+      { cache: "no-store" }
+    );
+    if (!response.ok) {
+      throw new Error(`COT HTTP ${response.status}`);
+    }
+
+    const json = await response.json();
+    if (!Array.isArray(json.records) || !json.records.length) {
+      throw new Error("No COT history records found.");
+    }
+
+    state.cot = json.records
+      .filter(row =>
+        row.report_date_as_yyyy_mm_dd &&
+        row.cftc_contract_market_code === "088691"
+      )
+      .sort((x, y) =>
+        String(x.report_date_as_yyyy_mm_dd).localeCompare(
+          String(y.report_date_as_yyyy_mm_dd)
+        )
+      );
+    state.cotMeta = json;
+  } catch (error) {
+    console.warn("COT load unavailable:", error.message);
+    state.cot = [];
+    state.cotMeta = null;
+  }
+}
+
+function cotNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function renderCOT() {
+  const panel = $("cotPanel");
+  const chart = $("cotChart");
+  const latestEl = $("cotLatestDate");
+  const summary = $("cotSummary");
+  const table = $("cotRows");
+
+  if (!panel || !chart || !latestEl || !summary || !table) return;
+
+  if (!Array.isArray(state.cot) || !state.cot.length) {
+    latestEl.textContent = "History not loaded";
+    summary.innerHTML =
+      '<div class="cot-empty">COT history is not in this deployment yet. ' +
+      'Run <code>python scripts/fetch_cot_gold.py</code> and add the generated history file ' +
+      '<code>data/cot/gold-disaggregated-futures-only.json</code> to the deployment after reviewing data-publication terms.</div>';
+    table.innerHTML = "";
+    const ctx = chart.getContext("2d");
+    ctx.clearRect(0, 0, chart.width, chart.height);
+    return;
+  }
+
+  const rows = state.cot.filter(row =>
+    cotNumber(row.m_money_positions_long_all) !== null &&
+    cotNumber(row.m_money_positions_short_all) !== null
+  );
+  const latest = rows[rows.length - 1];
+  if (!latest) {
+    latestEl.textContent = "No managed-money values";
+    summary.innerHTML = '<div class="cot-empty">Managed Money position fields are unavailable in the source rows.</div>';
+    table.innerHTML = "";
+    return;
+  }
+
+  const long = cotNumber(latest.m_money_positions_long_all);
+  const short = cotNumber(latest.m_money_positions_short_all);
+  const net = long - short;
+  latestEl.textContent = "Report date: " + fmtDate(String(latest.report_date_as_yyyy_mm_dd).slice(0, 10));
+
+  summary.innerHTML = [
+    ["Managed Money Long", long],
+    ["Managed Money Short", short],
+    ["Net (Long − Short)", net]
+  ].map(([label, value]) =>
+    '<div class="cot-stat"><span>' + label + '</span><strong>' +
+    fmtInt(value) + '</strong></div>'
+  ).join("");
+
+  const recent = rows.slice(-8).reverse();
+  table.innerHTML = recent.map(row => {
+    const l = cotNumber(row.m_money_positions_long_all);
+    const s = cotNumber(row.m_money_positions_short_all);
+    const n = l - s;
+    return '<div class="cot-row"><span>' +
+      fmtDate(String(row.report_date_as_yyyy_mm_dd).slice(0, 10)) +
+      '</span><span>' + fmtInt(l) + '</span><span>' +
+      fmtInt(s) + '</span><strong class="' + (n >= 0 ? "cot-positive" : "cot-negative") +
+      '">' + (n > 0 ? "+" : "") + fmtInt(n) + '</strong></div>';
+  }).join("");
+
+  drawCOTChart(chart, rows.slice(-26));
+}
+
+function drawCOTChart(canvas, rows) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const values = rows.map(row =>
+    cotNumber(row.m_money_positions_long_all) -
+    cotNumber(row.m_money_positions_short_all)
+  ).filter(Number.isFinite);
+  if (!values.length) return;
+
+  const maxAbs = Math.max(1, ...values.map(Math.abs));
+  const mid = Math.round(h / 2);
+  const left = 5;
+  const right = w - 5;
+  const slot = (right - left) / values.length;
+  ctx.strokeStyle = "#39414b";
+  ctx.beginPath();
+  ctx.moveTo(left, mid);
+  ctx.lineTo(right, mid);
+  ctx.stroke();
+
+  values.forEach((value, i) => {
+    const barH = Math.max(1, Math.abs(value) / maxAbs * (h / 2 - 8));
+    const x = left + i * slot + slot * 0.15;
+    ctx.fillStyle = value >= 0 ? "#62d49a" : "#ef767a";
+    ctx.fillRect(x, value >= 0 ? mid - barH : mid, Math.max(2, slot * 0.7), barH);
+  });
 }
 
 
@@ -486,6 +632,7 @@ function render() {
   );
 
   renderOptions();
+  renderCOT();
 }
 
 

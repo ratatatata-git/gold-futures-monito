@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 
   <title>Gold Futures Monitor</title>
 </head>
@@ -121,6 +121,23 @@
   </section>
 
 
+  <section class="options-section cot-section" id="cotPanel">
+    <div class="section-title">CFTC COT · Managed Money</div>
+    <div id="cotLatestDate" class="options-date">Loading COT history…</div>
+    <div id="cotSummary" class="cot-summary">
+      <div class="cot-empty">Loading official CFTC Disaggregated Futures Only history…</div>
+    </div>
+    <div class="chart-head cot-chart-head">
+      <h2>Net Position · Recent 26 Reports</h2>
+      <span>Long − Short</span>
+    </div>
+    <canvas id="cotChart" aria-label="Weekly managed money net position chart"></canvas>
+    <div class="cot-table-head"><span>Report date</span><span>Long</span><span>Short</span><span>Net</span></div>
+    <div id="cotRows" class="cot-rows"></div>
+    <p class="cot-note">Net position is calculated as Managed Money long minus short. COT describes reported positions as of Tuesday, normally published Friday; it is not a real-time feed or a forecast.</p>
+  </section>
+
+
   <section class="options-section">
 
     <div class="section-title">
@@ -188,7 +205,7 @@
 </main>
 
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 
 </body>
 </html>
