@@ -188,5 +188,5 @@ def main() -> int:
     return 0 if not issues else 1
 
 
-if __args__ == "__main__":
+if __name__ == "__main__":
     raise SystemExit(main())
