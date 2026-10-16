@@ -28,4 +28,4 @@ jobs:
           python -m py_compile scripts/fetch_cot_gold.py
           python -m py_compile tests/test_cot_ingestion.py
       - name: Run offline ingestion tests
-        run: python -m unittest tests.test_cot_ingestion -v
+        run: python -m unittest discover -s tests -p "test_cot_ingestion.py" -v
