@@ -15,8 +15,14 @@ on:
       - ".github/workflows/test-cot-ingestion.yml"
   pull_request:
     paths:
+      - "app.js"
+      - "index.html"
+      - "styles.css"
       - "scripts/fetch_cot_gold.py"
+      - "scripts/fetch_fred_context.py"
       - "tests/test_cot_ingestion.py"
+      - "tests/test_fred_context.py"
+      - "docs/fred-ingestion-mvp.md"
       - ".github/workflows/test-cot-ingestion.yml"
 
 jobs:
