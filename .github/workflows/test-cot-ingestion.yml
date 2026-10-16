@@ -1,0 +1,31 @@
+name: Test COT Ingestion
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/fetch_cot_gold.py"
+      - "tests/test_cot_ingestion.py"
+      - ".github/workflows/test-cot-ingestion.yml"
+  pull_request:
+    paths:
+      - "scripts/fetch_cot_gold.py"
+      - "tests/test_cot_ingestion.py"
+      - ".github/workflows/test-cot-ingestion.yml"
+
+jobs:
+  test-cot-ingestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check Python syntax
+        run: |
+          python -m py_compile scripts/fetch_cot_gold.py
+          python -m py_compile tests/test_cot_ingestion.py
+      - name: Run offline ingestion tests
+        run: python -m unittest tests.test_cot_ingestion -v
