@@ -98,3 +98,37 @@ python -m unittest discover -s tests -p "test_pdf_reconciliation.py" -v
 7. データの公開／再配布は、品質ゲートとは別の権利・公開ゲートで承認する。
 
 実PDFの照合結果がまだない状態では、Phase 2は「検証基盤を用意した」に留まり、「実PDF検証に合格した」とは報告しない。
+
+
+## ローカル原本リビジョンの登録
+
+`scripts/register_pdf_revision.py` は、手元にあるPDFのSHA-256、バイト数、ページ数を算出し、原本の版種や出典・取得時刻を含むローカルJSONマニフェストを新規作成する。PDFファイル自体は変更せず、マニフェストを公開リポジトリへ追加する必要もない。
+
+```sh
+python scripts/register_pdf_revision.py /secure/local/PG62.pdf \
+  --type PG62 \
+  --date 2026-10-15 \
+  --edition FINAL \
+  --source-url "https://official-source.example/path" \
+  --output /secure/local/manifests/PG62-2026-10-15.json
+```
+
+上記のURL・日付・ファイル名はコマンド形式の説明用プレースホルダーであり、実在する取得先や実データを示さない。実行時は公式の取得元と原本表示に基づく値へ置き換える。`--edition` は原本上で確認した版種を明示する。ツールはファイル名から版種を推定しない。既存の出力ファイルは上書きせず、エラーにする。
+
+同じbulletin種別・日付の前版マニフェストを指定すると、前版のSHA-256を親として記録する。
+
+```sh
+python scripts/register_pdf_revision.py /secure/local/PG62-revised.pdf \
+  --type PG62 \
+  --date 2026-10-15 \
+  --edition REVISED \
+  --source-url "https://official-source.example/path" \
+  --parent-manifest /secure/local/manifests/PG62-2026-10-15.json \
+  --output /secure/local/manifests/PG62-2026-10-15-revised.json
+```
+
+- 親マニフェストとbulletin種別・日付が一致しなければ拒否する。
+- 同じSHA-256のファイルは新しいリビジョンとして登録しない。
+- PDFが壊れている、暗号化されている、またはページ数を読み取れない場合は登録しない。
+- `RAW_REGISTERED_LOCAL_ONLY` はローカルでの登録を意味し、検証済み・権利確認済み・公開承認済みを意味しない。
+- 登録後も、抽出、独立照合、版差分レビュー、公開権利審査は別々に必要。
