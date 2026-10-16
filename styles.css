@@ -74,6 +74,32 @@ body{
   margin-right:4px;
 }
 
+.status.stale{
+  color:var(--bad);
+  border-color:var(--bad);
+}
+
+.status.stale .dot{
+  background:var(--bad);
+}
+
+.freshness{
+  margin:0 0 9px;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+
+.freshness.stale{
+  color:var(--bad);
+  border-color:var(--bad);
+  background:#ef767a12;
+}
+
 .card{
   background:linear-gradient(180deg,#12161b,#0f1317);
   border:1px solid var(--line);
