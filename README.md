@@ -9,6 +9,7 @@ Gold Futures Monitor is a staged research and decision-support project for COMEX
 - [Data state transitions and date contract](docs/data-state-and-date-contract.md)
 - [PG64 master/derived-data architecture](docs/pg64-master-derived-data-architecture.md)
 - [COT/FRED data-source and publication review checklist](docs/data-source-publication-review.md)
+- [Local dashboard data validation guide](docs/dashboard-data-validation.md)
 
 ## Current implementation notes
 
