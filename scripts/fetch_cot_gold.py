@@ -182,6 +182,7 @@ def ingest(payload: bytes, retrieved_at: str, history_path: Path = HISTORY_PATH,
     atomic_write_json(history_path, history)
     return {
         "response_rows": len(incoming),
+        "latest_report_date": max(str(row["report_date_as_yyyy_mm_dd"])[:10] for row in incoming),
         "history_rows": len(history["records"]),
         "rows_added": added,
         "rows_revised": revised,
