@@ -123,7 +123,7 @@ async function initFutures() {
     state.selected =
       state.data[state.data.length - 1];
 
-    updateLiveStatus();
+    updateLiveStatus(json);
 
   } catch (error) {
 
@@ -199,26 +199,72 @@ async function initOptions() {
    STATUS
    ========================= */
 
-function updateLiveStatus() {
+function updateLiveStatus(sourceMeta = {}) {
+
+  const latestDate =
+    state.selected && state.selected.date
+      ? state.selected.date
+      : sourceMeta.latest_date || null;
+
+  const latestDateMs =
+    latestDate
+      ? new Date(latestDate + "T00:00:00").getTime()
+      : NaN;
+
+  const ageDays =
+    Number.isFinite(latestDateMs)
+      ? Math.floor(
+          (Date.now() - latestDateMs) /
+          86400000
+        )
+      : NaN;
+
+  // Calendar-day threshold is a visible heuristic, not an exchange calendar.
+  const isStale =
+    Number.isFinite(ageDays) &&
+    ageDays > 7;
+
+  const processedAt =
+    sourceMeta.updated_at
+      ? new Date(sourceMeta.updated_at)
+      : null;
+
+  const processedAtLabel =
+    processedAt && !Number.isNaN(processedAt.getTime())
+      ? processedAt.toLocaleString("en-US", {
+          dateStyle: "medium",
+          timeStyle: "short"
+        })
+      : "unknown";
 
   const status =
     document.querySelector(".status");
 
   if (status) {
-
+    status.classList.toggle("stale", isStale);
     status.innerHTML =
-      '<span class="dot"></span> CME PDF';
+      '<span class="dot"></span> ' +
+      (isStale ? "STALE DATA" : "CME PDF");
+  }
 
+  const freshness =
+    $("dataFreshness");
+
+  if (freshness) {
+    freshness.classList.toggle("stale", isStale);
+    freshness.textContent =
+      (isStale ? "Data may be stale — " : "Data status — ") +
+      "latest trading date: " + (latestDate || "unknown") +
+      " · file processed: " + processedAtLabel +
+      (isStale ? " · older than 7 calendar days" : "");
   }
 
   const footer =
     document.querySelector("footer");
 
   if (footer) {
-
     footer.textContent =
-      "CME Daily Bulletin PG62 + PG64 · Manual PDF import · Active Contract = highest GC volume";
-
+      "CME Daily Bulletin PG62 + PG64 · Manual PDF import · Stale warning uses a 7-calendar-day heuristic";
   }
 }
 
@@ -230,6 +276,16 @@ function showFuturesError(message) {
 
   if (status) {
     status.textContent = "ERROR";
+    status.classList.add("stale");
+  }
+
+  const freshness =
+    $("dataFreshness");
+
+  if (freshness) {
+    freshness.classList.add("stale");
+    freshness.textContent =
+      "Futures data unavailable — " + message;
   }
 
   const settlement =
