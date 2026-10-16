@@ -14,11 +14,9 @@ COT report dates represent positions as of Tuesday; publication is normally Frid
 
 ## Run manually
 
-From the repository root, with Python 3.9 or newer:
+From the repository root, with Python 3.9 or newer, run:
 
-\`\`\`bash
-python scripts/fetch_cot_gold.py
-\`\`\`
+    python scripts/fetch_cot_gold.py
 
 The script makes one read-only request to the official CFTC API. It requires no API token for ordinary low-volume use. It fails closed if the response is empty, malformed, has the wrong market code, or does not identify the expected COMEX Gold market.
 
@@ -32,9 +30,9 @@ History is upserted by report date + CFTC contract market code + market name. Re
 
 ## Offline tests
 
-\`\`\`bash
-python -m unittest tests.test_cot_ingestion -v
-\`\`\`
+Run:
+
+    python -m unittest discover -s tests -p "test_cot_ingestion.py" -v
 
 Tests cover empty/wrong-market responses, duplicate keys, idempotent re-ingestion, and corrected source rows. They do not prove that the live CFTC API is reachable or that the market-code filter is current; perform a live run and reconcile the newest row against the CFTC website before relying on the resulting history.
 
