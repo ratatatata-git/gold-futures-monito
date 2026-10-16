@@ -1,8 +1,11 @@
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from fetch_fred_context import ingest, parse_csv
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from fetch_fred_context import ingest, parse_csv  # noqa: E402
 
 
 CSV = b"observation_date,DFII10,DGS10,DTWEXBGS\n2026-10-14,1.72,4.10,120.4\n2026-10-15,.,4.08,120.8\n"
