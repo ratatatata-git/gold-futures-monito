@@ -1,0 +1,24 @@
+name: Live Official CME PDF Smoke Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-pdf-smoke:
+    name: Download and parse current official PG62 / PG64 PDFs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install parser dependencies
+        run: python -m pip install -r pg64-requirements.txt
+      - name: Run live official PDF smoke test
+        run: python scripts/test_live_comex_pdfs.py
