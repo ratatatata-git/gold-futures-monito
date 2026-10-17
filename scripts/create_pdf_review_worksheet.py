@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -13,13 +12,10 @@ from typing import Any
 from pypdf import PdfReader
 
 EDITION_CHOICES = ("PRELIMINARY", "FINAL", "REVISED", "UNCLASSIFIED", "CONFLICTING_EVIDENCE")
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
-
-
 def is_timestamp(value: str) -> bool:
     try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
-        return True
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed.tzinfo is not None and parsed.utcoffset() is not None
     except (ValueError, AttributeError):
         return False
 
