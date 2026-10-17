@@ -1,6 +1,6 @@
-# 実PDFライブスモークテスト
+# 実PDFスモークテスト
 
-`scripts/test_live_comex_pdfs.py` downloads the official current CME PG62 and PG64 PDF endpoints into a temporary directory and runs the existing parsers plus the local source-provenance gate.
+`scripts/test_live_comex_pdfs.py` は、リポジトリに保存済みの実PDFを使い、PG62 parser と PG64 diagnostic audit、および PDF SHA-256 と parser output の provenance gate を実行します。CMEサイトからの再ダウンロードは不要です。
 
 ## Run locally
 
@@ -9,24 +9,22 @@ python -m pip install -r pg64-requirements.txt
 python scripts/test_live_comex_pdfs.py
 ```
 
-If the CME endpoint blocks automated downloads, download the two official PDFs through your normal browser session and pass the local files (they are read in place and not copied into the repository):
+既定では `data/cme-pg62/` と `data/cme-pg64/` の両方に存在する日付のうち、最も新しい共通日付を自動選択します。現在のリポジトリでは両ディレクトリにある 2026-10-14 の組を選びます。別のPDFを明示する場合:
 
 ```sh
-python scripts/test_live_comex_pdfs.py \\
-  --pg62-pdf /path/to/official-Section62.pdf \\
-  --pg64-pdf /path/to/official-Section64.pdf
+python scripts/test_live_comex_pdfs.py \
+  --pg62-pdf data/cme-pg62/PG62_2026-10-14.pdf \
+  --pg64-pdf data/cme-pg64/PG64_2026-10-14.pdf
 ```
 
-Both local paths must be supplied together. The script still verifies the bytes via SHA-256 and parser provenance; keep the PDFs and results in your local protected workspace. The GitHub Actions workflow is manual-only because CME returned HTTP 403 to GitHub-hosted runners during this attempt. Ordinary PR CI runs syntax and offline regression tests instead.
+両方のパスは同時に指定してください。入力PDFはその場で読み込み、コピーや書き換えは行いません。GitHub Actions はPDFとparser関連ファイルが変更された pull request でこのテストを実行します。
 
 ## Data handling and interpretation
 
-- Source URLs are the official CME current bulletin endpoints for Section 62 and Section 64.
-- PDF files and intermediate parser outputs are held only in a temporary directory and removed when the process exits.
-- The script prints a compact result (date, edition, page count, SHA-256, parser status and provenance status), not the extracted contract/option values.
-- PG62 must pass its built-in structural and TOTAL reconciliation checks.
-- PG64 must have a single unambiguous edition status; its parser output remains diagnostic-only.
-- A successful run verifies that the current real PDFs can be downloaded, parsed, and tied to matching local source manifests. It is not independent cell-by-cell reconciliation, a complete page-review record, a redistribution-rights decision, or publication approval.
-- The endpoint may change between runs. Keep the printed hashes and test time in a private operational log if audit continuity is required; do not commit PDFs or data-bearing artifacts to this repository while redistribution terms remain unresolved.
+- PDFのSHA-256、ページ数、日付、版情報と parser の来歴を照合します。
+- PG62 は既存の構造・TOTAL検証が PASS であることを要求します。
+- PG64 は版ステータスが一意に特定できることを要求し、出力は診断専用のままです。
+- 成功は、格納済みの実PDFに対する parser/provenance smoke test の成功を意味します。独立した全ページ確認、セル単位の独立転記照合、再配布権の判断、公開承認を意味しません。
+- 実PDFそのものはリポジトリに既に存在しますが、COT/FREDなどの派生データを新たに公開する判断は別途必要です。
 
-Phase 2 remains incomplete until the actual PDFs are reviewed page-by-page and independently transcribed raw tokens are reconciled against parser outputs.
+Phase 2 は、実PDFの全ページ確認と独立転記値による照合が完了するまで未完了です。
