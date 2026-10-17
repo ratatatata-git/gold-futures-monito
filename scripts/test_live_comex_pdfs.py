@@ -23,7 +23,11 @@ MAX_BYTES = 100 * 1024 * 1024
 
 
 def download(url: str, target: Path) -> None:
-    request = urllib.request.Request(url, headers={"User-Agent": "GoldFuturesMonitor-local-validation/1.0"})
+    request = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
+        "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html",
+    })
     with urllib.request.urlopen(request, timeout=45) as response:
         content_type = response.headers.get("Content-Type", "")
         payload = response.read(MAX_BYTES + 1)
