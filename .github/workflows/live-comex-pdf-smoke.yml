@@ -1,16 +1,26 @@
-name: Live Official CME PDF Smoke Test
+name: Real Repository CME PDF Smoke Test
 
 on:
+  pull_request:
+    paths:
+      - "data/cme-pg62/**"
+      - "data/cme-pg64/**"
+      - "scripts/test_live_comex_pdfs.py"
+      - "scripts/parse_pg62.py"
+      - "scripts/parse_pg64.py"
+      - "scripts/register_pdf_revision.py"
+      - "scripts/validate_pdf_parser_provenance.py"
+      - ".github/workflows/live-comex-pdf-smoke.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  live-pdf-smoke:
-    name: Download and parse current official PG62 / PG64 PDFs
+  real-pdf-smoke:
+    name: Parse checked-in PG62 / PG64 source PDFs
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,5 +30,5 @@ jobs:
           python-version: "3.11"
       - name: Install parser dependencies
         run: python -m pip install -r pg64-requirements.txt
-      - name: Run live official PDF smoke test
+      - name: Run real repository PDF smoke test
         run: python scripts/test_live_comex_pdfs.py
