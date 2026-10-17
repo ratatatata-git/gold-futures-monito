@@ -2,6 +2,16 @@ name: Live Official CME PDF Smoke Test
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/test_live_comex_pdfs.py"
+      - "scripts/parse_pg62.py"
+      - "scripts/parse_pg64.py"
+      - "scripts/register_pdf_revision.py"
+      - "scripts/validate_pdf_parser_provenance.py"
+      - "data/master/product/**"
+      - "pg64-requirements.txt"
+      - ".github/workflows/live-comex-pdf-smoke.yml"
 
 permissions:
   contents: read
