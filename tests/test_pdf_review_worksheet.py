@@ -52,6 +52,8 @@ class PdfReviewWorksheetTests(unittest.TestCase):
             self.build(bulletin_type="PG63")
         with self.assertRaises(ValueError):
             self.build(retrieved_at="yesterday")
+        with self.assertRaises(ValueError):
+            self.build(retrieved_at="2026-10-14T23:00:00")
 
 
 if __name__ == "__main__":
