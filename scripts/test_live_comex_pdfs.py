@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run PG62 and PG64 parsers against official current CME PDFs, locally."""
 from __future__ import annotations
+import argparse
 import sys
 import tempfile
 import urllib.request
@@ -94,6 +95,13 @@ def run_pg64(pdf: Path, retrieved_at: str, source_url: str) -> dict:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--pg62-pdf", type=Path, help="local official PG62 PDF; if supplied, --pg64-pdf is also required")
+    parser.add_argument("--pg64-pdf", type=Path, help="local official PG64 PDF; if supplied, --pg62-pdf is also required")
+    args = parser.parse_args()
+    if bool(args.pg62_pdf) != bool(args.pg64_pdf):
+        parser.error("--pg62-pdf and --pg64-pdf must be supplied together")
+
     retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     results = []
     try:
@@ -101,18 +109,27 @@ def main() -> int:
             temp_dir = Path(temp)
             paths = {}
             source_urls = {}
-            for kind, urls in SOURCES.items():
-                path = temp_dir / f"{kind}.pdf"
-                source_urls[kind] = download(urls, path)
+            if args.pg62_pdf and args.pg64_pdf:
+                paths = {"PG62": args.pg62_pdf.expanduser().resolve(), "PG64": args.pg64_pdf.expanduser().resolve()}
+                source_urls = {kind: urls[0] for kind, urls in SOURCES.items()}
+                for kind, path in paths.items():
+                    if not path.is_file() or path.suffix.lower() != ".pdf":
+                        raise ValueError(f"{kind} local input is not an existing PDF file: {path}")
+            else:
+                for kind, urls in SOURCES.items():
+                    path = temp_dir / f"{kind}.pdf"
+                    source_urls[kind] = download(urls, path)
+                    paths[kind] = path
+
+            for kind, path in paths.items():
                 reader = PdfReader(str(path), strict=True)
                 if reader.is_encrypted or len(reader.pages) < 1:
                     raise ValueError(f"{kind} PDF is encrypted or has no pages")
-                paths[kind] = path
             results.append(run_pg62(paths["PG62"], retrieved_at, source_urls["PG62"]))
             results.append(run_pg64(paths["PG64"], retrieved_at, source_urls["PG64"]))
     except Exception as exc:
         print(f"LIVE PDF SMOKE FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
-        print("PDFs and intermediate artifacts were held in a temporary directory and removed.", file=sys.stderr)
+        print("Downloaded PDFs and intermediate artifacts were held in a temporary directory and removed.", file=sys.stderr)
         return 1
     print("LIVE OFFICIAL CME PDF SMOKE: PASS")
     for result in results:
