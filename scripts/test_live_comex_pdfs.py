@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Run PG62 and PG64 parsers against official current CME PDFs, locally."""
+"""Smoke-test the repository's real CME PG62/PG64 PDFs and verify provenance."""
 from __future__ import annotations
+
 import argparse
+import re
 import sys
-import tempfile
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from pypdf import PdfReader
@@ -17,48 +17,36 @@ import register_pdf_revision
 import validate_pdf_parser_provenance
 
 SOURCES = {
-    "PG62": [
-        "https://www.cmegroup.com/daily_bulletin/current/Section62_Metals_Futures_Products.pdf",
-        "https://www.cmegroup.com/dailybulletin/current/Section62_Metals_Futures_Products.pdf",
-    ],
-    "PG64": [
-        "https://www.cmegroup.com/daily_bulletin/current/Section64_Metals_Option_Products.pdf",
-        "https://www.cmegroup.com/dailybulletin/current/Section64_Metals_Option_Products.pdf",
-    ],
+    "PG62": "https://www.cmegroup.com/market-data/daily-bulletin.html",
+    "PG64": "https://www.cmegroup.com/market-data/daily-bulletin.html",
 }
-MAX_BYTES = 100 * 1024 * 1024
+DATE_RE = re.compile(r"^(PG(?:62|64))_(\d{4}-\d{2}-\d{2})\.pdf$")
 
 
-def download(urls: list[str], target: Path) -> str:
-    errors = []
-    for url in urls:
-        request = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
-            "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html",
-        })
-        try:
-            with urllib.request.urlopen(request, timeout=45) as response:
-                content_type = response.headers.get("Content-Type", "")
-                payload = response.read(MAX_BYTES + 1)
-                final_url = response.geturl()
-            if len(payload) > MAX_BYTES:
-                raise ValueError("official PDF exceeded the 100 MiB safety limit")
-            if not payload.startswith(b"%PDF-"):
-                raise ValueError(f"official source did not return a PDF (Content-Type={content_type!r})")
-            target.write_bytes(payload)
-            return final_url
-        except Exception as exc:
-            errors.append(f"{url}: {type(exc).__name__}: {exc}")
-    raise RuntimeError("all official CME PDF endpoints failed: " + " | ".join(errors))
+def find_latest_common_pair() -> tuple[Path, Path]:
+    """Choose the newest date with both report types in their designated folders."""
+    found: dict[str, dict[str, Path]] = {"PG62": {}, "PG64": {}}
+    for kind in ("PG62", "PG64"):
+        folder = ROOT / "data" / f"cme-{kind.lower()}"
+        if not folder.is_dir():
+            raise FileNotFoundError(f"expected repository PDF directory: {folder}")
+        for path in folder.iterdir():
+            match = DATE_RE.fullmatch(path.name)
+            if match and match.group(1) == kind and path.is_file():
+                found[kind][match.group(2)] = path
+    common_dates = sorted(set(found["PG62"]) & set(found["PG64"]))
+    if not common_dates:
+        raise FileNotFoundError("no matching PG62/PG64 PDF dates found under data/cme-pg62 and data/cme-pg64")
+    date = common_dates[-1]
+    return found["PG62"][date], found["PG64"][date]
 
 
-def run_pg62(pdf: Path, retrieved_at: str, source_url: str) -> dict:
+def run_pg62(pdf: Path, retrieved_at: str) -> dict:
     artifact = parse_pg62.parse_pdf(pdf)
     edition = artifact["bulletin"]["status"]
     manifest = register_pdf_revision.build_manifest(
         pdf_path=pdf, bulletin_type="PG62", bulletin_date=artifact["trade_date"],
-        edition_status=edition, source_url=source_url, retrieved_at=retrieved_at,
+        edition_status=edition, source_url=SOURCES["PG62"], retrieved_at=retrieved_at,
     )
     provenance = validate_pdf_parser_provenance.verify(manifest, artifact)
     if artifact.get("validation", {}).get("status") != "PASS":
@@ -69,11 +57,10 @@ def run_pg62(pdf: Path, retrieved_at: str, source_url: str) -> dict:
         "type": "PG62", "date": artifact["trade_date"], "edition": edition,
         "pages": manifest["document"]["page_count"], "sha256": manifest["document"]["sha256"],
         "parser_status": artifact["validation"]["status"], "provenance_status": provenance["check_status"],
-        "accuracy_review": "NOT_INDEPENDENTLY_RECONCILED", "publication_approved": False,
     }
 
 
-def run_pg64(pdf: Path, retrieved_at: str, source_url: str) -> dict:
+def run_pg64(pdf: Path, retrieved_at: str) -> dict:
     artifact = parse_pg64.audit(pdf)
     statuses = artifact["bulletin"]["status_candidates"]
     if len(statuses) != 1:
@@ -81,7 +68,7 @@ def run_pg64(pdf: Path, retrieved_at: str, source_url: str) -> dict:
     edition = statuses[0]
     manifest = register_pdf_revision.build_manifest(
         pdf_path=pdf, bulletin_type="PG64", bulletin_date=artifact["trade_date"],
-        edition_status=edition, source_url=source_url, retrieved_at=retrieved_at,
+        edition_status=edition, source_url=SOURCES["PG64"], retrieved_at=retrieved_at,
     )
     provenance = validate_pdf_parser_provenance.verify(manifest, artifact)
     if provenance["check_status"] != "PROVENANCE_MATCH":
@@ -90,59 +77,45 @@ def run_pg64(pdf: Path, retrieved_at: str, source_url: str) -> dict:
         "type": "PG64", "date": artifact["trade_date"], "edition": edition,
         "pages": manifest["document"]["page_count"], "sha256": manifest["document"]["sha256"],
         "parser_status": artifact["production_master_status"], "provenance_status": provenance["check_status"],
-        "accuracy_review": "NOT_INDEPENDENTLY_RECONCILED", "publication_approved": False,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pg62-pdf", type=Path, help="local official PG62 PDF; if supplied, --pg64-pdf is also required")
-    parser.add_argument("--pg64-pdf", type=Path, help="local official PG64 PDF; if supplied, --pg62-pdf is also required")
+    parser.add_argument("--pg62-pdf", type=Path, help="optional explicit local PG62 PDF")
+    parser.add_argument("--pg64-pdf", type=Path, help="optional explicit local PG64 PDF")
     args = parser.parse_args()
     if bool(args.pg62_pdf) != bool(args.pg64_pdf):
         parser.error("--pg62-pdf and --pg64-pdf must be supplied together")
 
-    retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    results = []
-    try:
-        with tempfile.TemporaryDirectory(prefix="gold-futures-live-pdf-") as temp:
-            temp_dir = Path(temp)
-            paths = {}
-            source_urls = {}
-            if args.pg62_pdf and args.pg64_pdf:
-                paths = {"PG62": args.pg62_pdf.expanduser().resolve(), "PG64": args.pg64_pdf.expanduser().resolve()}
-                source_urls = {kind: urls[0] for kind, urls in SOURCES.items()}
-                for kind, path in paths.items():
-                    if not path.is_file() or path.suffix.lower() != ".pdf":
-                        raise ValueError(f"{kind} local input is not an existing PDF file: {path}")
-            else:
-                for kind, urls in SOURCES.items():
-                    path = temp_dir / f"{kind}.pdf"
-                    source_urls[kind] = download(urls, path)
-                    paths[kind] = path
+    if args.pg62_pdf and args.pg64_pdf:
+        paths = {"PG62": args.pg62_pdf.expanduser().resolve(), "PG64": args.pg64_pdf.expanduser().resolve()}
+    else:
+        pg62, pg64 = find_latest_common_pair()
+        paths = {"PG62": pg62, "PG64": pg64}
 
-            for kind, path in paths.items():
-                reader = PdfReader(str(path), strict=True)
-                if reader.is_encrypted or len(reader.pages) < 1:
-                    raise ValueError(f"{kind} PDF is encrypted or has no pages")
-            results.append(run_pg62(paths["PG62"], retrieved_at, source_urls["PG62"]))
-            results.append(run_pg64(paths["PG64"], retrieved_at, source_urls["PG64"]))
+    retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    try:
+        for kind, path in paths.items():
+            if not path.is_file() or path.suffix.lower() != ".pdf":
+                raise ValueError(f"{kind} input is not an existing PDF file: {path}")
+            reader = PdfReader(str(path), strict=True)
+            if reader.is_encrypted or len(reader.pages) < 1:
+                raise ValueError(f"{kind} PDF is encrypted or has no pages")
+        results = [run_pg62(paths["PG62"], retrieved_at), run_pg64(paths["PG64"], retrieved_at)]
     except Exception as exc:
-        print(f"LIVE PDF SMOKE FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
-        print("Downloaded PDFs and intermediate artifacts were held in a temporary directory and removed.", file=sys.stderr)
+        print(f"REPOSITORY PDF SMOKE FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
-    print("LIVE OFFICIAL CME PDF SMOKE: PASS")
+
+    print("REAL REPOSITORY CME PDF SMOKE: PASS")
     for result in results:
         print(
             f"{result['type']}: date={result['date']} edition={result['edition']} "
             f"pages={result['pages']} sha256={result['sha256']} "
             f"parser={result['parser_status']} provenance={result['provenance_status']}"
         )
-        print(
-            f"{result['type']}: accuracy_review={result['accuracy_review']} "
-            f"publication_approved={str(result['publication_approved']).lower()}"
-        )
-    print("Scope: live parser/provenance smoke only; no independent cell-by-cell review.")
+        print(f"{result['type']}: accuracy_review=NOT_INDEPENDENTLY_RECONCILED publication_approved=false")
+    print("Scope: real-PDF parser/provenance smoke only; independent cell-by-cell reconciliation is still required.")
     return 0
 
 
