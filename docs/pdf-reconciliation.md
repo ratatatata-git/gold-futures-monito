@@ -132,3 +132,8 @@ python scripts/register_pdf_revision.py /secure/local/PG62-revised.pdf \
 - PDFが壊れている、暗号化されている、またはページ数を読み取れない場合は登録しない。
 - `RAW_REGISTERED_LOCAL_ONLY` はローカルでの登録を意味し、検証済み・権利確認済み・公開承認済みを意味しない。
 - 登録後も、抽出、独立照合、版差分レビュー、公開権利審査は別々に必要。
+
+
+## ローカルレビュー用テンプレートの作成
+
+手作業レビューの記録を始める場合は、[`docs/pdf-review-worksheet.md`](pdf-review-worksheet.md) と `scripts/create_pdf_review_worksheet.py` を参照する。生成されるJSONは未完成テンプレートであり、ページ確認・独立転記・レビュー者情報を自動で補完しない。空のテンプレートをそのまま検証ゲートに通すことはできない。
