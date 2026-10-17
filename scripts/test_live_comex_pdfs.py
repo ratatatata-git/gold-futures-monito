@@ -16,34 +16,48 @@ import register_pdf_revision
 import validate_pdf_parser_provenance
 
 SOURCES = {
-    "PG62": "https://www.cmegroup.com/daily_bulletin/current/Section62_Metals_Futures_Products.pdf",
-    "PG64": "https://www.cmegroup.com/daily_bulletin/current/Section64_Metals_Option_Products.pdf",
+    "PG62": [
+        "https://www.cmegroup.com/daily_bulletin/current/Section62_Metals_Futures_Products.pdf",
+        "https://www.cmegroup.com/dailybulletin/current/Section62_Metals_Futures_Products.pdf",
+    ],
+    "PG64": [
+        "https://www.cmegroup.com/daily_bulletin/current/Section64_Metals_Option_Products.pdf",
+        "https://www.cmegroup.com/dailybulletin/current/Section64_Metals_Option_Products.pdf",
+    ],
 }
 MAX_BYTES = 100 * 1024 * 1024
 
 
-def download(url: str, target: Path) -> None:
-    request = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
-        "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html",
-    })
-    with urllib.request.urlopen(request, timeout=45) as response:
-        content_type = response.headers.get("Content-Type", "")
-        payload = response.read(MAX_BYTES + 1)
-    if len(payload) > MAX_BYTES:
-        raise ValueError("official PDF exceeded the 100 MiB safety limit")
-    if not payload.startswith(b"%PDF-"):
-        raise ValueError(f"official source did not return a PDF (Content-Type={content_type!r})")
-    target.write_bytes(payload)
+def download(urls: list[str], target: Path) -> str:
+    errors = []
+    for url in urls:
+        request = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
+            "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html",
+        })
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                content_type = response.headers.get("Content-Type", "")
+                payload = response.read(MAX_BYTES + 1)
+                final_url = response.geturl()
+            if len(payload) > MAX_BYTES:
+                raise ValueError("official PDF exceeded the 100 MiB safety limit")
+            if not payload.startswith(b"%PDF-"):
+                raise ValueError(f"official source did not return a PDF (Content-Type={content_type!r})")
+            target.write_bytes(payload)
+            return final_url
+        except Exception as exc:
+            errors.append(f"{url}: {type(exc).__name__}: {exc}")
+    raise RuntimeError("all official CME PDF endpoints failed: " + " | ".join(errors))
 
 
-def run_pg62(pdf: Path, retrieved_at: str) -> dict:
+def run_pg62(pdf: Path, retrieved_at: str, source_url: str) -> dict:
     artifact = parse_pg62.parse_pdf(pdf)
     edition = artifact["bulletin"]["status"]
     manifest = register_pdf_revision.build_manifest(
         pdf_path=pdf, bulletin_type="PG62", bulletin_date=artifact["trade_date"],
-        edition_status=edition, source_url=SOURCES["PG62"], retrieved_at=retrieved_at,
+        edition_status=edition, source_url=source_url, retrieved_at=retrieved_at,
     )
     provenance = validate_pdf_parser_provenance.verify(manifest, artifact)
     if artifact.get("validation", {}).get("status") != "PASS":
@@ -58,7 +72,7 @@ def run_pg62(pdf: Path, retrieved_at: str) -> dict:
     }
 
 
-def run_pg64(pdf: Path, retrieved_at: str) -> dict:
+def run_pg64(pdf: Path, retrieved_at: str, source_url: str) -> dict:
     artifact = parse_pg64.audit(pdf)
     statuses = artifact["bulletin"]["status_candidates"]
     if len(statuses) != 1:
@@ -66,7 +80,7 @@ def run_pg64(pdf: Path, retrieved_at: str) -> dict:
     edition = statuses[0]
     manifest = register_pdf_revision.build_manifest(
         pdf_path=pdf, bulletin_type="PG64", bulletin_date=artifact["trade_date"],
-        edition_status=edition, source_url=SOURCES["PG64"], retrieved_at=retrieved_at,
+        edition_status=edition, source_url=source_url, retrieved_at=retrieved_at,
     )
     provenance = validate_pdf_parser_provenance.verify(manifest, artifact)
     if provenance["check_status"] != "PROVENANCE_MATCH":
@@ -86,15 +100,16 @@ def main() -> int:
         with tempfile.TemporaryDirectory(prefix="gold-futures-live-pdf-") as temp:
             temp_dir = Path(temp)
             paths = {}
-            for kind, url in SOURCES.items():
+            source_urls = {}
+            for kind, urls in SOURCES.items():
                 path = temp_dir / f"{kind}.pdf"
-                download(url, path)
+                source_urls[kind] = download(urls, path)
                 reader = PdfReader(str(path), strict=True)
                 if reader.is_encrypted or len(reader.pages) < 1:
                     raise ValueError(f"{kind} PDF is encrypted or has no pages")
                 paths[kind] = path
-            results.append(run_pg62(paths["PG62"], retrieved_at))
-            results.append(run_pg64(paths["PG64"], retrieved_at))
+            results.append(run_pg62(paths["PG62"], retrieved_at, source_urls["PG62"]))
+            results.append(run_pg64(paths["PG64"], retrieved_at, source_urls["PG64"]))
     except Exception as exc:
         print(f"LIVE PDF SMOKE FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
         print("PDFs and intermediate artifacts were held in a temporary directory and removed.", file=sys.stderr)
