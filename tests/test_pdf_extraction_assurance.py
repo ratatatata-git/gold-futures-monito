@@ -8,6 +8,13 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import validate_pdf_extraction_assurance as gate  # noqa: E402
 
 
+def evidence():
+    return [
+        {"group": "layout", "reference": "synthetic-header-anchor", "result": "column location matches"},
+        {"group": "visual", "reference": "synthetic-rendered-page-review", "result": "value independently confirmed"},
+    ]
+
+
 def valid_manifest():
     return {
         "schema_version": 1,
@@ -28,15 +35,8 @@ def valid_manifest():
             {"token_id": "p1-c2", "disposition": "CELL", "cell_id": "settlement"},
         ],
         "cells": [
-            {
-                "cell_id": "contract",
-                "value_status": "RESOLVED",
-                "publishable": True,
-                "evidence": [
-                    {"group": "layout", "reference": "synthetic-header-anchor", "result": "column location matches"},
-                    {"group": "visual", "reference": "synthetic-rendered-page-review", "result": "value independently confirmed"},
-                ],
-            }
+            {"cell_id": "contract", "value_status": "RESOLVED", "publishable": True, "evidence": evidence()},
+            {"cell_id": "settlement", "value_status": "RESOLVED", "publishable": True, "evidence": evidence()},
         ],
     }
 
@@ -73,17 +73,16 @@ class PdfExtractionAssuranceTests(unittest.TestCase):
         result = gate.inspect_manifest(manifest)
         self.assertTrue(any("reason is required" in issue for issue in result["issues"]))
 
-    def test_quarantine_is_explicit_and_not_silently_ignored(self):
+    def test_quarantine_blocks_promotion(self):
         manifest = valid_manifest()
         manifest["assignments"][0] = {
             "token_id": "p1-c1",
             "disposition": "QUARANTINE",
             "reason": "synthetic ambiguous glyph",
         }
-        # Quarantine is auditable but remains a visible assignment; the manifest's
-        # gate only validates coverage/evidence, not production promotion.
         result = gate.inspect_manifest(manifest)
-        self.assertEqual(result["gate"], "PASS")
+        self.assertEqual(result["gate"], "BLOCKED")
+        self.assertTrue(any("promotion is blocked" in issue for issue in result["issues"]))
 
     def test_one_layout_evidence_group_is_insufficient(self):
         manifest = valid_manifest()
@@ -99,6 +98,12 @@ class PdfExtractionAssuranceTests(unittest.TestCase):
         manifest["cells"][0]["value_status"] = "UNRESOLVED"
         result = gate.inspect_manifest(manifest)
         self.assertTrue(any("UNRESOLVED values cannot be publishable" in issue for issue in result["issues"]))
+
+    def test_dangling_cell_reference_blocks(self):
+        manifest = valid_manifest()
+        manifest["assignments"][0]["cell_id"] = "missing-cell"
+        result = gate.inspect_manifest(manifest)
+        self.assertTrue(any("cell_id absent from cells" in issue for issue in result["issues"]))
 
     def test_zero_definition_matches_fail_closed(self):
         manifest = valid_manifest()
