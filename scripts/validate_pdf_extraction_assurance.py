@@ -63,6 +63,8 @@ def validate_assignment_coverage(tokens: Any, assignments: Any) -> list[str]:
                 issues.append(f"{prefix}.reason is required for {disposition}")
             if item.get("cell_id") not in (None, ""):
                 issues.append(f"{prefix}.cell_id must be omitted for {disposition}")
+            if disposition == "QUARANTINE":
+                issues.append(f"{prefix} token {token_id} is quarantined; promotion is blocked")
     for token_id in token_ids:
         count = assigned.get(token_id, 0)
         if count == 0:
@@ -118,7 +120,6 @@ def validate_cell_evidence(cells: Any) -> list[str]:
         if cell.get("value_status") == "UNRESOLVED" and cell.get("publishable") is True:
             issues.append(f"{prefix} UNRESOLVED values cannot be publishable")
         if cell.get("value_status") == "RESOLVED" and cell.get("publishable") is True:
-            # Publishable requires an independent corroboration plus a second ground.
             if len(groups) < 2 or not groups.intersection(INDEPENDENT_CORROBORATION):
                 issues.append(f"{prefix} publishable value lacks independent evidence")
     return issues
@@ -172,17 +173,29 @@ def inspect_manifest(manifest: Any) -> dict[str, Any]:
 
     selected, selection_issues = select_definition(manifest.get("fingerprint"), manifest.get("definitions"))
     issues.extend(selection_issues)
-    coverage_issues = validate_assignment_coverage(manifest.get("tokens"), manifest.get("assignments"))
-    issues.extend(coverage_issues)
-    evidence_issues = validate_cell_evidence(manifest.get("cells"))
-    issues.extend(evidence_issues)
+    tokens = manifest.get("tokens")
+    assignments = manifest.get("assignments")
+    issues.extend(validate_assignment_coverage(tokens, assignments))
+    cells = manifest.get("cells")
+    issues.extend(validate_cell_evidence(cells))
+
+    if isinstance(cells, list):
+        cell_ids = {
+            cell.get("cell_id") for cell in cells
+            if isinstance(cell, dict) and isinstance(cell.get("cell_id"), str)
+        }
+        if isinstance(assignments, list):
+            for i, item in enumerate(assignments):
+                if isinstance(item, dict) and item.get("disposition") == "CELL":
+                    if item.get("cell_id") not in cell_ids:
+                        issues.append(f"assignments[{i}] references cell_id absent from cells: {item.get('cell_id')}")
 
     return {
         "gate": "PASS" if not issues else "BLOCKED",
         "selected_definition": selected,
-        "token_count": len(manifest.get("tokens", [])) if isinstance(manifest.get("tokens"), list) else 0,
-        "assignment_count": len(manifest.get("assignments", [])) if isinstance(manifest.get("assignments"), list) else 0,
-        "cell_count": len(manifest.get("cells", [])) if isinstance(manifest.get("cells"), list) else 0,
+        "token_count": len(tokens) if isinstance(tokens, list) else 0,
+        "assignment_count": len(assignments) if isinstance(assignments, list) else 0,
+        "cell_count": len(cells) if isinstance(cells, list) else 0,
         "issues": issues,
     }
 
