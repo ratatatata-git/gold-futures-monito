@@ -1,0 +1,31 @@
+name: Test PDF Semantic Invariants
+
+on:
+  push:
+    paths:
+      - "scripts/validate_pdf_semantic_invariants.py"
+      - "tests/test_pdf_semantic_invariants.py"
+      - ".github/workflows/test-pdf-semantic-invariants.yml"
+  pull_request:
+    paths:
+      - "scripts/validate_pdf_semantic_invariants.py"
+      - "tests/test_pdf_semantic_invariants.py"
+      - ".github/workflows/test-pdf-semantic-invariants.yml"
+  workflow_dispatch:
+
+jobs:
+  test-semantic-invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check Python syntax
+        run: |
+          python -m py_compile scripts/validate_pdf_semantic_invariants.py
+          python -m py_compile tests/test_pdf_semantic_invariants.py
+      - name: Run synthetic exact-decimal identity tests
+        run: python -m unittest discover -s tests -p "test_pdf_semantic_invariants.py" -v
