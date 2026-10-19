@@ -1,0 +1,37 @@
+name: Test PDF Semantic Definition Master
+
+on:
+  push:
+    paths:
+      - "data/definitions/pdf-field-master.json"
+      - "scripts/validate_pdf_field_master.py"
+      - "tests/test_pdf_field_master.py"
+      - "docs/pdf-semantic-definition-master.md"
+      - ".github/workflows/test-pdf-field-master.yml"
+  pull_request:
+    paths:
+      - "data/definitions/pdf-field-master.json"
+      - "scripts/validate_pdf_field_master.py"
+      - "tests/test_pdf_field_master.py"
+      - "docs/pdf-semantic-definition-master.md"
+      - ".github/workflows/test-pdf-field-master.yml"
+  workflow_dispatch:
+
+jobs:
+  test-pdf-field-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate JSON master contract
+        run: python scripts/validate_pdf_field_master.py
+      - name: Check Python syntax
+        run: |
+          python -m py_compile scripts/validate_pdf_field_master.py
+          python -m py_compile tests/test_pdf_field_master.py
+      - name: Run master contract tests
+        run: python -m unittest discover -s tests -p "test_pdf_field_master.py" -v
