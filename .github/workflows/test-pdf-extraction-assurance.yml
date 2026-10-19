@@ -1,0 +1,33 @@
+name: Test PDF Extraction Assurance
+
+on:
+  push:
+    paths:
+      - "scripts/validate_pdf_extraction_assurance.py"
+      - "tests/test_pdf_extraction_assurance.py"
+      - "docs/pdf-extraction-assurance.md"
+      - ".github/workflows/test-pdf-extraction-assurance.yml"
+  pull_request:
+    paths:
+      - "scripts/validate_pdf_extraction_assurance.py"
+      - "tests/test_pdf_extraction_assurance.py"
+      - "docs/pdf-extraction-assurance.md"
+      - ".github/workflows/test-pdf-extraction-assurance.yml"
+  workflow_dispatch:
+
+jobs:
+  test-pdf-extraction-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check Python syntax
+        run: |
+          python -m py_compile scripts/validate_pdf_extraction_assurance.py
+          python -m py_compile tests/test_pdf_extraction_assurance.py
+      - name: Run synthetic fail-closed tests
+        run: python -m unittest discover -s tests -p "test_pdf_extraction_assurance.py" -v
