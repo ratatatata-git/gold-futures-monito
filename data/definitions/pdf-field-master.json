@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "master_id": "comex-pdf-semantic-definitions",
+  "master_version": "0.1.0-draft",
+  "status": "DRAFT_NOT_FOR_PRODUCTION",
+  "principles": {
+    "raw_text_is_immutable": true,
+    "unknown_values_fail_closed": true,
+    "layout_profile_must_match_exactly_one": true,
+    "definition_does_not_prove_extraction_accuracy": true
+  },
+  "layout_profiles": [
+    {
+      "profile_id": "pg62-gc-futures-v5-draft",
+      "bulletin_type": "PG62",
+      "dataset": "PG62_GC_FUTURES",
+      "parser_family": "pg62-gold-v5",
+      "status": "DRAFT_UNVERIFIED",
+      "fingerprint": {
+        "required_header_tokens": ["SETTLEMENT", "OPEN INTEREST"],
+        "page_count": null,
+        "page_size_profile": null,
+        "header_fingerprint_sha256": null
+      },
+      "effective_from": null,
+      "effective_to": null,
+      "notes": "Semantic fields are seeded from the existing PG62 master contract. Coordinate anchors and full fingerprint remain intentionally unset until independently reviewed across multiple real PDFs."
+    },
+    {
+      "profile_id": "pg64-options-v5-diagnostic-draft",
+      "bulletin_type": "PG64",
+      "dataset": "PG64_OPTIONS_DIAGNOSTIC",
+      "parser_family": "pg64-gold-v5",
+      "status": "DIAGNOSTIC_ONLY",
+      "fingerprint": {
+        "required_header_tokens": [],
+        "page_count": null,
+        "page_size_profile": null,
+        "header_fingerprint_sha256": null
+      },
+      "effective_from": null,
+      "effective_to": null,
+      "notes": "PG64 layout/row semantics are not approved as a production master. This profile is only a placeholder to prevent accidental reuse of PG62 field semantics."
+    }
+  ],
+  "field_definitions": [
+    {"field_id":"contract_code","label":"Contract month/code","data_type":"string","unit":null,"source_semantics":"Literal contract identifier printed in the source row","normalization":"trim_preserve_case","allowed_states":["VALUE","UNRESOLVED"],"publishable_when":["VALUE"],"evidence_groups_required":["layout","independent_visual_or_second_engine"],"status":"DRAFT"},
+    {"field_id":"open","label":"Open","data_type":"decimal_string","unit":"USD_per_troy_ounce","source_semantics":"Opening price field as printed in the PG62 GC futures table","normalization":"decimal_string_preserve_scale","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"high","label":"High","data_type":"decimal_string","unit":"USD_per_troy_ounce","source_semantics":"High price field as printed in the PG62 GC futures table","normalization":"decimal_string_preserve_scale","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"low","label":"Low","data_type":"decimal_string","unit":"USD_per_troy_ounce","source_semantics":"Low price field as printed in the PG62 GC futures table","normalization":"decimal_string_preserve_scale","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"settlement","label":"Settlement","data_type":"decimal_string","unit":"USD_per_troy_ounce","source_semantics":"Settlement field as printed in the PG62 GC futures table","normalization":"decimal_string_preserve_scale","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"price_change","label":"Price change","data_type":"decimal_string","unit":"USD_per_troy_ounce","source_semantics":"Reported change field; preserve source sign and raw glyphs separately","normalization":"signed_decimal_string","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"volume_globex","label":"Globex volume","data_type":"integer_string","unit":"contracts","source_semantics":"Volume field identified by the source table heading","normalization":"integer_string","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"volume_pnt_pit","label":"PNT/PIT volume","data_type":"integer_string","unit":"contracts","source_semantics":"PNT/PIT volume field identified by the source table heading","normalization":"integer_string","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"open_interest","label":"Open interest","data_type":"integer_string","unit":"contracts","source_semantics":"Open interest field identified by the source table heading","normalization":"integer_string","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"},
+    {"field_id":"oi_change","label":"Open interest change","data_type":"signed_integer_string","unit":"contracts","source_semantics":"Reported open-interest change; preserve raw forms such as UNCH before interpretation","normalization":"signed_integer_with_explicit_unch_rule","allowed_states":["VALUE","SOURCE_NULL","UNRESOLVED"],"publishable_when":["VALUE","SOURCE_NULL"],"evidence_groups_required":["layout","independent_visual_or_semantic"],"status":"DRAFT"}
+  ],
+  "raw_value_rules": [
+    {"rule_id":"raw-preserve","raw_pattern":"*","field_id":"*","action":"PRESERVE_RAW","status":"APPROVED_PRINCIPLE","notes":"Never overwrite or discard the exact source text."},
+    {"rule_id":"dash-null-pg62-draft","raw_values":["----"],"field_id":"*","action":"SOURCE_NULL","status":"DRAFT","notes":"Observed in current PG62 master; validate against headings and more than one source revision before promoting."},
+    {"rule_id":"unch-oi-change-draft","raw_values":["UNCH"],"field_id":"oi_change","action":"UNRESOLVED_UNTIL_SEMANTICS_REVIEW","status":"DRAFT","notes":"Existing parser maps UNCH to numeric zero; the master records that mapping as needing an explicit approved semantic rule, not an implicit parser behavior."},
+    {"rule_id":"trailing-b-indicator","raw_pattern":"numeric_value_followed_by_B","field_id":"high","action":"PRESERVE_AS_ANNOTATION_AND_QUARANTINE_UNTIL_DEFINED","status":"UNRESOLVED","notes":"The meaning and scope of the B marker are not assumed here. Preserve the raw token and do not silently discard the marker until the official legend is reviewed."},
+    {"rule_id":"split-sign-and-number","raw_pattern":"sign_token_adjacent_to_numeric_token","field_id":"price_change|oi_change","action":"COMBINE_ONLY_WITH_GEOMETRIC_AND_FIELD_EVIDENCE","status":"DRAFT","notes":"A detached sign must not be joined to a number based on text order alone."}
+  ],
+  "normalization_rules": [
+    {"rule_id":"numeric-decimal","applies_to":"decimal_string","rule":"Use decimal arithmetic; preserve source precision and exact raw token. No binary floating-point normalization.","status":"DRAFT"},
+    {"rule_id":"numeric-integer","applies_to":"integer_string","rule":"Parse only after field identity is established. A valid integer is not evidence that the column is correct.","status":"DRAFT"},
+    {"rule_id":"unicode-dash","applies_to":"all_raw_tokens","rule":"Keep original code points. Any normalized dash equivalence must be explicit and retain original text/code points.","status":"DRAFT"},
+    {"rule_id":"unknown-glyph","applies_to":"all_raw_tokens","rule":"Unknown or ambiguous glyphs produce UNRESOLVED/QUARANTINE, never an inferred replacement.","status":"DRAFT"}
+  ],
+  "evidence_policy": {
+    "minimum_distinct_evidence_groups_per_cell": 2,
+    "layout_definition_alone_is_independent_evidence": false,
+    "accepted_independent_groups": ["independent_visual", "second_extraction_engine", "semantic_invariant", "source_legend_review"],
+    "same_coordinate_definition_cannot_count_twice": true,
+    "all_tokens_must_have_exactly_one_disposition": ["CELL", "EXPLICIT_IGNORE_WITH_REASON", "QUARANTINE"],
+    "quarantine_blocks_promotion": true
+  }
+}
