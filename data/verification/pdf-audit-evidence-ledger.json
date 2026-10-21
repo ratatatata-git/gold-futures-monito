@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "ledger_version": "1.0.0",
+  "created_at": "2026-10-22",
+  "status": "HISTORICAL_EVIDENCE_WITH_OPEN_GATES",
+  "purpose": "Preserve prior PDF audit outcomes and clearly separate rerunnable repository checks from recorded manual reviews and unfinished verification. This ledger is an index of evidence, not a certification that extraction is production-ready.",
+  "sources": [
+    {
+      "source_id": "pg62-2026-10-12",
+      "bulletin_type": "PG62",
+      "bulletin_date": "2026-10-12",
+      "edition_status": "FINAL",
+      "repository_path": "data/cme-pg62/PG62_2026-10-12.pdf",
+      "sha256": "118aa6deb4303558d548bc9edcc04154f2c68798ee34c831d6a0309703bcc57b",
+      "page_count": 8,
+      "source_identity_note": "Hash is the SHA-256 of the PDF bytes recorded during the audit. The current repository smoke test should be rerun to establish the checked-in revision's current provenance."
+    },
+    {
+      "source_id": "pg62-2026-10-13",
+      "bulletin_type": "PG62",
+      "bulletin_date": "2026-10-13",
+      "edition_status": "FINAL",
+      "repository_path": "data/cme-pg62/PG62_2026-10-13.pdf",
+      "sha256": "114e5b1b2d238d85e3922462b65e66bd6204416a880a1e826d9079a71b1966ef",
+      "page_count": 8,
+      "source_identity_note": "Hash is the SHA-256 of the PDF bytes recorded during the audit. The current repository smoke test should be rerun to establish the checked-in revision's current provenance."
+    },
+    {
+      "source_id": "pg62-2026-10-14",
+      "bulletin_type": "PG62",
+      "bulletin_date": "2026-10-14",
+      "edition_status": "FINAL",
+      "repository_path": "data/cme-pg62/PG62_2026-10-14.pdf",
+      "sha256": "8f8e82715dfb06852e965117f88204b066017279a0d6c7354e60be1e7ab91b02",
+      "git_blob_sha1": "f7971d3c75db478eacbe5c6d302901d529d95b6c",
+      "byte_size": 103237,
+      "page_count": 8,
+      "bulletin_number": "198@",
+      "source_identity_note": "SHA-256 identifies the PDF bytes; git_blob_sha1 is Git's blob object ID and is not a SHA-256."
+    },
+    {
+      "source_id": "pg64-2026-10-14",
+      "bulletin_type": "PG64",
+      "bulletin_date": "2026-10-14",
+      "edition_status": "FINAL",
+      "repository_path": "data/cme-pg64/PG64_2026-10-14.pdf",
+      "sha256": "9210f016805c3edb0ff386d324f5cfe2fc4b6896ba1477bc2c0b9b6fa83129f5",
+      "git_blob_sha1": "f670abf66aa5846abe43f08eb12a37de05cf126d",
+      "byte_size": 904653,
+      "page_count": 70,
+      "bulletin_number": "198@",
+      "source_identity_note": "SHA-256 identifies the PDF bytes; git_blob_sha1 is Git's blob object ID and is not a SHA-256."
+    }
+  ],
+  "evidence_status_definitions": {
+    "REPRODUCIBLE_AUTOMATED": "A repository artifact and command exist to rerun this exact check. Passing this check proves only its stated scope.",
+    "MANUAL_REVIEW_RECORDED": "A prior visual/manual review was recorded, but the complete per-page/per-cell reviewer worksheet is not committed as reproducible evidence.",
+    "CROSSCHECK_RECORDED_NOT_REPRODUCIBLE": "Prior comparison counts/results were recorded, but the exact scanner inputs/version and executable procedure are not preserved well enough to reproduce those counts.",
+    "INCOMPLETE": "The stated verification has not been completed."
+  },
+  "evidence": [
+    {
+      "evidence_id": "pg62-3day-gc-row-visual-review",
+      "status": "MANUAL_REVIEW_RECORDED",
+      "source_ids": [
+        "pg62-2026-10-12",
+        "pg62-2026-10-13",
+        "pg62-2026-10-14"
+      ],
+      "scope": "PG62 GC futures rows for 2026-10-12 through 2026-10-14; 27 contract rows per date (81 row-date observations).",
+      "method": "Compare the parsed GC row fields against the original PDF table pages, retaining raw markers and signs.",
+      "result": "Recorded as complete for the 27 GC rows on each of the three dates. The 2026-10-14 table spans pages 2-3.",
+      "details": {
+        "row_count_per_date": 27,
+        "total_row_date_observations": 81,
+        "fields": [
+          "contract_code",
+          "open",
+          "high",
+          "low",
+          "settlement",
+          "price_change",
+          "volume_globex",
+          "volume_pnt_pit",
+          "open_interest",
+          "oi_change"
+        ],
+        "raw_markers_preserved_for_review": [
+          "B",
+          "----",
+          "UNCH",
+          "detached signs"
+        ],
+        "totals": {
+          "2026-10-12": {
+            "volume_globex": 114665,
+            "volume_pnt_pit": 1086,
+            "open_interest": 392484,
+            "oi_change": -1090
+          },
+          "2026-10-13": {
+            "volume_globex": 140217,
+            "volume_pnt_pit": 2191,
+            "open_interest": 396345,
+            "oi_change": 3861
+          },
+          "2026-10-14": {
+            "volume_globex": 208359,
+            "volume_pnt_pit": 2580,
+            "open_interest": 399926,
+            "oi_change": 3581
+          }
+        }
+      },
+      "limitations": [
+        "The complete reviewer-by-cell transcription worksheet and rendered-page snapshots are not preserved in the repository as a reproducible audit package.",
+        "This historical record is not equivalent to a currently rerunnable parser-to-source reconciliation test."
+      ]
+    },
+    {
+      "evidence_id": "pg62-settlement-change-crosscheck",
+      "status": "MANUAL_REVIEW_RECORDED",
+      "source_ids": [
+        "pg62-2026-10-13",
+        "pg62-2026-10-14"
+      ],
+      "scope": "All 27 GC contract rows on 2026-10-14 compared with 2026-10-13 settlement values.",
+      "method": "Independently recompute settlement(t) - settlement(t-1) and compare with the printed price_change field.",
+      "result": "Recorded zero mismatches across 27 contract rows.",
+      "limitations": [
+        "This is a recorded audit outcome, not a substitute for a reproducible test fixture linking each contract and source token.",
+        "Arithmetic corroborates values but cannot by itself prove correct column assignment."
+      ]
+    },
+    {
+      "evidence_id": "pg62-raw-line-json-token-crosscheck",
+      "status": "MANUAL_REVIEW_RECORDED",
+      "source_ids": [
+        "pg62-2026-10-14"
+      ],
+      "scope": "27 GC rows on 2026-10-14.",
+      "method": "Compare source.raw_line with independently tokenized JSON raw fields.",
+      "result": "Recorded 27 rows, zero unparsed rows, and zero raw-token mismatches.",
+      "limitations": [
+        "The exact one-off crosscheck code and generated comparison output are not committed as a rerunnable artifact."
+      ]
+    },
+    {
+      "evidence_id": "pg62-source-provenance-smoke",
+      "status": "REPRODUCIBLE_AUTOMATED",
+      "source_ids": [
+        "pg62-2026-10-14"
+      ],
+      "scope": "Repository's live COMEX PDF provenance/parser smoke workflow.",
+      "method": "Use scripts/test_live_comex_pdfs.py and related provenance validation in the live COMEX PDF smoke workflow.",
+      "result": "Prior workflow record: PG62 source matched expected provenance and 8 pages.",
+      "command": "python scripts/test_live_comex_pdfs.py",
+      "artifact_paths": [
+        "scripts/test_live_comex_pdfs.py",
+        "scripts/validate_pdf_parser_provenance.py",
+        ".github/workflows/live-comex-pdf-smoke.yml"
+      ],
+      "limitations": [
+        "Smoke test checks source provenance and parser execution, not independent cell-by-cell value accuracy.",
+        "This ledger records a prior result; rerun the command/workflow to establish current status."
+      ]
+    },
+    {
+      "evidence_id": "pg64-70-page-visual-review",
+      "status": "MANUAL_REVIEW_RECORDED",
+      "source_ids": [
+        "pg64-2026-10-14"
+      ],
+      "scope": "All 70 pages of PG64 dated 2026-10-14.",
+      "method": "Review seven contact sheets and high-resolution samples of pages 1-10 and 69-70; additionally inspect PG62 pages 2-3 and 7-8.",
+      "result": "Recorded all 70 PG64 pages as visually reviewed. Pages 69-70 are OPTIONS EOO'S AND BLOCKS; page 70 is a continuation page with fewer rows and was not treated as an omission.",
+      "details": {
+        "expected_sequential_side_pages": 70,
+        "duplicate_normalized_page_text_hashes": 0,
+        "candidate_strike_rows": 8317,
+        "candidate_rows_page_1": 30,
+        "candidate_rows_pages_2_to_68": 8287,
+        "candidate_rows_pages_69_to_70": "Options EOO's and blocks; not included in the 8,317 strike-like-row scan"
+      },
+      "limitations": [
+        "Per-page visual reviewer notes and rendered images are not committed as a complete reproducible review package.",
+        "Visual page coverage does not certify every extracted option field or canonical contract key."
+      ]
+    },
+    {
+      "evidence_id": "pg64-independent-engine-row-scan",
+      "status": "CROSSCHECK_RECORDED_NOT_REPRODUCIBLE",
+      "source_ids": [
+        "pg64-2026-10-14"
+      ],
+      "scope": "Independent candidate-row comparison across all PG64 pages.",
+      "method": "Compare PyMuPDF word extraction and pdfplumber word extraction using y-coordinate grouping and candidate rows with 15-17 tokens.",
+      "result": "Recorded PyMuPDF 8,529 candidate rows; pdfplumber 8,490; 8,490 y-coordinate matches; 8,480 normalized token-sequence matches; 10 matched rows with token mismatches; 39 PyMuPDF-only rows; 0 pdfplumber-only rows.",
+      "details": {
+        "pymupdf_candidate_rows": 8529,
+        "pdfplumber_candidate_rows": 8490,
+        "y_coordinate_matched_rows": 8490,
+        "exact_normalized_token_matches": 8480,
+        "matched_but_token_mismatch": 10,
+        "pymupdf_only_rows": 39,
+        "pdfplumber_only_rows": 0
+      },
+      "limitations": [
+        "The original scanner source and exact package versions/configuration are not committed; these historical counts are not currently reproducible.",
+        "The follow-up investigation script is diagnostic only: token normalization does not reliably rejoin split signs, and greedy y-grouping may merge rows.",
+        "Candidate-row counts and token agreement do not prove field-by-field correctness or unique canonical option identifiers."
+      ]
+    },
+    {
+      "evidence_id": "pg64-all-field-source-reconciliation",
+      "status": "INCOMPLETE",
+      "source_ids": [
+        "pg64-2026-10-14"
+      ],
+      "scope": "Every PG64 option row and each semantic field against original PDF values.",
+      "method": "Required future work: build a normalized row/cell inventory, preserve raw tokens and page/coordinates, independently reconcile all rows/fields, and quarantine unresolved values.",
+      "result": "Not complete. No same-date normalized master artifact has been fully reconciled cell-by-cell against the PDF.",
+      "limitations": [
+        "PG64 remains diagnostic-only and must not be promoted to a production-quality source based on page review or row-count agreement."
+      ]
+    },
+    {
+      "evidence_id": "semantic-master-promotion",
+      "status": "INCOMPLETE",
+      "source_ids": [
+        "pg62-2026-10-12",
+        "pg62-2026-10-13",
+        "pg62-2026-10-14",
+        "pg64-2026-10-14"
+      ],
+      "scope": "Promotion of data/definitions/pdf-field-master.json and its layout profiles.",
+      "method": "Resolve source semantics and structural fingerprints; validate multiple dates and edge cases; ensure token coverage and independent evidence; rerun golden tests.",
+      "result": "Master remains draft (version 0.1.0-draft); PG62 profile is DRAFT_UNVERIFIED and PG64 profile is diagnostic-only.",
+      "limitations": [
+        "Meanings of ----, UNCH, B, detached signs and incomplete layout fingerprints remain unresolved or require explicit reviewed rules."
+      ]
+    }
+  ],
+  "open_gates": [
+    {
+      "gate_id": "reproducible-pg62-cell-audit",
+      "status": "OPEN",
+      "required_to_close": "Commit exact raw-token reconciliation fixtures and a command that reruns the 27-row/date comparison against source PDFs."
+    },
+    {
+      "gate_id": "pg64-reproducible-scanner",
+      "status": "OPEN",
+      "required_to_close": "Preserve scanner implementation, dependency versions, deterministic row grouping, mismatch TSV/JSON, and tests for split signs and merged rows."
+    },
+    {
+      "gate_id": "pg64-cell-accuracy",
+      "status": "OPEN",
+      "required_to_close": "Independently reconcile every row and field to the original PDF; zero unexplained mismatches and explicit quarantine for unresolved cells."
+    },
+    {
+      "gate_id": "master-promotion",
+      "status": "OPEN",
+      "required_to_close": "Resolve semantics, complete profile fingerprints, pass multi-date golden tests, and keep all unresolved tokens from publication."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: Test PDF audit evidence ledger
+
+on:
+  push:
+    paths:
+      - "data/verification/pdf-audit-evidence-ledger.json"
+      - "scripts/validate_pdf_audit_evidence_ledger.py"
+      - "tests/test_pdf_audit_evidence_ledger.py"
+      - ".github/workflows/test-pdf-audit-evidence-ledger.yml"
+  pull_request:
+    paths:
+      - "data/verification/pdf-audit-evidence-ledger.json"
+      - "scripts/validate_pdf_audit_evidence_ledger.py"
+      - "tests/test_pdf_audit_evidence_ledger.py"
+      - ".github/workflows/test-pdf-audit-evidence-ledger.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate evidence ledger structure
+        run: python scripts/validate_pdf_audit_evidence_ledger.py
+      - name: Run ledger tests
+        run: python -m unittest discover -s tests -p "test_pdf_audit_evidence_ledger.py" -v
