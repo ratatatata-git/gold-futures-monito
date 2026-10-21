@@ -1,14 +1,14 @@
 # PG62 independent cell reconciliation worksheet
 
-This command creates a local-only, fail-closed review template from a pinned source PDF and a PG62 parser JSON result. It creates one review item per contract and source field, including contract code, open, high, low, settlement, price change, Globex volume, PNT/Pit volume, open interest, and OI change.
+This command creates a local-only, fail-closed review template from a pinned source PDF and a PG62 parser JSON result. It creates one review item per contract and source field: contract code, open, high, low, settlement, price change, Globex volume, PNT/Pit volume, open interest, and OI change.
 
 Example (run locally; use the actual retrieval time):
 
 ```sh
-python scripts/parse_pg62.py data/cme-pg62/PG62_2026-10-14.pdf --output /secure/local-review/pg62-2026-10-14-parsed.json
+python scripts/parse_pg62.py data/cme-pg62/PG62_2026-10-14.pdf --output-dir /secure/local-review/parsed
 python scripts/create_pg62_cell_reconciliation.py \
   data/cme-pg62/PG62_2026-10-14.pdf \
-  /secure/local-review/pg62-2026-10-14-parsed.json \
+  /secure/local-review/parsed/2026-10-14/2026-10-14_FINAL.json \
   --source-url "https://www.cmegroup.com/market-data/daily-bulletin.html" \
   --retrieved-at "REPLACE_WITH_ACTUAL_TIMESTAMP" \
   --output /secure/local-review/pg62-2026-10-14-cell-review.json
