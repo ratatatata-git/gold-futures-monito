@@ -8,6 +8,8 @@
 - 言語：日本語（コード、フィールド名、識別子は英語を基本とする）
 
 > **最重要ルール**：この文書は目的・全体設計・開発順序の統合基準である。データ状態と日付の詳細契約は [data-state-and-date-contract.md](data-state-and-date-contract.md)、PG64のマスター／派生データ構造は [pg64-master-derived-data-architecture.md](pg64-master-derived-data-architecture.md)、実PDF照合・数値整合・本番ゲート等は本書末尾の関連文書を参照する。詳細契約と本書が矛盾した場合は、勝手にどちらかを選ばず、変更提案と影響範囲を記録してレビューする。
+>
+> 想定される異常系・横断リスク・必須受け入れテストは [risk-register-and-failure-handling.md](risk-register-and-failure-handling.md) を参照する。仕様に記載されているだけでは実装済みとみなさず、実装・テスト・実データ証拠を個別に確認する。
 
 ---
 
