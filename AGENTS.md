@@ -24,7 +24,6 @@ Phase 1 — GCの最小縦切り。PG62 GCの手動PDF入力→抽出→算術�
 
 ## 詳細仕様
 - [統合システム仕様書](docs/system-specification.md)
-- [検証・実装・本番運用 手順書](docs/implementation-validation-and-production-runbook.md)
 - [目的・検証計画](docs/project-purpose-and-validation-plan.md)
 - [データ状態・日付契約](docs/data-state-and-date-contract.md)
 - [PG64マスター／派生データ設計](docs/pg64-master-derived-data-architecture.md)
