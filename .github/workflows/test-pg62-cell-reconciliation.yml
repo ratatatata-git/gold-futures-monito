@@ -1,0 +1,32 @@
+name: Test PG62 Cell Reconciliation Worksheet
+
+on:
+  push:
+    paths:
+      - "scripts/create_pg62_cell_reconciliation.py"
+      - "tests/test_pg62_cell_reconciliation.py"
+      - ".github/workflows/test-pg62-cell-reconciliation.yml"
+  pull_request:
+    paths:
+      - "scripts/create_pg62_cell_reconciliation.py"
+      - "tests/test_pg62_cell_reconciliation.py"
+      - ".github/workflows/test-pg62-cell-reconciliation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pg62-cell-reconciliation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PDF dependency
+        run: python -m pip install "pypdf>=5,<7"
+      - name: Run cell reconciliation worksheet tests
+        run: |
+          cd tests
+          python -m unittest -v test_pg62_cell_reconciliation
