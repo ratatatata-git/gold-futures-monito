@@ -1,0 +1,25 @@
+name: Test GC daily arithmetic gate
+
+on:
+  pull_request:
+    paths:
+      - "scripts/validate_gc_daily_series.py"
+      - "tests/test_gc_daily_series.py"
+      - ".github/workflows/test-gc-daily-series.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/validate_gc_daily_series.py"
+      - "tests/test_gc_daily_series.py"
+      - ".github/workflows/test-gc-daily-series.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m py_compile scripts/validate_gc_daily_series.py tests/test_gc_daily_series.py
+      - run: python -m unittest tests/test_gc_daily_series.py
