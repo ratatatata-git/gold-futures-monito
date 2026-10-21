@@ -5,7 +5,8 @@
 - 文書ステータス：作業方針の合意用ドラフト
 - 横断的な異常系・品質ゲートは [リスク台帳・異常系処理・受け入れ仕様](risk-register-and-failure-handling.md) に従う。
 - 対象リポジトリ：`ratatatata-git/gold-futures-monito`
-- ローカル／非公開Webアプリ：https://ratatatata-git.github.io/gold-futures-monito/\n- [データ状態遷移と日付定義（設計案）](data-state-and-date-contract.md)
+- ローカル／非公開Webアプリ：https://ratatatata-git.github.io/gold-futures-monito/
+- [データ状態遷移と日付定義（設計案）](data-state-and-date-contract.md)
 - 主対象市場：COMEX Gold（GC）先物および関連オプション
 - 最終更新：2026-10-14
 
