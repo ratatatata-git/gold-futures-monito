@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +34,7 @@ def main() -> int:
         dates = dates_between(start, end)
         if not dates:
             raise ValueError("range contains no weekdays")
-        retrieved_at = "2026-10-22T00:00:00Z"
+        retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         results: list[dict] = []
         for day in dates:
             stamp = day.isoformat()
