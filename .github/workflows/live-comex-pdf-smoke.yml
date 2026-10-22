@@ -1,4 +1,4 @@
-name: Real Repository CME PDF Smoke Test
+name: Full Repository CME PDF Corpus Regression
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - "data/cme-pg62/**"
       - "data/cme-pg64/**"
       - "scripts/test_live_comex_pdfs.py"
+      - "scripts/test_repository_pdf_corpus.py"
       - "scripts/parse_pg62.py"
       - "scripts/parse_pg64.py"
       - "scripts/register_pdf_revision.py"
@@ -18,9 +19,9 @@ permissions:
 
 jobs:
   real-pdf-smoke:
-    name: Parse checked-in PG62 / PG64 source PDFs
+    name: Parse every checked-in PG62 / PG64 source PDF
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,4 +32,4 @@ jobs:
       - name: Install parser dependencies
         run: python -m pip install -r pg64-requirements.txt
       - name: Run real repository PDF smoke test
-        run: python scripts/test_live_comex_pdfs.py
+        run: python scripts/test_repository_pdf_corpus.py
