@@ -9,9 +9,11 @@ filename pattern in both source directories**:
 
 The script does not select only the newest common date. It validates each file's
 PDF readability, SHA-256 and page-count provenance, parsed trade date versus
-filename date, and parser-specific structural/status gates. PG62 additionally
-requires FINAL status, a passing parser validation, and unique non-empty contract
-codes. PG64 requires a single unambiguous edition-status candidate and a passing
+filename date, and parser-specific structural/status gates. PG62 accepts recognized FINAL, PRELIMINARY, or REVISED edition labels, preserves the
+edition status in the report, and requires a passing parser validation plus unique
+non-empty contract codes. A PRELIMINARY pass is only a parser/structure regression
+result; it does not promote that bulletin to FINAL or make it eligible for the normal
+production history. PG64 requires a single unambiguous edition-status candidate and a passing
 provenance match.
 
 The set of PG62 dates and PG64 dates may differ; the script prints the date range,
