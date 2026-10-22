@@ -135,7 +135,7 @@ def build_worksheet(
         "instructions": [
             "This worksheet is deliberately blocked until independently reviewed.",
             "Render and inspect the original PDF. Enter expected_raw from the source PDF itself; never copy it from extracted_raw.",
-            "For high and low, expected_raw is the original combined high/low source cell, matching the parser's shared raw token.",
+            "For high and low, transcribe the two values separately into their respective expected_raw fields; preserve source markers and signs.",
             "Mark independently_verified true only after direct source inspection and record reviewer identity, timestamp, and all reviewed pages.",
             "Run scripts/validate_pdf_reconciliation.py after completing review. The untouched worksheet must fail closed.",
         ],
