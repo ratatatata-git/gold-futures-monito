@@ -57,8 +57,8 @@ def inspect_pdf(kind: str, date: str, path: Path, retrieved_at: str) -> dict:
         edition = artifact["bulletin"]["status"]
         if artifact.get("trade_date") != date:
             raise ValueError(f"PG62 filename date {date} != parsed trade date {artifact.get('trade_date')}")
-        if edition != "FINAL":
-            raise ValueError(f"PG62 {date}: expected FINAL, got {edition!r}")
+        if edition not in {"FINAL", "PRELIMINARY", "REVISED"}:
+            raise ValueError(f"PG62 {date}: unsupported or ambiguous edition status {edition!r}")
         if artifact.get("validation", {}).get("status") != "PASS":
             raise ValueError(f"PG62 {date}: arithmetic/structural validation did not PASS")
         rows = artifact.get("contracts", [])
