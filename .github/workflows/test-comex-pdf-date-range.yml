@@ -1,0 +1,35 @@
+name: Month-Boundary CME PDF Range Test
+
+on:
+  pull_request:
+    paths:
+      - "data/cme-pg62/**"
+      - "data/cme-pg64/**"
+      - "scripts/test_live_comex_pdfs.py"
+      - "scripts/test_comex_pdf_date_range.py"
+      - "scripts/parse_pg62.py"
+      - "scripts/parse_pg64.py"
+      - "scripts/register_pdf_revision.py"
+      - "scripts/validate_pdf_parser_provenance.py"
+      - ".github/workflows/test-comex-pdf-date-range.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  month-boundary:
+    name: Verify PG62 and PG64 from 2026-09-29 through 2026-10-09
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install parser dependencies
+        run: python -m pip install -r pg64-requirements.txt
+      - name: Run month-boundary real-PDF test
+        run: python scripts/test_comex_pdf_date_range.py --start-date 2026-09-29 --end-date 2026-10-09
