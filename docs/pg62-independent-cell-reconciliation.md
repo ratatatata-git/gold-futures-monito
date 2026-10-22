@@ -15,8 +15,8 @@ python scripts/create_pg62_cell_reconciliation.py \
 python scripts/validate_pdf_reconciliation.py /secure/local-review/pg62-2026-10-14-cell-review.json
 ```
 
-The worksheet binds the PDF SHA-256 to the parser JSON, checks the FINAL edition and row/page locators, and records the parser's extracted raw token in `extracted_raw`. Crucially, every `expected_raw` is blank and every `independently_verified` flag is false. A reviewer must render the original PDF and transcribe each expected token directly from the source. Do not copy expected values from parser output or the master JSON. The untouched template must fail validation.
+The worksheet binds the PDF SHA-256 to the parser JSON, checks the FINAL edition and row/page locators, and records each parser-extracted raw token in `extracted_raw`. Crucially, every `expected_raw` is blank and every `independently_verified` flag is false. A reviewer must render the original PDF and transcribe each expected token directly from the source. Do not copy expected values from parser output or the master JSON. The untouched template must fail validation.
 
-For high and low, the parser retains one combined high/low source token; the reviewer enters that same combined token as `expected_raw` for both fields after inspecting the original cell. This checks the source token, while the separate semantic regression test checks how the parser interprets its components.
+For high and low, the parser JSON stores separate `high.raw` and `low.raw` values, even though the source PDF visually prints the high/low values together in a slash-separated cell. Enter the high and low values separately in their respective `expected_raw` fields after inspecting the original PDF. Preserve source notation such as `B`, `----`, `UNCH`, and explicit signs exactly as printed. This allows the cell-level comparison to compare like-for-like fields rather than duplicating one combined token into two checks.
 
 This worksheet does not claim any cells have already been independently reviewed. It is a tool to make that review systematic and auditable. Keep PDFs, parsed JSON, and completed review reports in the intended private/local storage.
