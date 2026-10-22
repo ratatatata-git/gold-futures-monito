@@ -19,8 +19,8 @@ def parsed_fixture():
         "volume_globex", "volume_pnt_pit", "open_interest", "oi_change",
     ):
         row[field] = {"state": "VALUE", "raw": "4093.60", "value": "4093.60"}
-    row["high"]["raw"] = "4099.00 /4080.70"
-    row["low"]["raw"] = "4099.00 /4080.70"
+    row["high"]["raw"] = "4099.00"
+    row["low"]["raw"] = "4080.70"
     return {
         "dataset": "PG62_GC_FUTURES",
         "trade_date": "2026-10-14",
@@ -55,11 +55,12 @@ class PG62CellReconciliationWorksheetTests(unittest.TestCase):
         self.assertEqual(worksheet["pages_reviewed"], [])
         self.assertEqual(worksheet["worksheet_status"], "INCOMPLETE_REVIEW_REQUIRED")
 
-    def test_high_low_keep_shared_source_cell_raw_token(self):
+    def test_high_and_low_have_separate_source_tokens(self):
         worksheet = self.build()
         items = {item["field"]: item for item in worksheet["items"]}
-        self.assertEqual(items["high"]["extracted_raw"], "4099.00 /4080.70")
-        self.assertEqual(items["low"]["extracted_raw"], "4099.00 /4080.70")
+        self.assertEqual(items["high"]["extracted_raw"], "4099.00")
+        self.assertEqual(items["low"]["extracted_raw"], "4080.70")
+        self.assertNotEqual(items["high"]["extracted_raw"], items["low"]["extracted_raw"])
 
     def test_refuses_hash_mismatch_non_final_and_duplicate_contracts(self):
         with self.assertRaisesRegex(ValueError, "SHA-256 does not match"):
