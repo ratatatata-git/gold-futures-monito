@@ -7,6 +7,7 @@ shortcut is used. PG62 and PG64 coverage can differ by date.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import sys
 from datetime import datetime, timezone
@@ -49,7 +50,7 @@ def inspect_pdf(kind: str, date: str, path: Path, retrieved_at: str) -> dict:
     if reader.is_encrypted or not reader.pages:
         raise ValueError(f"{kind} {date}: encrypted PDF or zero pages")
     page_count = len(reader.pages)
-    digest = parse_pg62.sha256(path) if kind == "PG62" else parse_pg64.sha256(path)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
 
     if kind == "PG62":
         artifact = parse_pg62.parse_pdf(path)
