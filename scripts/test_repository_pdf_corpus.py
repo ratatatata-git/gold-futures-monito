@@ -117,10 +117,19 @@ def main() -> int:
             for kind in ("PG62", "PG64")
             for date, path in discover(kind)
         ]
-        results = [inspect_pdf(kind, date, path, retrieved_at) for kind, date, path in cases]
     except Exception as exc:
         print(f"REPOSITORY PDF CORPUS REGRESSION: FAIL: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
+
+    results = []
+    failures = []
+    for kind, date, path in cases:
+        try:
+            results.append(inspect_pdf(kind, date, path, retrieved_at))
+        except Exception as exc:
+            failure = f"{kind} {date} ({path.name}): {type(exc).__name__}: {exc}"
+            failures.append(failure)
+            print(f"PDF CORPUS CASE FAIL: {failure}", file=sys.stderr)
 
     by_type = {kind: [r for r in results if r["type"] == kind] for kind in ("PG62", "PG64")}
     for kind in ("PG62", "PG64"):
@@ -131,11 +140,16 @@ def main() -> int:
                 f"{extra} sha256={result['sha256']} parser={result['parser_status']}"
                 f" provenance={result['provenance_status']}"
             )
-    pg62_dates = {r["date"] for r in by_type["PG62"]}
-    pg64_dates = {r["date"] for r in by_type["PG64"]}
-    print(f"PG62 PDFs tested: {len(by_type['PG62'])}; dates={min(pg62_dates)}..{max(pg62_dates)}")
-    print(f"PG64 PDFs tested: {len(by_type['PG64'])}; dates={min(pg64_dates)}..{max(pg64_dates)}")
-    print(f"Shared dates: {len(pg62_dates & pg64_dates)}; PG62-only dates: {sorted(pg62_dates - pg64_dates)}; PG64-only dates: {sorted(pg64_dates - pg62_dates)}")
+    print(f"PDF corpus cases passed: {len(results)}/{len(cases)}; failed: {len(failures)}")
+    if failures:
+        print("REPOSITORY PDF CORPUS REGRESSION: FAIL")
+        print("All failing cases were reported above; date/provenance gates remain enforced.")
+        return 1
+
+    by_type_dates = {kind: {r["date"] for r in by_type[kind]} for kind in ("PG62", "PG64")}
+    print(f"PG62 PDFs tested: {len(by_type['PG62'])}; dates={min(by_type_dates['PG62'])}..{max(by_type_dates['PG62'])}")
+    print(f"PG64 PDFs tested: {len(by_type['PG64'])}; dates={min(by_type_dates['PG64'])}..{max(by_type_dates['PG64'])}")
+    print(f"Shared dates: {len(by_type_dates['PG62'] & by_type_dates['PG64'])}; PG62-only dates: {sorted(by_type_dates['PG62'] - by_type_dates['PG64'])}; PG64-only dates: {sorted(by_type_dates['PG64'] - by_type_dates['PG62'])}")
     print("REPOSITORY PDF CORPUS REGRESSION: PASS")
     print("Scope: all checked-in PDFs parsed with structural/status/provenance gates. This does NOT certify independent cell-by-cell accuracy, especially for PG64.")
     return 0
