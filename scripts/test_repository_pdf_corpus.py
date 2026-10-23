@@ -56,7 +56,15 @@ def inspect_pdf(kind: str, date: str, path: Path, retrieved_at: str) -> dict:
         artifact = parse_pg62.parse_pdf(path)
         edition = artifact["bulletin"]["status"]
         if artifact.get("trade_date") != date:
-            raise ValueError(f"PG62 filename date {date} != parsed trade date {artifact.get('trade_date')}")
+            # Keep the mismatch fail-closed, but expose source evidence in CI logs so
+            # operators can distinguish a bad filename from a parser date bug.
+            first_page = re.sub(r"\\s+", " ", reader.pages[0].extract_text() or "").strip()
+            header_excerpt = first_page[:900]
+            bulletin = artifact.get("bulletin", {})
+            raise ValueError(
+                f"PG62 filename date {date} != parsed trade date {artifact.get('trade_date')}; "
+                f"bulletin={bulletin!r}; first_page_excerpt={header_excerpt!r}"
+            )
         if edition not in {"FINAL", "PRELIMINARY", "REVISED"}:
             raise ValueError(f"PG62 {date}: unsupported or ambiguous edition status {edition!r}")
         if artifact.get("validation", {}).get("status") != "PASS":
