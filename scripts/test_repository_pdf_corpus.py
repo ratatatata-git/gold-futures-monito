@@ -58,7 +58,7 @@ def inspect_pdf(kind: str, date: str, path: Path, retrieved_at: str) -> dict:
         if artifact.get("trade_date") != date:
             # Keep the mismatch fail-closed, but expose source evidence in CI logs so
             # operators can distinguish a bad filename from a parser date bug.
-            first_page = re.sub(r"\\s+", " ", reader.pages[0].extract_text() or "").strip()
+                        first_page = " ".join((reader.pages[0].extract_text() or "").split())
             header_excerpt = first_page[:900]
             bulletin = artifact.get("bulletin", {})
             raise ValueError(
